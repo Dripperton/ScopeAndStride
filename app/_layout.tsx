@@ -34,12 +34,32 @@ export default function Layout() {
       router.replace('/reset-password');
       return;
     }
+
     const publicRoutes = ['index', 'forgot-password', 'reset-password'];
     const onPublicRoute = segments[0] === undefined || publicRoutes.includes(segments[0]);
+
     if (!session && !onPublicRoute) {
       router.replace('/');
-    } else if (session && onPublicRoute) {
-      router.replace('/dashboard');
+      return;
+    }
+
+    if (session && onPublicRoute) {
+      // Check if horse owner needs onboarding
+      supabase
+        .from('profiles')
+        .select('role, onboarding_complete')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (
+            profile?.role === 'horse_owner' &&
+            profile?.onboarding_complete === false
+          ) {
+            router.replace('/onboarding');
+          } else {
+            router.replace('/dashboard');
+          }
+        });
     }
   }, [session, segments, isRecovery]);
 
