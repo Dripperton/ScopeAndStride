@@ -14,6 +14,7 @@ export default function Onboarding() {
   const [error, setError] = useState('');
 
   // Step 1 — Horse details
+  const [fullName, setFullName] = useState('');
   const [horseName, setHorseName] = useState('');
   const [breed, setBreed] = useState('');
   const [boardType, setBoardType] = useState('');
@@ -34,7 +35,7 @@ export default function Onboarding() {
   const [quirks, setQuirks] = useState('');
 
   function canProceed() {
-    if (step === 0) return horseName.trim().length > 0;
+    if (step === 0) return fullName.trim().length > 0 && horseName.trim().length > 0;
     if (step === 1) return vetName.trim().length > 0 && vetPhone.trim().length > 0;
     return true;
   }
@@ -94,10 +95,10 @@ export default function Onboarding() {
         }
       }
 
-      // Mark onboarding complete
+      // Save name and mark onboarding complete
       await supabase
         .from('profiles')
-        .update({ onboarding_complete: true })
+        .update({ onboarding_complete: true, full_name: fullName.trim() })
         .eq('id', profile.id);
       setStep(3);
     } catch (e: any) {
@@ -142,6 +143,9 @@ export default function Onboarding() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Tell us about your horse</Text>
             <Text style={styles.sectionSub}>This helps your barn manager keep accurate records.</Text>
+
+            <Text style={styles.fieldLabel}>YOUR NAME *</Text>
+            <TextInput style={styles.input} value={fullName} onChangeText={setFullName} placeholder="e.g. Sarah Henderson" placeholderTextColor="#9A9285" />
 
             <Text style={styles.fieldLabel}>HORSE NAME *</Text>
             <TextInput style={styles.input} value={horseName} onChangeText={setHorseName} placeholder="e.g. Clifford" placeholderTextColor="#9A9285" />
