@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CheckCircle } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import { useProfile } from '../lib/useProfile';
 
 interface Alert {
   horseId: number;
@@ -13,12 +14,14 @@ interface Alert {
 
 export default function AlertsScreen() {
   const router = useRouter();
+  const { isOwner, isStaff } = useProfile();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchAlerts();
-  }, []);
+    if (isOwner || isStaff) fetchAlerts();
+    else setLoading(false);
+  }, [isOwner, isStaff]);
 
   async function fetchAlerts() {
     const today = new Date();
@@ -70,6 +73,23 @@ export default function AlertsScreen() {
 
     setAlerts(newAlerts);
     setLoading(false);
+  }
+
+  if (!isOwner && !isStaff) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Pressable onPress={() => router.back()}>
+            <Text style={styles.backText}>Back</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>Alerts</Text>
+          <View style={{ width: 48 }} />
+        </View>
+        <View style={styles.emptyState}>
+          <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center', padding: 40 }}>You don't have permission to view alerts.</Text>
+        </View>
+      </View>
+    );
   }
 
   const criticalAlerts = alerts.filter(a => a.severity === 'critical');

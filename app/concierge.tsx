@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal } from 'lucide-react-native';
+import { useProfile } from '../lib/useProfile';
 
 const audits = [
   { id: 1, category: 'Feed Management', score: 92, status: 'Excellent', color: '#EDF5EF', textColor: '#2C4A35' },
@@ -21,7 +22,29 @@ const tasks = [
 
 export default function Concierge() {
   const router = useRouter();
+  const { isOwner } = useProfile();
   const overallScore = 81;
+
+  if (!isOwner) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View style={styles.headerIcon}>
+              <Text style={styles.headerIconText}>S{'\n'}S</Text>
+            </View>
+            <View>
+              <Text style={styles.headerName}>Concierge</Text>
+              <Text style={styles.headerBarn}>Operational Audit</Text>
+            </View>
+          </View>
+        </View>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+          <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center' }}>You don't have permission to view this page.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
