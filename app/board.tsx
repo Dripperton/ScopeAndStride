@@ -241,16 +241,26 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
       {/* Attachments preview */}
       {(post.post_attachments || []).length > 0 && (
         <View style={styles.attachmentsWrap}>
-          {post.post_attachments.slice(0, 3).map((att: any, i: number) => (
-            att.type === 'image' || att.type === 'gif' ? (
-              <Image key={att.id} source={{ uri: att.url }} style={[styles.attachThumb, post.post_attachments.length === 1 && styles.attachThumbFull]} resizeMode={post.post_attachments.length === 1 ? 'contain' : 'cover'} />
-            ) : (
-              <View key={att.id} style={styles.attachPdfChip}>
-                <FileText size={13} color="#2C4A35" />
-                <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
-              </View>
-            )
-          ))}
+          {post.post_attachments.length === 1 && (post.post_attachments[0].type === 'image' || post.post_attachments[0].type === 'gif') ? (
+            <Image source={{ uri: post.post_attachments[0].url }} style={styles.attachThumbFull} resizeMode="contain" />
+          ) : (
+            post.post_attachments.slice(0, 3).map((att: any, i: number) => (
+              att.type === 'image' || att.type === 'gif' ? (
+                <Image key={att.id} source={{ uri: att.url }} style={styles.attachThumb} resizeMode="cover" />
+              ) : (
+                <View key={att.id} style={styles.attachPdfChip}>
+                  <FileText size={13} color="#2C4A35" />
+                  <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
+                </View>
+              )
+            ))
+          )}
+          {post.post_attachments.length === 1 && post.post_attachments[0].type === 'pdf' && (
+            <View style={styles.attachPdfChip}>
+              <FileText size={13} color="#2C4A35" />
+              <Text style={styles.attachPdfName} numberOfLines={1}>{post.post_attachments[0].filename || 'Document'}</Text>
+            </View>
+          )}
           {post.post_attachments.length > 3 && (
             <View style={styles.attachMore}>
               <Text style={styles.attachMoreText}>+{post.post_attachments.length - 3}</Text>
