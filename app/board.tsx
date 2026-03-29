@@ -241,30 +241,31 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
       {/* Attachments preview */}
       {(post.post_attachments || []).length > 0 && (
         <View style={styles.attachmentsWrap}>
-          {post.post_attachments.length === 1 && (post.post_attachments[0].type === 'image' || post.post_attachments[0].type === 'gif') ? (
-            <Image source={{ uri: post.post_attachments[0].url }} style={styles.attachThumbFull} resizeMode="contain" />
-          ) : (
-            post.post_attachments.slice(0, 3).map((att: any, i: number) => (
-              att.type === 'image' || att.type === 'gif' ? (
-                <Image key={att.id} source={{ uri: att.url }} style={styles.attachThumb} resizeMode="cover" />
-              ) : (
-                <View key={att.id} style={styles.attachPdfChip}>
-                  <FileText size={13} color="#2C4A35" />
-                  <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
-                </View>
-              )
-            ))
-          )}
-          {post.post_attachments.length === 1 && post.post_attachments[0].type === 'pdf' && (
+          {post.post_attachments.length === 1 && post.post_attachments[0].type === 'pdf' ? (
             <View style={styles.attachPdfChip}>
               <FileText size={13} color="#2C4A35" />
               <Text style={styles.attachPdfName} numberOfLines={1}>{post.post_attachments[0].filename || 'Document'}</Text>
             </View>
-          )}
-          {post.post_attachments.length > 3 && (
-            <View style={styles.attachMore}>
-              <Text style={styles.attachMoreText}>+{post.post_attachments.length - 3}</Text>
-            </View>
+          ) : post.post_attachments.length === 1 ? (
+            <Image source={{ uri: post.post_attachments[0].url }} style={styles.attachThumbFull} resizeMode="contain" />
+          ) : (
+            <>
+              {post.post_attachments.slice(0, 3).map((att: any) => (
+                att.type === 'image' || att.type === 'gif' ? (
+                  <Image key={att.id} source={{ uri: att.url }} style={styles.attachThumb} resizeMode="cover" />
+                ) : (
+                  <View key={att.id} style={styles.attachPdfChip}>
+                    <FileText size={13} color="#2C4A35" />
+                    <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
+                  </View>
+                )
+              ))}
+              {post.post_attachments.length > 3 && (
+                <View style={styles.attachMore}>
+                  <Text style={styles.attachMoreText}>+{post.post_attachments.length - 3}</Text>
+                </View>
+              )}
+            </>
           )}
         </View>
       )}
@@ -323,9 +324,9 @@ const styles = StyleSheet.create({
   pinBtn: { padding: 6, borderRadius: 6 },
   pinBtnHovered: { backgroundColor: '#F5F1EA' },
   postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
-  attachmentsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12, width: '100%' },
+  attachmentsWrap: { marginBottom: 12 },
   attachThumb: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#F5F1EA' },
-  attachThumbFull: { width: '100%', aspectRatio: 4/3, borderRadius: 8 },
+  attachThumbFull: { width: '100%', aspectRatio: 4/3, borderRadius: 8, overflow: 'hidden' },
   attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F1EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   attachPdfName: { fontSize: 12, color: '#2C4A35', fontWeight: '500', maxWidth: 160 },
   attachMore: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#E8E0CC', alignItems: 'center', justifyContent: 'center' },
