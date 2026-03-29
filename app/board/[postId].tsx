@@ -22,7 +22,7 @@ export default function PostDetail() {
 
   async function fetchPost() {
     const [{ data: postData }, { data: commentsData }] = await Promise.all([
-      supabase.from('posts').select('*, profiles(full_name, role)').eq('id', postId).single(),
+      supabase.from('posts').select('*, profiles(full_name, role), post_reactions(id, user_id)').eq('id', postId).single(),
       supabase.from('post_comments').select('*, profiles(full_name, role)').eq('post_id', postId).order('created_at', { ascending: true }),
     ]);
     if (postData) setPost(postData);
@@ -83,6 +83,18 @@ export default function PostDetail() {
   async function handlePin() {
     await supabase.from('posts').update({ pinned: !post.pinned }).eq('id', postId);
     setPost((prev: any) => ({ ...prev, pinned: !prev.pinned }));
+  }
+
+  async function handleLike() {
+    if (!profile) return;
+    const hasLiked = (post.post_reactions || []).some((r: any) => r.user_id === profile.id);
+    if (hasLiked) {
+      await supabase.from('post_reactions').delete().eq('post_id', postId).eq('user_id', profile.id);
+      setPost((prev: any) => ({ ...prev, post_reactions: prev.post_reactions.filter((r: any) => r.user_id !== profile.id) }));
+    } else {
+      const { data } = await supabase.from('post_reactions').insert({ post_id: postId, user_id: profile.id }).select().single();
+      if (data) setPost((prev: any) => ({ ...prev, post_reactions: [...(prev.post_reactions || []), data] }));
+    }
   }
 
   function formatDate(dateStr: string) {
@@ -183,6 +195,17 @@ export default function PostDetail() {
             </View>
           </View>
           <Text style={styles.postContent}>{post.content}</Text>
+          <View style={styles.postActions}>
+            <Pressable
+              style={({ hovered }: any) => [styles.likeBtn, (post.post_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
+              onPress={handleLike}
+            >
+              <Text style={[(post.post_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.likeIconActive : styles.likeIcon]}>♥</Text>
+              <Text style={[(post.post_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.likeCountActive : styles.likeCount]}>
+                {post.post_reactions?.length > 0 ? `${post.post_reactions.length} like${post.post_reactions.length !== 1 ? 's' : ''}` : 'Like'}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Comments */}
@@ -290,6 +313,14 @@ const styles = StyleSheet.create({
   commentText: { fontSize: 13, color: '#3A3830', lineHeight: 19 },
   deleteCommentBtn: { padding: 4, borderRadius: 4 },
   deleteCommentBtnHovered: { backgroundColor: '#FFF5F5' },
+  postActions: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
+  likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  likeBtnActive: { backgroundColor: '#FEF0F0' },
+  likeBtnHovered: { backgroundColor: '#F5F1EA' },
+  likeIcon: { fontSize: 15, color: '#C4BAA8' },
+  likeIconActive: { fontSize: 15, color: '#C0392B' },
+  likeCount: { fontSize: 13, color: '#9A9285', fontWeight: '500' },
+  likeCountActive: { fontSize: 13, color: '#C0392B', fontWeight: '600' },
   commentInputWrap: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, padding: 12, paddingBottom: 28, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC' },
   commentInputAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   commentInputAvatarText: { fontSize: 12, fontWeight: '700', color: '#2C4A35' },

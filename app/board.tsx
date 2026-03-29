@@ -20,7 +20,7 @@ export default function Board() {
     setLoading(true);
     const { data } = await supabase
       .from('posts')
-      .select('*, profiles(full_name, role), post_comments(id)')
+      .select('*, profiles(full_name, role), post_comments(id), post_reactions(id, user_id)')
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false });
     setPosts(data || []);
@@ -36,6 +36,26 @@ export default function Board() {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       })
     );
+  }
+
+  async function handleLike(post: any) {
+    if (!profile) return;
+    const hasLiked = (post.post_reactions || []).some((r: any) => r.user_id === profile.id);
+    if (hasLiked) {
+      await supabase.from('post_reactions').delete().eq('post_id', post.id).eq('user_id', profile.id);
+      setPosts(prev => prev.map(p => p.id === post.id
+        ? { ...p, post_reactions: p.post_reactions.filter((r: any) => r.user_id !== profile.id) }
+        : p
+      ));
+    } else {
+      const { data } = await supabase.from('post_reactions').insert({ post_id: post.id, user_id: profile.id }).select().single();
+      if (data) {
+        setPosts(prev => prev.map(p => p.id === post.id
+          ? { ...p, post_reactions: [...(p.post_reactions || []), data] }
+          : p
+        ));
+      }
+    }
   }
 
   function formatDate(dateStr: string) {
@@ -109,6 +129,8 @@ export default function Board() {
                   currentUserId={profile?.id}
                   onPin={() => handlePin(post)}
                   onPress={() => router.push({ pathname: '/board/[postId]', params: { postId: post.id } })}
+                  onLike={() => handleLike(post)}
+                  currentUserId={profile?.id}
                   formatDate={formatDate}
                   getRoleLabel={getRoleLabel}
                 />
@@ -128,6 +150,8 @@ export default function Board() {
                   currentUserId={profile?.id}
                   onPin={() => handlePin(post)}
                   onPress={() => router.push({ pathname: '/board/[postId]', params: { postId: post.id } })}
+                  onLike={() => handleLike(post)}
+                  currentUserId={profile?.id}
                   formatDate={formatDate}
                   getRoleLabel={getRoleLabel}
                 />
@@ -165,11 +189,13 @@ export default function Board() {
   );
 }
 
-function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, formatDate, getRoleLabel }: any) {
+function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLike, formatDate, getRoleLabel }: any) {
   const isAuthor = post.author_id === currentUserId;
   const canPin = isOwner || isStaff;
   const isAnnouncement = post.type === 'announcement';
   const commentCount = post.post_comments?.length || 0;
+  const likeCount = post.post_reactions?.length || 0;
+  const hasLiked = (post.post_reactions || []).some((r: any) => r.user_id === currentUserId);
   const authorRole = post.profiles?.role || 'horse_owner';
 
   return (
@@ -212,12 +238,21 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, forma
 
       <Text style={styles.postContent}>{post.content}</Text>
 
-      {commentCount > 0 && (
-        <View style={styles.postFooter}>
-          <MessageSquare size={13} color="#9A9285" />
-          <Text style={styles.postCommentCount}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
-        </View>
-      )}
+      <View style={styles.postFooter}>
+        <Pressable
+          style={({ hovered }: any) => [styles.likeBtn, hasLiked && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
+          onPress={onLike}
+        >
+          <Text style={[styles.likeIcon, hasLiked && styles.likeIconActive]}>♥</Text>
+          {likeCount > 0 && <Text style={[styles.likeCount, hasLiked && styles.likeCountActive]}>{likeCount}</Text>}
+        </Pressable>
+        {commentCount > 0 && (
+          <View style={styles.commentCount}>
+            <MessageSquare size={13} color="#9A9285" />
+            <Text style={styles.postCommentCount}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
+          </View>
+        )}
+      </View>
     </Pressable>
   );
 }
@@ -258,7 +293,15 @@ const styles = StyleSheet.create({
   pinBtn: { padding: 6, borderRadius: 6 },
   pinBtnHovered: { backgroundColor: '#F5F1EA' },
   postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
-  postFooter: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
+  postFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
+  likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  likeBtnActive: { backgroundColor: '#FEF0F0' },
+  likeBtnHovered: { backgroundColor: '#F5F1EA' },
+  likeIcon: { fontSize: 14, color: '#C4BAA8' },
+  likeIconActive: { color: '#C0392B' },
+  likeCount: { fontSize: 12, color: '#9A9285', fontWeight: '500' },
+  likeCountActive: { color: '#C0392B' },
+  commentCount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   postCommentCount: { fontSize: 12, color: '#9A9285' },
   nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
   navItem: { flex: 1, alignItems: 'center', gap: 2 },
