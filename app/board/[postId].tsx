@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   deleteCommentBtn: { padding: 4, borderRadius: 4 },
   deleteCommentBtnHovered: { backgroundColor: '#FFF5F5' },
   detailAttachments: { gap: 10, marginTop: 14 },
-  detailAttachImage: { width: '100%', height: 240, borderRadius: 10, backgroundColor: '#F5F1EA' },
+  detailAttachImage: { width: '100%', aspectRatio: 4/3, borderRadius: 10, backgroundColor: '#F5F1EA' },
   detailAttachPdf: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F5F1EA', borderRadius: 10, padding: 14 },
   detailAttachPdfHovered: { backgroundColor: '#EDF5EF' },
   detailAttachPdfName: { flex: 1, fontSize: 13, color: '#2C4A35', fontWeight: '500' },
