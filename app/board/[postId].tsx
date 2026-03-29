@@ -23,7 +23,7 @@ export default function PostDetail() {
   async function fetchPost() {
     const [{ data: postData }, { data: commentsData }] = await Promise.all([
       supabase.from('posts').select('*, profiles(full_name, role), post_reactions(id, user_id), post_attachments(id, url, type, filename)').eq('id', postId).single(),
-      supabase.from('post_comments').select('*, profiles(full_name, role)').eq('post_id', postId).order('created_at', { ascending: true }),
+      supabase.from('post_comments').select('*, profiles(full_name, role), comment_reactions(id, user_id)').eq('post_id', postId).order('created_at', { ascending: true }),
     ]);
     if (postData) setPost(postData);
     if (commentsData) setComments(commentsData);
@@ -94,6 +94,26 @@ export default function PostDetail() {
     } else {
       const { data } = await supabase.from('post_reactions').insert({ post_id: postId, user_id: profile.id }).select().single();
       if (data) setPost((prev: any) => ({ ...prev, post_reactions: [...(prev.post_reactions || []), data] }));
+    }
+  }
+
+  async function handleLikeComment(comment: any) {
+    if (!profile) return;
+    const hasLiked = (comment.comment_reactions || []).some((r: any) => r.user_id === profile.id);
+    if (hasLiked) {
+      await supabase.from('comment_reactions').delete().eq('comment_id', comment.id).eq('user_id', profile.id);
+      setComments(prev => prev.map(c => c.id === comment.id
+        ? { ...c, comment_reactions: c.comment_reactions.filter((r: any) => r.user_id !== profile.id) }
+        : c
+      ));
+    } else {
+      const { data } = await supabase.from('comment_reactions').insert({ comment_id: comment.id, user_id: profile.id }).select().single();
+      if (data) {
+        setComments(prev => prev.map(c => c.id === comment.id
+          ? { ...c, comment_reactions: [...(c.comment_reactions || []), data] }
+          : c
+        ));
+      }
     }
   }
 
@@ -251,14 +271,27 @@ export default function PostDetail() {
                     </View>
                     <Text style={styles.commentText}>{c.content}</Text>
                   </View>
-                  {canDelete && (
+                  <View style={styles.commentActions}>
                     <Pressable
-                      style={({ hovered }: any) => [styles.deleteCommentBtn, hovered && styles.deleteCommentBtnHovered]}
-                      onPress={() => handleDeleteComment(c.id)}
+                      style={({ hovered }: any) => [styles.commentLikeBtn, (c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.commentLikeBtnActive, hovered && styles.commentLikeBtnHovered]}
+                      onPress={() => handleLikeComment(c)}
                     >
-                      <Trash2 size={13} color="#C4BAA8" />
+                      <Text style={(c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.commentLikeIconActive : styles.commentLikeIcon}>♥</Text>
+                      {(c.comment_reactions || []).length > 0 && (
+                        <Text style={(c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.commentLikeCountActive : styles.commentLikeCount}>
+                          {c.comment_reactions.length}
+                        </Text>
+                      )}
                     </Pressable>
-                  )}
+                    {canDelete && (
+                      <Pressable
+                        style={({ hovered }: any) => [styles.deleteCommentBtn, hovered && styles.deleteCommentBtnHovered]}
+                        onPress={() => handleDeleteComment(c.id)}
+                      >
+                        <Trash2 size={13} color="#C4BAA8" />
+                      </Pressable>
+                    )}
+                  </View>
                 </View>
               );
             })}
@@ -332,6 +365,14 @@ const styles = StyleSheet.create({
   commentAuthor: { fontSize: 13, fontWeight: '600', color: '#1A1A14' },
   commentTime: { fontSize: 11, color: '#C4BAA8' },
   commentText: { fontSize: 13, color: '#3A3830', lineHeight: 19 },
+  commentActions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+  commentLikeBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
+  commentLikeBtnActive: { backgroundColor: '#FEF0F0' },
+  commentLikeBtnHovered: { backgroundColor: '#F5F1EA' },
+  commentLikeIcon: { fontSize: 12, color: '#C4BAA8' },
+  commentLikeIconActive: { fontSize: 12, color: '#C0392B' },
+  commentLikeCount: { fontSize: 11, color: '#9A9285' },
+  commentLikeCountActive: { fontSize: 11, color: '#C0392B', fontWeight: '600' },
   deleteCommentBtn: { padding: 4, borderRadius: 4 },
   deleteCommentBtnHovered: { backgroundColor: '#FFF5F5' },
   detailAttachments: { gap: 10, marginTop: 14 },
