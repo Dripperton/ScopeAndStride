@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
@@ -189,6 +190,24 @@ export default function Board() {
   );
 }
 
+function AutoHeightImage({ uri }: { uri: string }) {
+  const { width } = useWindowDimensions();
+  const [height, setHeight] = useState(280);
+  const cardWidth = width - 32; // account for page padding
+
+  Image.getSize(uri, (w, h) => {
+    setHeight((h / w) * cardWidth);
+  }, () => {});
+
+  return (
+    <Image
+      source={{ uri }}
+      style={{ width: '100%', height }}
+      resizeMode="cover"
+    />
+  );
+}
+
 function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLike, formatDate, getRoleLabel }: any) {
   const isAuthor = post.author_id === currentUserId;
   const canPin = isOwner || isStaff;
@@ -247,7 +266,7 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
               <Text style={styles.attachPdfName} numberOfLines={1}>{post.post_attachments[0].filename || 'Document'}</Text>
             </View>
           ) : post.post_attachments.length === 1 ? (
-            <Image source={{ uri: post.post_attachments[0].url }} style={styles.attachThumbFull} resizeMode="cover" />
+            <AutoHeightImage uri={post.post_attachments[0].url} />
           ) : (
             <>
               {post.post_attachments.slice(0, 3).map((att: any) => (
@@ -326,7 +345,7 @@ const styles = StyleSheet.create({
   postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
   attachmentsWrap: { marginBottom: 12, marginHorizontal: -16, marginTop: 12 },
   attachThumb: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#F5F1EA' },
-  attachThumbFull: { width: '100%', height: 280 },
+  attachThumbFull: { width: '100%', height: 280 }, // fallback only
   attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F1EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   attachPdfName: { fontSize: 12, color: '#2C4A35', fontWeight: '500', maxWidth: 160 },
   attachMore: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#E8E0CC', alignItems: 'center', justifyContent: 'center' },
