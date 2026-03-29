@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, Settings, Users } from 'lucide-react-native';
+import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, Settings, Users, MessageSquare } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 
@@ -351,6 +351,13 @@ export default function Dashboard() {
               <Text style={styles.actionLabel}>Manage Users</Text>
             </Pressable>
           )}
+          <Pressable
+            style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
+            onPress={() => router.push('/board')}
+          >
+            <MessageSquare size={28} color="#2C4A35" />
+            <Text style={styles.actionLabel}>Board</Text>
+          </Pressable>
         </View>
 
         <View style={{ height: 40 }} />
@@ -383,6 +390,10 @@ export default function Dashboard() {
             <Text style={styles.navLbl}>Billing</Text>
           </Pressable>
         )}
+        <Pressable style={styles.navItem} onPress={() => router.push('/board')}>
+          <MessageSquare size={22} color="#9A9285" />
+          <Text style={styles.navLbl}>Board</Text>
+        </Pressable>
         {isOwner && (
           <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
             <MoreHorizontal size={22} color="#9A9285" />
