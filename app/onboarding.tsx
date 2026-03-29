@@ -94,9 +94,11 @@ export default function Onboarding() {
         }
       }
 
-      // Mark onboarding complete regardless
+      // Mark onboarding complete
       await supabase
         .from('profiles')
+        .update({ onboarding_complete: true })
+        .eq('id', profile.id);
       setStep(3);
     } catch (e: any) {
       setError(e.message || 'Something went wrong. Please try again.');
@@ -206,7 +208,7 @@ export default function Onboarding() {
             </Text>
             <Pressable
               style={({ hovered }: any) => [styles.doneBtn, hovered && styles.doneBtnHovered]}
-              onPress={async () => { await supabase.from('profiles').update({ onboarding_complete: true }).eq('id', profile!.id); router.replace('/dashboard'); }}
+              onPress={() => router.replace('/dashboard')}
             >
               <Text style={styles.doneBtnText}>Go to my dashboard</Text>
             </Pressable>
