@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { useWindowDimensions } from 'react-native';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
@@ -191,22 +190,14 @@ export default function Board() {
 }
 
 function AutoHeightImage({ uri }: { uri: string }) {
-  const { width } = useWindowDimensions();
-  const [height, setHeight] = useState(280);
-  const maxHeight = 400;
-  const cardWidth = Math.min(width - 32, 600); // cap card width on wide screens
-
-  Image.getSize(uri, (w, h) => {
-    const natural = (h / w) * cardWidth;
-    setHeight(Math.min(natural, maxHeight));
-  }, () => {});
-
   return (
-    <Image
-      source={{ uri }}
-      style={{ width: '100%', height }}
-      resizeMode="cover"
-    />
+    <View style={{ width: '100%', aspectRatio: 1.5 }}>
+      <Image
+        source={{ uri }}
+        style={{ width: '100%', height: '100%' }}
+        resizeMode="cover"
+      />
+    </View>
   );
 }
 
