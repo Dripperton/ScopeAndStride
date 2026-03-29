@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useFocusEffect } from 'expo-router';
 import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, Trophy, Stethoscope, Hammer, CalendarCheck, FileText } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import { useProfile } from '../lib/useProfile';
 
 const TYPE_COLORS: Record<string, string> = {
   lesson:  '#EAD9A8',
@@ -44,6 +45,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function Schedule() {
   const router = useRouter();
+  const { isOwner, isStaff, isHorseOwner } = useProfile();
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState(today);
   const [weekBase, setWeekBase] = useState(today);
@@ -114,12 +116,14 @@ export default function Schedule() {
               <Text style={styles.todayBtnText}>Today</Text>
             </Pressable>
           )}
-          <Pressable
-            style={styles.addBtn}
-            onPress={() => router.push({ pathname: '/schedule/add', params: { date: toDateStr(selectedDate) } })}
-          >
-            <Text style={styles.addBtnText}>+ Event</Text>
-          </Pressable>
+          {(isOwner || isStaff) && (
+            <Pressable
+              style={styles.addBtn}
+              onPress={() => router.push({ pathname: '/schedule/add', params: { date: toDateStr(selectedDate) } })}
+            >
+              <Text style={styles.addBtnText}>+ Event</Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -160,7 +164,7 @@ export default function Schedule() {
               <Pressable
                 key={event.id}
                 style={({ hovered }: any) => [styles.eventCard, hovered && styles.eventCardHovered]}
-                onPress={() => router.push({ pathname: '/schedule/edit', params: { eventId: event.id } })}
+                onPress={() => (isOwner || isStaff) && router.push({ pathname: '/schedule/edit', params: { eventId: event.id } })}
               >
                 <View style={styles.eventTime}>
                   <Text style={styles.eventTimeText}>{event.time || '—'}</Text>
@@ -189,10 +193,12 @@ export default function Schedule() {
           <Home size={22} color="#9A9285" />
           <Text style={styles.navLbl}>Home</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
-          <ChessKnight size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Horses</Text>
-        </Pressable>
+        {(isOwner || isStaff) && (
+          <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
+            <ChessKnight size={22} color="#9A9285" />
+            <Text style={styles.navLbl}>Horses</Text>
+          </Pressable>
+        )}
         <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
           <Calendar size={22} color="#2C4A35" />
           <Text style={[styles.navLbl, styles.navActive]}>Schedule</Text>
@@ -201,10 +207,12 @@ export default function Schedule() {
           <DollarSign size={22} color="#9A9285" />
           <Text style={styles.navLbl}>Billing</Text>
         </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
-          <MoreHorizontal size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>More</Text>
-        </Pressable>
+        {(isOwner || isStaff) && (
+          <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
+            <MoreHorizontal size={22} color="#9A9285" />
+            <Text style={styles.navLbl}>More</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );

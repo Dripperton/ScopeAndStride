@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Trophy, Stethoscope, Hammer, CalendarCheck, FileText } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
+import { useProfile } from '../../lib/useProfile';
 import DateInput from '../../lib/DateInput';
 
 const TYPES = [
@@ -15,6 +16,7 @@ const TYPES = [
 
 export default function AddEvent() {
   const router = useRouter();
+  const { isOwner, isStaff } = useProfile();
   const { date: initialDate } = useLocalSearchParams();
   const [title, setTitle] = useState('');
   const [date, setDate] = useState((initialDate as string) || '');
@@ -24,6 +26,14 @@ export default function AddEvent() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  if (!isOwner && !isStaff) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAF7F2', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+        <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center' }}>You don't have permission to add events.</Text>
+      </View>
+    );
+  }
 
   async function handleSave() {
     if (!title.trim()) { setError('Title is required.'); return; }

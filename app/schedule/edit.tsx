@@ -1,8 +1,9 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Trophy, Stethoscope, Hammer, CalendarCheck, FileText } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
+import { useProfile } from '../../lib/useProfile';
 import DateInput from '../../lib/DateInput';
 
 const TYPES = [
@@ -15,6 +16,7 @@ const TYPES = [
 
 export default function EditEvent() {
   const router = useRouter();
+  const { isOwner, isStaff } = useProfile();
   const { eventId } = useLocalSearchParams();
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -61,11 +63,29 @@ export default function EditEvent() {
   }
 
   async function handleDelete() {
-    const confirmed = Platform.OS === 'web' ? confirm('Delete this event?') : true;
-    if (!confirmed) return;
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this event?')) return;
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          Alert.alert('Delete Event', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+          ]);
+        });
+      } catch { return; }
+    }
     setDeleting(true);
     await supabase.from('events').delete().eq('id', eventId);
     router.back();
+  }
+
+  if (!isOwner && !isStaff) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#FAF7F2', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+        <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center' }}>You don't have permission to edit events.</Text>
+      </View>
+    );
   }
 
   if (loading) return (
