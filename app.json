@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scope & Stride needs camera access to add photos to posts.",
+        "NSPhotoLibraryUsageDescription": "Scope & Stride needs photo library access to add images to posts.",
+        "NSPhotoLibraryAddUsageDescription": "Scope & Stride needs permission to save photos."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +24,12 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "output": "static",
@@ -39,7 +49,14 @@
           }
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Scope & Stride needs access to your photos to add images to posts.",
+          "cameraPermission": "Scope & Stride needs camera access to add photos to posts."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

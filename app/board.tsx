@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin } from 'lucide-react-native';
+import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 
@@ -20,7 +20,7 @@ export default function Board() {
     setLoading(true);
     const { data } = await supabase
       .from('posts')
-      .select('*, profiles(full_name, role), post_comments(id), post_reactions(id, user_id)')
+      .select('*, profiles(full_name, role), post_comments(id), post_reactions(id, user_id), post_attachments(id, url, type, filename)')
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false });
     setPosts(data || []);
@@ -238,6 +238,27 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
 
       <Text style={styles.postContent}>{post.content}</Text>
 
+      {/* Attachments preview */}
+      {(post.post_attachments || []).length > 0 && (
+        <View style={styles.attachmentsWrap}>
+          {post.post_attachments.slice(0, 3).map((att: any, i: number) => (
+            att.type === 'image' || att.type === 'gif' ? (
+              <Image key={att.id} source={{ uri: att.url }} style={[styles.attachThumb, post.post_attachments.length === 1 && styles.attachThumbFull]} />
+            ) : (
+              <View key={att.id} style={styles.attachPdfChip}>
+                <FileText size={13} color="#2C4A35" />
+                <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
+              </View>
+            )
+          ))}
+          {post.post_attachments.length > 3 && (
+            <View style={styles.attachMore}>
+              <Text style={styles.attachMoreText}>+{post.post_attachments.length - 3}</Text>
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={styles.postFooter}>
         <Pressable
           style={({ hovered }: any) => [styles.likeBtn, hasLiked && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
@@ -252,7 +273,6 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
             <Text style={styles.postCommentCount}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
           </View>
         )}
-      </View>
     </Pressable>
   );
 }
@@ -293,6 +313,13 @@ const styles = StyleSheet.create({
   pinBtn: { padding: 6, borderRadius: 6 },
   pinBtnHovered: { backgroundColor: '#F5F1EA' },
   postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
+  attachmentsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  attachThumb: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#F5F1EA' },
+  attachThumbFull: { width: '100%', height: 200 },
+  attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F1EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  attachPdfName: { fontSize: 12, color: '#2C4A35', fontWeight: '500', maxWidth: 160 },
+  attachMore: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#E8E0CC', alignItems: 'center', justifyContent: 'center' },
+  attachMoreText: { fontSize: 18, fontWeight: '700', color: '#9A9285' },
   postFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   likeBtnActive: { backgroundColor: '#FEF0F0' },

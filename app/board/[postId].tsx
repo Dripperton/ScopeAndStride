@@ -1,7 +1,7 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Pin, Trash2 } from 'lucide-react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pin, Trash2, FileText } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 
@@ -22,7 +22,7 @@ export default function PostDetail() {
 
   async function fetchPost() {
     const [{ data: postData }, { data: commentsData }] = await Promise.all([
-      supabase.from('posts').select('*, profiles(full_name, role), post_reactions(id, user_id)').eq('id', postId).single(),
+      supabase.from('posts').select('*, profiles(full_name, role), post_reactions(id, user_id), post_attachments(id, url, type, filename)').eq('id', postId).single(),
       supabase.from('post_comments').select('*, profiles(full_name, role)').eq('post_id', postId).order('created_at', { ascending: true }),
     ]);
     if (postData) setPost(postData);
@@ -195,6 +195,27 @@ export default function PostDetail() {
             </View>
           </View>
           <Text style={styles.postContent}>{post.content}</Text>
+          {/* Attachments */}
+          {(post.post_attachments || []).length > 0 && (
+            <View style={styles.detailAttachments}>
+              {post.post_attachments.map((att: any) => (
+                att.type === 'image' || att.type === 'gif' ? (
+                  <Image key={att.id} source={{ uri: att.url }} style={styles.detailAttachImage} resizeMode="cover" />
+                ) : (
+                  <Pressable
+                    key={att.id}
+                    style={({ hovered }: any) => [styles.detailAttachPdf, hovered && styles.detailAttachPdfHovered]}
+                    onPress={() => Linking.openURL(att.url)}
+                  >
+                    <FileText size={20} color="#2C4A35" />
+                    <Text style={styles.detailAttachPdfName} numberOfLines={2}>{att.filename || 'Document'}</Text>
+                    <Text style={styles.detailAttachPdfOpen}>Open →</Text>
+                  </Pressable>
+                )
+              ))}
+            </View>
+          )}
+
           <View style={styles.postActions}>
             <Pressable
               style={({ hovered }: any) => [styles.likeBtn, (post.post_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
@@ -313,6 +334,12 @@ const styles = StyleSheet.create({
   commentText: { fontSize: 13, color: '#3A3830', lineHeight: 19 },
   deleteCommentBtn: { padding: 4, borderRadius: 4 },
   deleteCommentBtnHovered: { backgroundColor: '#FFF5F5' },
+  detailAttachments: { gap: 10, marginTop: 14 },
+  detailAttachImage: { width: '100%', height: 240, borderRadius: 10, backgroundColor: '#F5F1EA' },
+  detailAttachPdf: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F5F1EA', borderRadius: 10, padding: 14 },
+  detailAttachPdfHovered: { backgroundColor: '#EDF5EF' },
+  detailAttachPdfName: { flex: 1, fontSize: 13, color: '#2C4A35', fontWeight: '500' },
+  detailAttachPdfOpen: { fontSize: 12, color: '#9A9285' },
   postActions: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   likeBtnActive: { backgroundColor: '#FEF0F0' },
