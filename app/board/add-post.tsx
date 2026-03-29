@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Megaphone, MessageSquare, Camera, Image as ImageIcon, FileText, X } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
@@ -185,13 +185,15 @@ export default function AddPost() {
               <ImageIcon size={20} color="#2C4A35" />
               <Text style={styles.attachBtnText}>Photo</Text>
             </Pressable>
-            <Pressable
-              style={({ hovered }: any) => [styles.attachBtn, hovered && styles.attachBtnHovered]}
-              onPress={handlePickCamera}
-            >
-              <Camera size={20} color="#2C4A35" />
-              <Text style={styles.attachBtnText}>Camera</Text>
-            </Pressable>
+            {Platform.OS !== 'web' && (
+              <Pressable
+                style={({ hovered }: any) => [styles.attachBtn, hovered && styles.attachBtnHovered]}
+                onPress={handlePickCamera}
+              >
+                <Camera size={20} color="#2C4A35" />
+                <Text style={styles.attachBtnText}>Camera</Text>
+              </Pressable>
+            )}
             <Pressable
               style={({ hovered }: any) => [styles.attachBtn, hovered && styles.attachBtnHovered]}
               onPress={handlePickDocument}
