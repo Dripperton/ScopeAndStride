@@ -88,6 +88,16 @@ export default function ManageUsers() {
     </View>
   );
 
+  if (!isOwner) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 40 }]}>
+        <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center' }}>
+          You don't have permission to access this page.
+        </Text>
+      </View>
+    );
+  }
+
   const selectedInviteHorse = horses.find(h => String(h.id) === inviteHorseId);
 
   return (
