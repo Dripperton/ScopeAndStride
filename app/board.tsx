@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
   attachmentsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   attachThumb: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#F5F1EA' },
-  attachThumbFull: { width: '100%', aspectRatio: 16/9, borderRadius: 8 },
+  attachThumbFull: { width: '100%', height: undefined, aspectRatio: 4/3, borderRadius: 8, alignSelf: 'stretch' },
   attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F1EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   attachPdfName: { fontSize: 12, color: '#2C4A35', fontWeight: '500', maxWidth: 160 },
   attachMore: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#E8E0CC', alignItems: 'center', justifyContent: 'center' },
