@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 
@@ -49,22 +49,52 @@ export default function HorseProfile() {
   }, [id]));
 
   async function deleteMedical(recordId: string) {
-    const confirmed = Platform.OS === 'web' ? confirm('Delete this record?') : true;
-    if (!confirmed) return;
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this record?')) return;
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          Alert.alert('Delete Record', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+          ]);
+        });
+      } catch { return; }
+    }
     await supabase.from('medical_records').delete().eq('id', recordId);
     setRecords(prev => prev.filter(r => r.id !== recordId));
   }
 
   async function deleteFarrier(recordId: string) {
-    const confirmed = Platform.OS === 'web' ? confirm('Delete this farrier record?') : true;
-    if (!confirmed) return;
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this farrier record?')) return;
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          Alert.alert('Delete Record', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+          ]);
+        });
+      } catch { return; }
+    }
     await supabase.from('farrier_records').delete().eq('id', recordId);
     setFarrierRecords(prev => prev.filter(r => r.id !== recordId));
   }
 
   async function deleteDietary(recordId: string) {
-    const confirmed = Platform.OS === 'web' ? confirm('Delete this dietary record?') : true;
-    if (!confirmed) return;
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this dietary record?')) return;
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          Alert.alert('Delete Record', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+          ]);
+        });
+      } catch { return; }
+    }
     await supabase.from('dietary_records').delete().eq('id', recordId);
     setDietaryRecords(prev => prev.filter(r => r.id !== recordId));
   }
