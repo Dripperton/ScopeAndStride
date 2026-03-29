@@ -70,6 +70,11 @@ export default function AddPost() {
             type: attachments[i].type,
             filename: attachments[i].filename,
           });
+        } else {
+          setError(`Failed to upload ${attachments[i].filename} — check console for details`);
+          setSaving(false);
+          setUploadProgress('');
+          return;
         }
       }
     }
