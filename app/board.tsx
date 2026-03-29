@@ -258,7 +258,6 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
           )}
         </View>
       )}
-
       <View style={styles.postFooter}>
         <Pressable
           style={({ hovered }: any) => [styles.likeBtn, hasLiked && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
@@ -273,6 +272,7 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
             <Text style={styles.postCommentCount}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
           </View>
         )}
+      </View>
     </Pressable>
   );
 }
