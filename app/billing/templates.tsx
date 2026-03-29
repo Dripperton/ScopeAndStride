@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
+import { RefreshCw } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
 function getNextDueDate(interval: string, dueDay: number) {
@@ -25,6 +26,7 @@ export default function RecurringTemplates() {
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [generateMsg, setGenerateMsg] = useState('');
 
   useFocusEffect(useCallback(() => {
     fetchTemplates();
@@ -47,13 +49,14 @@ export default function RecurringTemplates() {
   async function generateInvoices() {
     const activeTemplates = templates.filter(t => t.active);
     if (activeTemplates.length === 0) {
-      alert('No active templates to generate from.');
+      setGenerateMsg('No active templates to generate from.');
       return;
     }
     const confirmed = Platform.OS === 'web'
       ? confirm(`Generate ${activeTemplates.length} invoice${activeTemplates.length !== 1 ? 's' : ''} from active templates?`)
       : true;
     if (!confirmed) return;
+    setGenerateMsg('');
     setGenerating(true);
     let successCount = 0;
     for (const template of activeTemplates) {
@@ -70,8 +73,8 @@ export default function RecurringTemplates() {
       successCount++;
     }
     setGenerating(false);
-    alert(`Generated ${successCount} invoice${successCount !== 1 ? 's' : ''} successfully!`);
-    router.push('/billing');
+    setGenerateMsg(`Generated ${successCount} invoice${successCount !== 1 ? 's' : ''} successfully.`);
+    setTimeout(() => router.push('/billing'), 1500);
   }
 
   async function toggleActive(template: any) {
@@ -117,7 +120,7 @@ export default function RecurringTemplates() {
           <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 40 }} />
         ) : templates.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🔄</Text>
+            <RefreshCw size={40} color="#C4BAA8" />
             <Text style={styles.emptyTitle}>No templates yet</Text>
             <Text style={styles.emptyText}>Tap + New to create a recurring invoice template.</Text>
           </View>
@@ -174,7 +177,6 @@ const styles = StyleSheet.create({
   generateBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
   body: { flex: 1, padding: 16 },
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#1A1A14' },
   emptyText: { fontSize: 13, color: '#9A9285', textAlign: 'center' },
   templateCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },

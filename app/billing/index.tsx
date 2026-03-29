@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal } from 'lucide-react-native';
+import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, Receipt } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 
@@ -77,7 +77,7 @@ export default function Billing() {
         {isOwner && (
           <View style={styles.summaryGrid}>
             <View style={[styles.summaryCard, styles.summaryMain]}>
-              <Text style={styles.summaryLabel}>Total Billed</Text>
+              <Text style={styles.summaryLabel}>All-Time Billed</Text>
               <Text style={styles.summaryValLarge}>${totals.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
             </View>
             <View style={styles.summarySmallCol}>
@@ -99,7 +99,7 @@ export default function Billing() {
           <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 40 }} />
         ) : invoices.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>💰</Text>
+            <Receipt size={40} color="#C4BAA8" />
             <Text style={styles.emptyTitle}>No invoices yet</Text>
             {isOwner && <Text style={styles.emptyText}>Tap + Invoice to create one.</Text>}
           </View>
@@ -110,7 +110,10 @@ export default function Billing() {
               <Pressable
                 key={inv.id}
                 style={({ hovered }: any) => [styles.invoiceCard, hovered && styles.invoiceCardHovered]}
-                onPress={() => isOwner && router.push({ pathname: '/billing/edit', params: { invoiceId: inv.id } })}
+                onPress={() => {
+                  if (isOwner) router.push({ pathname: '/billing/edit', params: { invoiceId: inv.id } });
+                  else if (isHorseOwner) router.push({ pathname: '/billing/view', params: { invoiceId: inv.id } });
+                }}
               >
                 <View style={styles.invoiceLeft}>
                   <Text style={styles.invoiceHorse}>{inv.owner_name || '—'}</Text>
@@ -189,7 +192,6 @@ const styles = StyleSheet.create({
   summaryValSmall: { fontSize: 18, fontWeight: '700', color: '#1A1A14' },
   sectionTitle: { fontSize: 12, fontWeight: '600', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginTop: 4 },
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 8 },
-  emptyIcon: { fontSize: 40 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#1A1A14' },
   emptyText: { fontSize: 13, color: '#9A9285' },
   invoiceCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 8, gap: 12 },

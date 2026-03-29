@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import DateInput from '../../lib/DateInput';
 
@@ -78,8 +78,16 @@ export default function EditInvoice() {
   }
 
   async function handleDelete() {
-    const confirmed = Platform.OS === 'web' ? confirm('Delete this invoice?') : true;
-    if (!confirmed) return;
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this invoice?')) return;
+    } else {
+      await new Promise<void>((resolve, reject) => {
+        Alert.alert('Delete Invoice', 'Are you sure? This cannot be undone.', [
+          { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+          { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+        ]);
+      }).catch(() => { setDeleting(false); return; });
+    }
     setDeleting(true);
     await supabase.from('invoices').delete().eq('id', invoiceId);
     router.back();
