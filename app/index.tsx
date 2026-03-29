@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
@@ -10,6 +10,7 @@ export default function Index() {
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
+  const passwordRef = useRef<any>(null);
 
   async function handleAuth() {
     if (!email.trim() || !password.trim()) { setError('Please enter your email and password.'); return; }
@@ -75,18 +76,24 @@ export default function Index() {
             placeholderTextColor="#C4BAA8"
             keyboardType="email-address"
             autoCapitalize="none"
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
+            blurOnSubmit={false}
           />
         </View>
 
         <View style={styles.inputWrap}>
           <Text style={styles.label}>Password</Text>
           <TextInput
+            ref={passwordRef}
             style={styles.input}
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
             placeholderTextColor="#C4BAA8"
             secureTextEntry
+            returnKeyType="go"
+            onSubmitEditing={handleAuth}
           />
         </View>
 
