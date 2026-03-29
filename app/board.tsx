@@ -193,10 +193,12 @@ export default function Board() {
 function AutoHeightImage({ uri }: { uri: string }) {
   const { width } = useWindowDimensions();
   const [height, setHeight] = useState(280);
-  const cardWidth = width - 32; // account for page padding
+  const maxHeight = 400;
+  const cardWidth = Math.min(width - 32, 600); // cap card width on wide screens
 
   Image.getSize(uri, (w, h) => {
-    setHeight((h / w) * cardWidth);
+    const natural = (h / w) * cardWidth;
+    setHeight(Math.min(natural, maxHeight));
   }, () => {});
 
   return (
