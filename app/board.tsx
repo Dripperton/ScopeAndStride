@@ -191,7 +191,7 @@ export default function Board() {
 
 function AutoHeightImage({ uri }: { uri: string }) {
   return (
-    <View style={{ width: '100%', aspectRatio: 1.5 }}>
+    <View style={{ width: '100%', aspectRatio: 4/3 }}>
       <Image
         source={{ uri }}
         style={{ width: '100%', height: '100%' }}
