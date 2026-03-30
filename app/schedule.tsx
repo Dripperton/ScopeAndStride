@@ -99,9 +99,9 @@ export default function Schedule() {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.headerIcon}>
-            <Text style={styles.headerIconText}>S{'\n'}S</Text>
-          </View>
+          <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
+            <Home size={18} color="#C9A85C" />
+          </Pressable>
           <View>
             <Text style={styles.headerName}>Schedule</Text>
             <Text style={styles.headerBarn}>{formatHeader(selectedDate)}</Text>
