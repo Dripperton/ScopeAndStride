@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Home } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 

@@ -1,10 +1,7 @@
-import { Home, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CheckCircle } import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { CheckCircle } from 'lucide-react-native';
+import { Home, CheckCircle } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 

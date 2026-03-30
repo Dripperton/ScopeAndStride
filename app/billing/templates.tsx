@@ -1,12 +1,8 @@
-import { Home, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { RefreshCw } import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
-import { RefreshCw } from 'lucide-react-native';
+import { Home, RefreshCw } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
 function getNextDueDate(interval: string, dueDay: number) {
