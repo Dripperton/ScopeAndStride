@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { Home, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Megaphone, MessageSquare, Camera, Image as ImageIcon, FileText, X } from 'lucide-react-native';
@@ -87,9 +87,7 @@ export default function AddPost() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Cancel</Text>
-        </Pressable>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
         <Text style={styles.headerTitle}>New Post</Text>
         <Pressable
           style={({ hovered }: any) => [styles.saveBtn, (!content.trim() && attachments.length === 0) && styles.saveBtnDisabled, hovered && (content.trim() || attachments.length > 0) && styles.saveBtnHovered]}
@@ -263,4 +261,7 @@ const styles = StyleSheet.create({
   uploadProgress: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, backgroundColor: '#EDF5EF', borderRadius: 10, marginBottom: 12 },
   uploadProgressText: { fontSize: 13, color: '#2C4A35' },
   errorText: { color: '#8B2E2E', fontSize: 13, padding: 4 },
+
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

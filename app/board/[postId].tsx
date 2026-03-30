@@ -1,4 +1,4 @@
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Home, useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pin, Trash2, FileText } from 'lucide-react-native';
@@ -161,9 +161,7 @@ export default function PostDetail() {
       keyboardVerticalOffset={0}
     >
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Back</Text>
-        </Pressable>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
         <Text style={styles.headerTitle}>{isAnnouncement ? 'Announcement' : 'Post'}</Text>
         <View style={styles.headerActions}>
           {canPin && (
@@ -397,4 +395,7 @@ const styles = StyleSheet.create({
   sendBtnDisabled: { opacity: 0.4 },
   sendBtnHovered: { backgroundColor: '#1A3A25' },
   sendBtnText: { color: '#C9A85C', fontSize: 13, fontWeight: '600' },
+
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

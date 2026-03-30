@@ -1,4 +1,4 @@
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Home, useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Trophy, Stethoscope, Hammer, CalendarCheck, FileText } from 'lucide-react-native';
@@ -55,9 +55,7 @@ export default function AddEvent() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Cancel</Text>
-        </Pressable>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
         <Text style={styles.headerTitle}>Add Event</Text>
         <Pressable
           style={({ hovered }: any) => [styles.saveBtn, hovered && styles.saveBtnHovered]}
@@ -152,4 +150,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#FAF7F2', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, padding: 12, fontSize: 14, color: '#1A1A14' },
   notesInput: { minHeight: 80, textAlignVertical: 'top' },
   errorText: { color: '#8B2E2E', fontSize: 13, padding: 16 },
+
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });
