@@ -25,26 +25,19 @@ export default function AlertsScreen() {
 
   async function fetchAlerts() {
     const today = new Date();
-
     const [{ data: settings }, { data: horses }, { data: medRecords }, { data: farrierRecords }] = await Promise.all([
       supabase.from('alert_settings').select('*').eq('barn_id', 'default').single(),
       supabase.from('horses').select('id, name, alert'),
       supabase.from('medical_records').select('horse_id, type, expiry_date').eq('type', 'coggins'),
       supabase.from('farrier_records').select('horse_id, next_due').order('date', { ascending: false }),
     ]);
-
     const cogginsDays = settings?.coggins_days ?? 30;
     const farrierDays = settings?.farrier_days ?? 14;
     const newAlerts: Alert[] = [];
-
     if (!horses) { setLoading(false); return; }
-
     horses.forEach(horse => {
-      if (horse.alert) {
-        newAlerts.push({ horseId: horse.id, horseName: horse.name, message: 'Manual alert flagged', severity: 'critical' });
-      }
+      if (horse.alert) newAlerts.push({ horseId: horse.id, horseName: horse.name, message: 'Manual alert flagged', severity: 'critical' });
     });
-
     if (medRecords) {
       const cogginsMap: Record<number, string> = {};
       medRecords.forEach(r => { if (r.expiry_date && !cogginsMap[r.horse_id]) cogginsMap[r.horse_id] = r.expiry_date; });
@@ -57,7 +50,6 @@ export default function AlertsScreen() {
         else if (diff <= cogginsDays) newAlerts.push({ horseId, horseName: horse.name, message: `Coggins expires in ${diff} day${diff === 1 ? '' : 's'}`, severity: 'warning' });
       });
     }
-
     if (farrierRecords) {
       const farrierMap: Record<number, string> = {};
       farrierRecords.forEach(r => { if (r.next_due && !farrierMap[r.horse_id]) farrierMap[r.horse_id] = r.next_due; });
@@ -70,7 +62,6 @@ export default function AlertsScreen() {
         else if (diff <= farrierDays) newAlerts.push({ horseId, horseName: horse.name, message: `Farrier due in ${diff} day${diff === 1 ? '' : 's'}`, severity: 'warning' });
       });
     }
-
     setAlerts(newAlerts);
     setLoading(false);
   }
@@ -79,8 +70,8 @@ export default function AlertsScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()}>
-            <Text style={styles.backText}>Back</Text>
+          <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
+            <Home size={18} color="#C9A85C" />
           </Pressable>
           <Text style={styles.headerTitle}>Alerts</Text>
           <View style={{ width: 48 }} />
@@ -98,7 +89,9 @@ export default function AlertsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
+          <Home size={18} color="#C9A85C" />
+        </Pressable>
         <Text style={styles.headerTitle}>Alerts</Text>
         <View style={{ width: 48 }} />
       </View>
@@ -134,7 +127,6 @@ export default function AlertsScreen() {
               </View>
             </View>
           )}
-
           {warningAlerts.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Upcoming</Text>
@@ -156,7 +148,6 @@ export default function AlertsScreen() {
               </View>
             </View>
           )}
-
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
@@ -167,8 +158,9 @@ export default function AlertsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FAF7F2' },
   header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
   headerTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C' },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
   body: { flex: 1 },
   section: { margin: 16, marginBottom: 0 },
   sectionTitle: { fontSize: 11, fontWeight: '700', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
@@ -187,13 +179,3 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '700', color: '#2C4A35' },
   emptyText: { fontSize: 14, color: '#9A9285' },
 });
-
-import { supabase } from '../lib/supabase';
-import { useProfile } from '../lib/useProfile';
-
-interface Alert {
-  horseId: number;
-  horseName: string;
-  message: string;
-  severity: 'critical' | 'warning';
-}
