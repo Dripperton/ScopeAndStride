@@ -304,7 +304,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/horses')}
             >
-              <ChessKnight size={28} color="#2C4A35" />
+              <ChessKnight size={28} color="white" />
               <Text style={styles.actionLabel}>Horses</Text>
             </Pressable>
           )}
@@ -313,7 +313,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push(`/horse/${myHorse.id}`)}
             >
-              <ChessKnight size={28} color="#2C4A35" />
+              <ChessKnight size={28} color="white" />
               <Text style={styles.actionLabel}>My Horse</Text>
             </Pressable>
           )}
@@ -321,7 +321,7 @@ export default function Dashboard() {
             style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
             onPress={() => router.push('/schedule')}
           >
-            <Calendar size={28} color="#2C4A35" />
+            <Calendar size={28} color="white" />
             <Text style={styles.actionLabel}>Schedule</Text>
           </Pressable>
           {(isOwner || isHorseOwner) && (
@@ -329,7 +329,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/billing')}
             >
-              <DollarSign size={28} color="#2C4A35" />
+              <DollarSign size={28} color="white" />
               <Text style={styles.actionLabel}>Billing</Text>
             </Pressable>
           )}
@@ -338,7 +338,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/concierge')}
             >
-              <Settings size={28} color="#2C4A35" />
+              <Settings size={28} color="white" />
               <Text style={styles.actionLabel}>Settings</Text>
             </Pressable>
           )}
@@ -347,7 +347,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/manage-users')}
             >
-              <Users size={28} color="#2C4A35" />
+              <Users size={28} color="white" />
               <Text style={styles.actionLabel}>Manage Users</Text>
             </Pressable>
           )}
@@ -355,7 +355,7 @@ export default function Dashboard() {
             style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
             onPress={() => router.push('/board')}
           >
-            <MessageSquare size={28} color="#2C4A35" />
+            <MessageSquare size={28} color="white" />
             <Text style={styles.actionLabel}>Board</Text>
           </Pressable>
         </View>
@@ -462,10 +462,10 @@ const styles = StyleSheet.create({
   statNumberAlert: { color: '#C9854A' },
   statLabel: { fontSize: 11, color: '#9A9285', marginTop: 2 },
   sectionTitle: { fontSize: 12, fontWeight: '600', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginTop: 4 },
-  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
-  actionCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 12, padding: 16, alignItems: 'center', gap: 8, minWidth: 80, flex: 1 },
-  actionCardHovered: { backgroundColor: '#F5F1EA', borderColor: '#C9A85C' },
-  actionLabel: { fontSize: 11, color: '#3A3830', fontWeight: '500', textAlign: 'center' },
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
+  actionCard: { backgroundColor: '#2C4A35', borderRadius: 22, padding: 20, alignItems: 'center', justifyContent: 'center', gap: 10, width: '30%', aspectRatio: 1 },
+  actionCardHovered: { backgroundColor: '#1A3A25' },
+  actionLabel: { fontSize: 12, color: 'white', fontWeight: '600', textAlign: 'center' },
   nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
   navItem: { flex: 1, alignItems: 'center', gap: 2 },
   navLbl: { fontSize: 9, color: '#9A9285' },
