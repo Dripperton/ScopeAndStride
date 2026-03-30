@@ -194,7 +194,7 @@ function AutoHeightImage({ uri }: { uri: string }) {
     <Image
       source={{ uri }}
       style={{ width: '100%', aspectRatio: 4/3 }}
-      resizeMode="contain"
+      resizeMode="cover"
     />
   );
 }
