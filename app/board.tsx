@@ -162,29 +162,6 @@ export default function Board() {
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
-
-      <View style={styles.nav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Home size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Home</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
-          <ChessKnight size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Horses</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
-          <Calendar size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Schedule</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/billing')}>
-          <DollarSign size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Billing</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <MessageSquare size={22} color="#2C4A35" />
-          <Text style={[styles.navLbl, styles.navActive]}>Board</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -351,8 +328,6 @@ const styles = StyleSheet.create({
   likeCountActive: { color: '#C0392B' },
   commentCount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   postCommentCount: { fontSize: 12, color: '#9A9285' },
-  nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
-  navItem: { flex: 1, alignItems: 'center', gap: 2 },
-  navLbl: { fontSize: 9, color: '#9A9285' },
-  navActive: { color: '#2C4A35', fontWeight: '600' },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

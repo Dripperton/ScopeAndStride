@@ -170,4 +170,6 @@ const styles = StyleSheet.create({
   navItem: { flex: 1, alignItems: 'center', gap: 2 },
   navLbl: { fontSize: 9, color: '#9A9285' },
   navActive: { color: '#2C4A35', fontWeight: '600' },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

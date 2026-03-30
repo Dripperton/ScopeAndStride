@@ -74,9 +74,7 @@ export default function AddInvoice() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Cancel</Text>
-        </Pressable>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
         <Text style={styles.headerTitle}>New Invoice</Text>
         <Pressable
           style={({ hovered }: any) => [styles.saveBtn, hovered && styles.saveBtnHovered]}
@@ -248,4 +246,6 @@ const styles = StyleSheet.create({
   addLineBtnHovered: { backgroundColor: '#EDF5EF' },
   addLineBtnText: { fontSize: 13, color: '#2C4A35', fontWeight: '600' },
   errorText: { color: '#8B2E2E', fontSize: 13, padding: 16 },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

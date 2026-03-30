@@ -55,6 +55,7 @@ export default function Billing() {
             <Text style={styles.headerBarn}>{new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })}</Text>
           </View>
         </View>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
         {isOwner && (
           <View style={styles.headerBtns}>
             <Pressable
@@ -138,33 +139,6 @@ export default function Billing() {
         )}
         <View style={{ height: 40 }} />
       </ScrollView>
-
-      <View style={styles.nav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Home size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Home</Text>
-        </Pressable>
-        {isOwner && (
-          <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
-            <ChessKnight size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>Horses</Text>
-          </Pressable>
-        )}
-        <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
-          <Calendar size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Schedule</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <DollarSign size={22} color="#2C4A35" />
-          <Text style={[styles.navLbl, styles.navActive]}>Billing</Text>
-        </Pressable>
-        {isOwner && (
-          <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
-            <MoreHorizontal size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>More</Text>
-          </Pressable>
-        )}
-      </View>
     </View>
   );
 }
@@ -204,8 +178,6 @@ const styles = StyleSheet.create({
   invoiceAmount: { fontSize: 16, fontWeight: '700', color: '#1A1A14' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   statusText: { fontSize: 10, fontWeight: '600' },
-  nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
-  navItem: { flex: 1, alignItems: 'center', gap: 2 },
-  navLbl: { fontSize: 9, color: '#9A9285' },
-  navActive: { color: '#2C4A35', fontWeight: '600' },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

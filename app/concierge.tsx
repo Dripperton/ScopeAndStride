@@ -100,28 +100,6 @@ export default function Concierge() {
         ))}
         <View style={{ height: 20 }} />
       </ScrollView>
-      <View style={styles.nav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Home size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Home</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
-          <ChessKnight size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Horses</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
-          <Calendar size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Schedule</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/billing')}>
-          <DollarSign size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Billing</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
-          <MoreHorizontal size={22} color="#2C4A35" />
-          <Text style={[styles.navLbl, styles.navActive]}>More</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -161,8 +139,6 @@ const styles = StyleSheet.create({
   taskTitle: { fontSize: 13, color: '#1A1A14', fontWeight: '500' },
   taskTitleDone: { textDecorationLine: 'line-through', color: '#9A9285' },
   taskPriority: { fontSize: 10, color: '#9A9285', marginTop: 2 },
-  nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
-  navItem: { flex: 1, alignItems: 'center', gap: 2 },
-  navLbl: { fontSize: 9, color: '#9A9285' },
-  navActive: { color: '#2C4A35', fontWeight: '600' },
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });

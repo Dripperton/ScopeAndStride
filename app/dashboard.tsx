@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, Settings, Users, MessageSquare } from 'lucide-react-native';
+import { ChessKnight, Calendar, DollarSign, Settings, Users, MessageSquare } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 
@@ -363,44 +363,7 @@ export default function Dashboard() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <View style={styles.nav}>
-        <Pressable style={styles.navItem}>
-          <Home size={22} color="#2C4A35" strokeWidth={2.5} />
-          <Text style={[styles.navLbl, styles.navActive]}>Home</Text>
-        </Pressable>
-        {(isOwner || isStaff) && (
-          <Pressable style={styles.navItem} onPress={() => router.push('/horses')}>
-            <ChessKnight size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>Horses</Text>
-          </Pressable>
-        )}
-        {isHorseOwner && myHorse && (
-          <Pressable style={styles.navItem} onPress={() => router.push(`/horse/${myHorse.id}`)}>
-            <ChessKnight size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>My Horse</Text>
-          </Pressable>
-        )}
-        <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
-          <Calendar size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Schedule</Text>
-        </Pressable>
-        {(isOwner || isHorseOwner) && (
-          <Pressable style={styles.navItem} onPress={() => router.push('/billing')}>
-            <DollarSign size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>Billing</Text>
-          </Pressable>
-        )}
-        <Pressable style={styles.navItem} onPress={() => router.push('/board')}>
-          <MessageSquare size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Board</Text>
-        </Pressable>
-        {isOwner && (
-          <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
-            <MoreHorizontal size={22} color="#9A9285" />
-            <Text style={styles.navLbl}>More</Text>
-          </Pressable>
-        )}
-      </View>
+
     </View>
   );
 }
@@ -466,8 +429,5 @@ const styles = StyleSheet.create({
   actionCard: { backgroundColor: '#2C4A35', borderRadius: 22, padding: 20, alignItems: 'center', justifyContent: 'center', gap: 10, width: '30%', aspectRatio: 1 },
   actionCardHovered: { backgroundColor: '#1A3A25' },
   actionLabel: { fontSize: 13, color: 'white', fontWeight: '600', textAlign: 'center' },
-  nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
-  navItem: { flex: 1, alignItems: 'center', gap: 2 },
-  navLbl: { fontSize: 9, color: '#9A9285' },
-  navActive: { color: '#2C4A35', fontWeight: '600' },
+
 });
