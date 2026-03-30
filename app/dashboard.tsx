@@ -304,7 +304,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/horses')}
             >
-              <ChessKnight size={28} color="white" />
+              <ChessKnight size={34} color="white" />
               <Text style={styles.actionLabel}>Horses</Text>
             </Pressable>
           )}
@@ -313,7 +313,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push(`/horse/${myHorse.id}`)}
             >
-              <ChessKnight size={28} color="white" />
+              <ChessKnight size={34} color="white" />
               <Text style={styles.actionLabel}>My Horse</Text>
             </Pressable>
           )}
@@ -321,7 +321,7 @@ export default function Dashboard() {
             style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
             onPress={() => router.push('/schedule')}
           >
-            <Calendar size={28} color="white" />
+            <Calendar size={34} color="white" />
             <Text style={styles.actionLabel}>Schedule</Text>
           </Pressable>
           {(isOwner || isHorseOwner) && (
@@ -329,7 +329,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/billing')}
             >
-              <DollarSign size={28} color="white" />
+              <DollarSign size={34} color="white" />
               <Text style={styles.actionLabel}>Billing</Text>
             </Pressable>
           )}
@@ -338,7 +338,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/concierge')}
             >
-              <Settings size={28} color="white" />
+              <Settings size={34} color="white" />
               <Text style={styles.actionLabel}>Settings</Text>
             </Pressable>
           )}
@@ -347,7 +347,7 @@ export default function Dashboard() {
               style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
               onPress={() => router.push('/manage-users')}
             >
-              <Users size={28} color="white" />
+              <Users size={34} color="white" />
               <Text style={styles.actionLabel}>Manage Users</Text>
             </Pressable>
           )}
@@ -355,7 +355,7 @@ export default function Dashboard() {
             style={({ hovered }: any) => [styles.actionCard, hovered && styles.actionCardHovered]}
             onPress={() => router.push('/board')}
           >
-            <MessageSquare size={28} color="white" />
+            <MessageSquare size={34} color="white" />
             <Text style={styles.actionLabel}>Board</Text>
           </Pressable>
         </View>
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 16 },
   actionCard: { backgroundColor: '#2C4A35', borderRadius: 22, padding: 20, alignItems: 'center', justifyContent: 'center', gap: 10, width: '30%', aspectRatio: 1 },
   actionCardHovered: { backgroundColor: '#1A3A25' },
-  actionLabel: { fontSize: 12, color: 'white', fontWeight: '600', textAlign: 'center' },
+  actionLabel: { fontSize: 13, color: 'white', fontWeight: '600', textAlign: 'center' },
   nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
   navItem: { flex: 1, alignItems: 'center', gap: 2 },
   navLbl: { fontSize: 9, color: '#9A9285' },
