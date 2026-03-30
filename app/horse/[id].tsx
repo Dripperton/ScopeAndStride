@@ -1,4 +1,4 @@
-import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { Home, useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
@@ -127,8 +127,8 @@ export default function HorseProfile() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Back</Text>
+        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
+          <Home size={18} color="#C9A85C" />
         </Pressable>
         <Text style={styles.headerTitle}>Stall Card</Text>
         {canEdit ? (
@@ -500,4 +500,7 @@ const styles = StyleSheet.create({
   iconBtnDanger: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#E8E0CC' },
   iconBtnDangerHovered: { borderColor: '#8B2E2E', backgroundColor: '#FFF5F5' },
   iconBtnDangerText: { fontSize: 12, color: '#8B2E2E', fontWeight: '500' },
+
+  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });
