@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal } from 'lucide-react-native';
+import { Home, ChessKnight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 
 export default function Horses() {
@@ -105,29 +105,6 @@ export default function Horses() {
         )}
         <View style={{ height: 20 }} />
       </ScrollView>
-
-      <View style={styles.nav}>
-        <Pressable style={styles.navItem} onPress={() => router.push('/dashboard')}>
-          <Home size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Home</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <ChessKnight size={22} color="#2C4A35" />
-          <Text style={[styles.navLbl, styles.navActive]}>Horses</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/schedule')}>
-          <Calendar size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Schedule</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/billing')}>
-          <DollarSign size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>Billing</Text>
-        </Pressable>
-        <Pressable style={styles.navItem} onPress={() => router.push('/concierge')}>
-          <MoreHorizontal size={22} color="#9A9285" />
-          <Text style={styles.navLbl}>More</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -166,10 +143,6 @@ const styles = StyleSheet.create({
   deleteBtn: { backgroundColor: '#FDECEA', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
   deleteBtnHovered: { backgroundColor: '#8B2E2E' },
   deleteBtnText: { fontSize: 11, fontWeight: '600', color: '#8B2E2E' },
-  nav: { backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC', flexDirection: 'row', paddingBottom: 20, paddingTop: 8 },
-  navItem: { flex: 1, alignItems: 'center', gap: 2 },
-  navLbl: { fontSize: 9, color: '#9A9285' },
-  navActive: { color: '#2C4A35', fontWeight: '600' },
   homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
 });
