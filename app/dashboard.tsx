@@ -339,7 +339,7 @@ export default function Dashboard() {
               onPress={() => router.push('/concierge')}
             >
               <Settings size={34} color="white" />
-              <Text style={styles.actionLabel}>Settings</Text>
+              <Text style={styles.actionLabel}>Concierge</Text>
             </Pressable>
           )}
           {isOwner && (
