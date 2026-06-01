@@ -2,22 +2,33 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
+import { ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
+import { useLanguage } from '../lib/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
+import HomeButton from '../lib/HomeButton';
+import { formatRelativeDate, getRoleLabel as _getRoleLabel } from '../lib/dateUtils';
 
 export default function Board() {
   const router = useRouter();
   const { profile, isOwner, isStaff } = useProfile();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(useCallback(() => {
     fetchPosts();
-  }, []));
+    if (profile?.id) {
+      supabase.from('profiles').update({ last_seen_board: new Date().toISOString() }).eq('id', profile.id);
+    }
+  }, [profile?.id]));
 
   async function fetchPosts() {
-    setLoading(true);
+    if (posts.length === 0) setLoading(true);
     const { data } = await supabase
       .from('posts')
       .select('*, profiles(full_name, role), post_comments(id), post_reactions(id, user_id), post_attachments(id, url, type, filename)')
@@ -58,68 +69,49 @@ export default function Board() {
     }
   }
 
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  function getRoleLabel(role: string) {
-    if (role === 'owner') return 'Barn Manager';
-    if (role === 'staff') return 'Staff';
-    return 'Horse Owner';
-  }
+  const formatDate = (dateStr: string) => formatRelativeDate(dateStr, t);
+  const getRoleLabel = (role: string) => _getRoleLabel(role, t);
 
   const pinnedPosts = posts.filter(p => p.pinned);
   const regularPosts = posts.filter(p => !p.pinned);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
         <View style={styles.headerLeft}>
-          <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
-            <Home size={18} color="#C9A85C" />
-          </Pressable>
+          <HomeButton />
           <View>
-            <Text style={styles.headerName}>Board</Text>
-            <Text style={styles.headerSub}>Barn community</Text>
+            <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Community Board')}</Text>
+            <Text style={styles.headerSub}>{t('Barn community')}</Text>
           </View>
         </View>
         <Pressable
-          style={({ hovered }: any) => [styles.addBtn, hovered && styles.addBtnHovered]}
+          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
           onPress={() => router.push('/board/add-post')}
         >
-          <Text style={styles.addBtnText}>+ Post</Text>
+          <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ {t('Post')}</Text>
         </Pressable>
       </View>
 
-      {loading ? (
-        <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 60 }} />
+      {loading && posts.length === 0 ? (
+        <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 60 }} />
       ) : posts.length === 0 ? (
         <View style={styles.emptyState}>
-          <MessageSquare size={44} color="#C4BAA8" />
-          <Text style={styles.emptyTitle}>Nothing posted yet</Text>
-          <Text style={styles.emptyText}>Be the first to share something with the barn.</Text>
+          <MessageSquare size={44} color={C.cardBorder} />
+          <Text style={[styles.emptyTitle, { color: C.primary, fontFamily: F.sansBold }]}>{t('Nothing posted yet')}</Text>
+          <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('Be the first to share something with the barn.')}</Text>
           <Pressable
-            style={({ hovered }: any) => [styles.emptyBtn, hovered && styles.emptyBtnHovered]}
+            style={({ hovered }: any) => [styles.emptyBtn, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
             onPress={() => router.push('/board/add-post')}
           >
-            <Text style={styles.emptyBtnText}>Create a post</Text>
+            <Text style={[styles.emptyBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Create a post')}</Text>
           </Pressable>
         </View>
       ) : (
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
           {pinnedPosts.length > 0 && (
             <View>
-              <Text style={styles.sectionLabel}>Pinned</Text>
+              <Text style={[styles.sectionLabel, { color: C.textMuted }]}>{t('Pinned')}</Text>
               {pinnedPosts.map(post => (
                 <PostCard
                   key={post.id}
@@ -140,7 +132,7 @@ export default function Board() {
 
           {regularPosts.length > 0 && (
             <View>
-              {pinnedPosts.length > 0 && <Text style={styles.sectionLabel}>Recent</Text>}
+              {pinnedPosts.length > 0 && <Text style={[styles.sectionLabel, { color: C.textMuted }]}>{t('Recent')}</Text>}
               {regularPosts.map(post => (
                 <PostCard
                   key={post.id}
@@ -177,6 +169,10 @@ function AutoHeightImage({ uri }: { uri: string }) {
 }
 
 function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLike, formatDate, getRoleLabel }: any) {
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const isAuthor = post.author_id === currentUserId;
   const canPin = isOwner || isStaff;
   const isAnnouncement = post.type === 'announcement';
@@ -189,49 +185,50 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
     <Pressable
       style={({ hovered }: any) => [
         styles.postCard,
-        isAnnouncement && styles.postCardAnnouncement,
-        hovered && styles.postCardHovered,
+        { backgroundColor: C.card, borderColor: C.cardBorder },
+        isAnnouncement && { borderColor: C.secondary, backgroundColor: '#FFFDF7' },
+        hovered && { backgroundColor: C.cardSeparator },
       ]}
       onPress={onPress}
     >
       <View style={styles.postHeader}>
-        <View style={[styles.avatar, isAnnouncement && styles.avatarAnnouncement]}>
-          <Text style={[styles.avatarText, isAnnouncement && styles.avatarTextAnnouncement]}>
+        <View style={[styles.avatar, { backgroundColor: C.activeBg }, isAnnouncement && { backgroundColor: C.secondaryAlpha15 }]}>
+          <Text style={[styles.avatarText, { color: C.primary }, isAnnouncement && { color: C.headerText }]}>
             {(post.profiles?.full_name || '?')[0].toUpperCase()}
           </Text>
         </View>
         <View style={styles.postMeta}>
           <View style={styles.postMetaTop}>
-            <Text style={styles.postAuthor}>{post.profiles?.full_name || 'Unknown'}</Text>
+            <Text style={[styles.postAuthor, { color: C.text, fontFamily: F.sansBold }]}>{post.profiles?.full_name || 'Unknown'}</Text>
             {isAnnouncement && (
-              <View style={styles.announcementBadge}>
-                <Text style={styles.announcementBadgeText}>Announcement</Text>
+              <View style={[styles.announcementBadge, { backgroundColor: C.secondaryAlpha15 }]}>
+                <Text style={[styles.announcementBadgeText, { color: C.textWarm, fontFamily: F.sansBold }]}>{t('Announcement')}</Text>
               </View>
             )}
           </View>
-          <Text style={styles.postMetaSub}>
+          <Text style={[styles.postMetaSub, { color: C.textMuted }]}>
             {getRoleLabel(authorRole)} · {formatDate(post.created_at)}
           </Text>
         </View>
         {canPin && (
           <Pressable
-            style={({ hovered }: any) => [styles.pinBtn, hovered && styles.pinBtnHovered]}
+            style={({ hovered }: any) => [styles.pinBtn, hovered && { backgroundColor: C.cardSeparator }]}
             onPress={onPin}
           >
-            <Pin size={14} color={post.pinned ? '#C9A85C' : '#C4BAA8'} fill={post.pinned ? '#C9A85C' : 'none'} />
+            <Pin size={14} color={post.pinned ? C.secondary : C.cardBorder} fill={post.pinned ? C.secondary : 'none'} />
           </Pressable>
         )}
       </View>
 
-      <Text style={styles.postContent}>{post.content}</Text>
+      <Text style={[styles.postContent, { color: C.text }]}>{post.content}</Text>
 
       {/* Attachments preview */}
       {(post.post_attachments || []).length > 0 && (
         <View style={styles.attachmentsWrap}>
           {post.post_attachments.length === 1 && post.post_attachments[0].type === 'pdf' ? (
-            <View style={styles.attachPdfChip}>
-              <FileText size={13} color="#2C4A35" />
-              <Text style={styles.attachPdfName} numberOfLines={1}>{post.post_attachments[0].filename || 'Document'}</Text>
+            <View style={[styles.attachPdfChip, { backgroundColor: C.cardSeparator }]}>
+              <FileText size={13} color={C.primary} />
+              <Text style={[styles.attachPdfName, { color: C.primary, fontFamily: F.sansMedium }]} numberOfLines={1}>{post.post_attachments[0].filename || 'Document'}</Text>
             </View>
           ) : post.post_attachments.length === 1 ? (
             <AutoHeightImage uri={post.post_attachments[0].url} />
@@ -239,35 +236,35 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
             <>
               {post.post_attachments.slice(0, 3).map((att: any) => (
                 att.type === 'image' || att.type === 'gif' ? (
-                  <Image key={att.id} source={{ uri: att.url }} style={styles.attachThumb} resizeMode="cover" />
+                  <Image key={att.id} source={{ uri: att.url }} style={[styles.attachThumb, { backgroundColor: C.cardSeparator }]} resizeMode="cover" />
                 ) : (
-                  <View key={att.id} style={styles.attachPdfChip}>
-                    <FileText size={13} color="#2C4A35" />
-                    <Text style={styles.attachPdfName} numberOfLines={1}>{att.filename || 'Document'}</Text>
+                  <View key={att.id} style={[styles.attachPdfChip, { backgroundColor: C.cardSeparator }]}>
+                    <FileText size={13} color={C.primary} />
+                    <Text style={[styles.attachPdfName, { color: C.primary, fontFamily: F.sansMedium }]} numberOfLines={1}>{att.filename || 'Document'}</Text>
                   </View>
                 )
               ))}
               {post.post_attachments.length > 3 && (
-                <View style={styles.attachMore}>
-                  <Text style={styles.attachMoreText}>+{post.post_attachments.length - 3}</Text>
+                <View style={[styles.attachMore, { backgroundColor: C.cardBorder }]}>
+                  <Text style={[styles.attachMoreText, { color: C.textMuted, fontFamily: F.sansBold }]}>+{post.post_attachments.length - 3}</Text>
                 </View>
               )}
             </>
           )}
         </View>
       )}
-      <View style={styles.postFooter}>
+      <View style={[styles.postFooter, { borderTopColor: C.cardSeparator }]}>
         <Pressable
-          style={({ hovered }: any) => [styles.likeBtn, hasLiked && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
+          style={({ hovered }: any) => [styles.likeBtn, hasLiked && styles.likeBtnActive, hovered && { backgroundColor: C.cardSeparator }]}
           onPress={onLike}
         >
-          <Text style={[styles.likeIcon, hasLiked && styles.likeIconActive]}>♥</Text>
-          {likeCount > 0 && <Text style={[styles.likeCount, hasLiked && styles.likeCountActive]}>{likeCount}</Text>}
+          <Text style={[styles.likeIcon, hasLiked && styles.likeIconActive]}>{hasLiked ? '♥' : '♥'}</Text>
+          {likeCount > 0 && <Text style={[styles.likeCount, { color: C.textMuted }, hasLiked && styles.likeCountActive]}>{likeCount}</Text>}
         </Pressable>
         {commentCount > 0 && (
           <View style={styles.commentCount}>
-            <MessageSquare size={13} color="#9A9285" />
-            <Text style={styles.postCommentCount}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
+            <MessageSquare size={13} color={C.textMuted} />
+            <Text style={[styles.postCommentCount, { color: C.textMuted }]}>{commentCount} comment{commentCount !== 1 ? 's' : ''}</Text>
           </View>
         )}
       </View>
@@ -276,58 +273,45 @@ function PostCard({ post, isOwner, isStaff, currentUserId, onPin, onPress, onLik
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerIcon: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  headerIconText: { fontSize: 10, fontWeight: '700', color: '#C9A85C', textAlign: 'center', lineHeight: 11 },
-  headerName: { fontSize: 15, fontWeight: '600', color: '#C9A85C' },
+  headerName: { fontSize: 15, fontWeight: '600' },
   headerSub: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
-  addBtn: { backgroundColor: 'rgba(201,168,92,0.15)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
-  addBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
-  addBtnText: { color: '#C9A85C', fontSize: 13, fontWeight: '600' },
+  addBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
+  addBtnText: { fontSize: 13, fontWeight: '600' },
   body: { flex: 1, padding: 12 },
   emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, padding: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: '#2C4A35' },
-  emptyText: { fontSize: 14, color: '#9A9285', textAlign: 'center' },
-  emptyBtn: { marginTop: 8, backgroundColor: '#2C4A35', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
-  emptyBtnHovered: { backgroundColor: '#1A3A25' },
-  emptyBtnText: { color: '#C9A85C', fontSize: 14, fontWeight: '600' },
-  sectionLabel: { fontSize: 10, fontWeight: '600', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 4 },
-  postCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 14, padding: 16, marginBottom: 10 },
-  postCardAnnouncement: { borderColor: '#C9A85C', backgroundColor: '#FFFDF7' },
-  postCardHovered: { backgroundColor: '#F5F1EA' },
+  emptyTitle: { fontSize: 18, fontWeight: '700' },
+  emptyText: { fontSize: 14, textAlign: 'center' },
+  emptyBtn: { marginTop: 8, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
+  emptyBtnText: { fontSize: 14, fontWeight: '600' },
+  sectionLabel: { fontSize: 10, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 4 },
+  postCard: { borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 10 },
   postHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  avatar: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
-  avatarAnnouncement: { backgroundColor: 'rgba(201,168,92,0.15)' },
-  avatarText: { fontSize: 15, fontWeight: '700', color: '#2C4A35' },
-  avatarTextAnnouncement: { color: '#C9A85C' },
+  avatar: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 15, fontWeight: '700' },
   postMeta: { flex: 1 },
   postMetaTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  postAuthor: { fontSize: 14, fontWeight: '600', color: '#1A1A14' },
-  announcementBadge: { backgroundColor: 'rgba(201,168,92,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
-  announcementBadgeText: { fontSize: 10, color: '#B08C4A', fontWeight: '600' },
-  postMetaSub: { fontSize: 11, color: '#9A9285', marginTop: 2 },
+  postAuthor: { fontSize: 14, fontWeight: '600' },
+  announcementBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
+  announcementBadgeText: { fontSize: 10, fontWeight: '600' },
+  postMetaSub: { fontSize: 11, marginTop: 2 },
   pinBtn: { padding: 6, borderRadius: 6 },
-  pinBtnHovered: { backgroundColor: '#F5F1EA' },
-  postContent: { fontSize: 14, color: '#1A1A14', lineHeight: 21 },
+  postContent: { fontSize: 14, lineHeight: 21 },
   attachmentsWrap: { marginBottom: 12, marginHorizontal: -16, marginTop: 12 },
-  attachThumb: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#F5F1EA' },
-  attachThumbFull: { width: '100%', height: 280 }, // fallback only
-  attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F1EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-  attachPdfName: { fontSize: 12, color: '#2C4A35', fontWeight: '500', maxWidth: 160 },
-  attachMore: { width: 100, height: 100, borderRadius: 8, backgroundColor: '#E8E0CC', alignItems: 'center', justifyContent: 'center' },
-  attachMoreText: { fontSize: 18, fontWeight: '700', color: '#9A9285' },
-  postFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
+  attachThumb: { width: 100, height: 100, borderRadius: 8 },
+  attachPdfChip: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  attachPdfName: { fontSize: 12, fontWeight: '500', maxWidth: 160 },
+  attachMore: { width: 100, height: 100, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  attachMoreText: { fontSize: 18, fontWeight: '700' },
+  postFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, paddingTop: 10, borderTopWidth: 1 },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   likeBtnActive: { backgroundColor: '#FEF0F0' },
-  likeBtnHovered: { backgroundColor: '#F5F1EA' },
   likeIcon: { fontSize: 14, color: '#C4BAA8' },
   likeIconActive: { color: '#C0392B' },
-  likeCount: { fontSize: 12, color: '#9A9285', fontWeight: '500' },
+  likeCount: { fontSize: 12, fontWeight: '500' },
   likeCountActive: { color: '#C0392B' },
   commentCount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  postCommentCount: { fontSize: 12, color: '#9A9285' },
-  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
+  postCommentCount: { fontSize: 12 },
 });

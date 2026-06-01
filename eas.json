@@ -1,0 +1,33 @@
+{
+  "cli": {
+    "version": ">= 18.5.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
+    },
+    "production:scope-and-stride": {
+      "extends": "production",
+      "env": {
+        "BRAND_SLUG": "scope-and-stride"
+      }
+    },
+    "production:hidden-hill-farm": {
+      "extends": "production",
+      "env": {
+        "BRAND_SLUG": "hidden-hill-farm"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

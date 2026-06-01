@@ -3,12 +3,19 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import DateInput from '../../lib/DateInput';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
+import HomeButton from '../../lib/HomeButton';
 
 const STATUSES = ['pending', 'paid', 'overdue'];
 const LINE_ITEM_PRESETS = ['Full Board', 'Training Board', 'Pasture Board', 'Farrier', 'Vet Visit', 'Trailering', 'Supplies', 'Other'];
 
 export default function AddInvoice() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [horses, setHorses] = useState<any[]>([]);
   const [horseId, setHorseId] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -49,9 +56,9 @@ export default function AddInvoice() {
   }
 
   async function handleSave() {
-    if (!horseId) { setError('Please select a horse.'); return; }
+    if (!horseId) { setError(t('Please select a horse.')); return; }
     const validItems = lineItems.filter(item => item.description.trim() && item.amount);
-    if (validItems.length === 0) { setError('Add at least one line item.'); return; }
+    if (validItems.length === 0) { setError(t('Add at least one line item.')); return; }
     setSaving(true);
     setError('');
     const { data: invoice, error: invErr } = await supabase.from('invoices').insert({
@@ -61,7 +68,7 @@ export default function AddInvoice() {
       due_date: dueDate || null,
       notes: notes.trim() || null,
     }).select().single();
-    if (invErr || !invoice) { setError(invErr?.message || 'Failed to create invoice'); setSaving(false); return; }
+    if (invErr || !invoice) { setError(invErr?.message || t('Failed to create invoice')); setSaving(false); return; }
     const { error: itemsErr } = await supabase.from('invoice_line_items').insert(
       validItems.map(item => ({ invoice_id: invoice.id, description: item.description.trim(), amount: parseFloat(item.amount) }))
     );
@@ -72,103 +79,103 @@ export default function AddInvoice() {
   const selectedHorse = horses.find(h => String(h.id) === horseId);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
-        <Text style={styles.headerTitle}>New Invoice</Text>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
+        <HomeButton />
+        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Add Invoice')}</Text>
         <Pressable
           style={({ hovered }: any) => [styles.saveBtn, hovered && styles.saveBtnHovered]}
           onPress={handleSave}
           disabled={saving}
         >
-          {saving ? <ActivityIndicator color="#1A1A14" size="small" /> : <Text style={styles.saveBtnText}>Save</Text>}
+          {saving ? <ActivityIndicator color="#1A1A14" size="small" /> : <Text style={[styles.saveBtnText, { fontFamily: F.sansBold }]}>{t('Save')}</Text>}
         </Pressable>
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Invoice Details</Text>
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Invoice Details')}</Text>
 
-          <Text style={styles.fieldLabel}>HORSE</Text>
-          <Pressable style={styles.dropdown} onPress={() => setShowHorseDropdown(prev => !prev)}>
-            <Text style={[styles.dropdownText, !selectedHorse && styles.dropdownPlaceholder]}>
-              {selectedHorse ? `${selectedHorse.name} — ${selectedHorse.owner}` : 'Select a horse...'}
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Horse').toUpperCase()}</Text>
+          <Pressable style={[styles.dropdown, { backgroundColor: C.background, borderColor: C.cardBorder }]} onPress={() => setShowHorseDropdown(prev => !prev)}>
+            <Text style={[styles.dropdownText, { color: C.text, fontFamily: F.sans }, !selectedHorse && { color: C.textMuted }]}>
+              {selectedHorse ? `${selectedHorse.name} — ${selectedHorse.owner}` : t('Select a horse...')}
             </Text>
-            <Text style={styles.dropdownChevron}>{showHorseDropdown ? '▲' : '▼'}</Text>
+            <Text style={[styles.dropdownChevron, { color: C.textMuted }]}>{showHorseDropdown ? '▲' : '▼'}</Text>
           </Pressable>
           {showHorseDropdown && (
-            <View style={styles.dropdownList}>
+            <View style={[styles.dropdownList, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
               {horses.map(horse => (
                 <Pressable
                   key={horse.id}
-                  style={({ hovered }: any) => [styles.dropdownItem, String(horse.id) === horseId && styles.dropdownItemSelected, hovered && styles.dropdownItemHovered]}
+                  style={({ hovered }: any) => [styles.dropdownItem, { borderBottomColor: C.cardSeparator }, String(horse.id) === horseId && { backgroundColor: C.activeBg }, hovered && { backgroundColor: C.background }]}
                   onPress={() => selectHorse(horse)}
                 >
-                  <Text style={[styles.dropdownItemText, String(horse.id) === horseId && styles.dropdownItemTextSelected]}>
+                  <Text style={[styles.dropdownItemText, { color: C.text, fontFamily: F.sans }, String(horse.id) === horseId && { color: C.primary, fontWeight: '600' }]}>
                     {horse.name} — {horse.owner}
                   </Text>
-                  {String(horse.id) === horseId && <Text style={styles.dropdownCheck}>✓</Text>}
+                  {String(horse.id) === horseId && <Text style={[styles.dropdownCheck, { color: C.primary }]}>✓</Text>}
                 </Pressable>
               ))}
             </View>
           )}
 
-          <Text style={styles.fieldLabel}>STATUS</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Status').toUpperCase()}</Text>
           <View style={styles.statusRow}>
             {STATUSES.map(s => (
               <Pressable
                 key={s}
-                style={[styles.statusOption, status === s && styles.statusOptionSelected]}
+                style={[styles.statusOption, { borderWidth: 1.5, borderColor: C.cardBorder, backgroundColor: 'transparent' }, status === s && { borderColor: C.primary, backgroundColor: C.activeBg }]}
                 onPress={() => setStatus(s)}
               >
-                <Text style={[styles.statusOptionText, status === s && styles.statusOptionTextSelected]}>
+                <Text style={[styles.statusOptionText, { color: C.textMuted, fontFamily: F.sansMedium }, status === s && { color: C.primary, fontWeight: '700' }]}>
                   {s.charAt(0).toUpperCase() + s.slice(1)}
                 </Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={styles.fieldLabel}>DUE DATE</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Due Date').toUpperCase()}</Text>
           <DateInput value={dueDate} onChange={setDueDate} placeholder="Select date" />
 
-          <Text style={styles.fieldLabel}>NOTES</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Notes').toUpperCase()}</Text>
           <TextInput
-            style={[styles.input, styles.notesInput]}
+            style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
             value={notes}
             onChangeText={setNotes}
             placeholder="Any additional notes..."
-            placeholderTextColor="#9A9285"
+            placeholderTextColor={C.textMuted}
             multiline
           />
         </View>
 
-        <View style={styles.section}>
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Line Items</Text>
-            <Text style={styles.totalText}>Total: ${getTotal().toFixed(2)}</Text>
+            <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Line Items')}</Text>
+            <Text style={[styles.totalText, { color: C.primary, fontFamily: F.sansBold }]}>{t('Total')}: ${getTotal().toFixed(2)}</Text>
           </View>
 
           {lineItems.map((item, index) => (
-            <View key={index} style={styles.lineItem}>
+            <View key={index} style={[styles.lineItem, { borderBottomColor: C.cardSeparator }]}>
               <View style={styles.lineItemTop}>
                 <TextInput
-                  style={[styles.input, styles.lineItemDesc]}
+                  style={[styles.input, styles.lineItemDesc, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
                   value={item.description}
                   onChangeText={val => updateLineItem(index, 'description', val)}
                   placeholder="Description"
-                  placeholderTextColor="#9A9285"
+                  placeholderTextColor={C.textMuted}
                 />
                 <TextInput
-                  style={[styles.input, styles.lineItemAmount]}
+                  style={[styles.input, styles.lineItemAmount, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
                   value={item.amount}
                   onChangeText={val => updateLineItem(index, 'amount', val)}
                   placeholder="0.00"
-                  placeholderTextColor="#9A9285"
+                  placeholderTextColor={C.textMuted}
                   keyboardType="numeric"
                 />
                 {lineItems.length > 1 && (
                   <Pressable onPress={() => removeLineItem(index)} style={styles.removeBtn}>
-                    <Text style={styles.removeBtnText}>✕</Text>
+                    <Text style={[styles.removeBtnText, { color: C.error }]}>✕</Text>
                   </Pressable>
                 )}
               </View>
@@ -176,10 +183,10 @@ export default function AddInvoice() {
                 {LINE_ITEM_PRESETS.map(preset => (
                   <Pressable
                     key={preset}
-                    style={styles.presetChip}
+                    style={[styles.presetChip, { backgroundColor: C.cardSeparator }]}
                     onPress={() => updateLineItem(index, 'description', preset)}
                   >
-                    <Text style={styles.presetChipText}>{preset}</Text>
+                    <Text style={[styles.presetChipText, { color: C.primary, fontFamily: F.sansMedium }]}>{preset}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -187,14 +194,14 @@ export default function AddInvoice() {
           ))}
 
           <Pressable
-            style={({ hovered }: any) => [styles.addLineBtn, hovered && styles.addLineBtnHovered]}
+            style={({ hovered }: any) => [styles.addLineBtn, { borderColor: C.primary }, hovered && { backgroundColor: C.activeBg }]}
             onPress={addLineItem}
           >
-            <Text style={styles.addLineBtnText}>+ Add Line Item</Text>
+            <Text style={[styles.addLineBtnText, { color: C.primary, fontFamily: F.sansBold }]}>+ {t('Add Line Item')}</Text>
           </Pressable>
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -202,50 +209,40 @@ export default function AddInvoice() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C' },
-  saveBtn: { backgroundColor: '#C9A85C', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 6 },
-  saveBtnHovered: { backgroundColor: '#B08C4A' },
-  saveBtnText: { color: '#1A1A14', fontSize: 13, fontWeight: '700' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerTitle: { fontSize: 16, fontWeight: '600' },
+  saveBtn: { backgroundColor: 'transparent', paddingHorizontal: 4, paddingVertical: 4, borderRadius: 0, borderWidth: 0 },
+  saveBtnHovered: {},
+  saveBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
   body: { flex: 1 },
-  section: { margin: 16, marginBottom: 0, backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#E8E0CC', padding: 16 },
+  section: { margin: 16, marginBottom: 0, borderRadius: 14, borderWidth: 1, padding: 16 },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { fontSize: 11, fontWeight: '700', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-  totalText: { fontSize: 14, fontWeight: '700', color: '#2C4A35' },
-  fieldLabel: { fontSize: 10, fontWeight: '600', color: '#9A9285', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#FAF7F2', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, padding: 12, fontSize: 14, color: '#1A1A14' },
+  sectionTitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  totalText: { fontSize: 14, fontWeight: '700' },
+  fieldLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
+  input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14 },
   notesInput: { minHeight: 60, textAlignVertical: 'top' },
-  dropdown: { backgroundColor: '#FAF7F2', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  dropdownText: { fontSize: 14, color: '#1A1A14', flex: 1 },
-  dropdownPlaceholder: { color: '#9A9285' },
-  dropdownChevron: { fontSize: 10, color: '#9A9285' },
-  dropdownList: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, marginTop: 4, overflow: 'hidden' },
-  dropdownItem: { padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#F5F1EA' },
-  dropdownItemSelected: { backgroundColor: '#EDF5EF' },
-  dropdownItemHovered: { backgroundColor: '#FAF7F2' },
-  dropdownItemText: { fontSize: 14, color: '#1A1A14' },
-  dropdownItemTextSelected: { color: '#2C4A35', fontWeight: '600' },
-  dropdownCheck: { fontSize: 13, color: '#2C4A35' },
+  dropdown: { borderWidth: 1, borderRadius: 10, padding: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  dropdownText: { fontSize: 14, flex: 1 },
+  dropdownChevron: { fontSize: 10 },
+  dropdownList: { borderWidth: 1, borderRadius: 10, marginTop: 4, overflow: 'hidden' },
+  dropdownItem: { padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1 },
+  dropdownItemText: { fontSize: 14 },
+  dropdownCheck: { fontSize: 13 },
   statusRow: { flexDirection: 'row', gap: 8 },
-  statusOption: { flex: 1, borderWidth: 1.5, borderColor: '#E8E0CC', borderRadius: 8, padding: 10, alignItems: 'center' },
-  statusOptionSelected: { borderColor: '#2C4A35', backgroundColor: '#EDF5EF' },
-  statusOptionText: { fontSize: 12, color: '#9A9285', fontWeight: '500' },
-  statusOptionTextSelected: { color: '#2C4A35', fontWeight: '700' },
-  lineItem: { marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#F5F1EA', paddingBottom: 12 },
+  statusOption: { flex: 1, borderRadius: 8, padding: 10, alignItems: 'center' },
+  statusOptionText: { fontSize: 12, fontWeight: '500' },
+  lineItem: { marginBottom: 12, borderBottomWidth: 1, paddingBottom: 12 },
   lineItemTop: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   lineItemDesc: { flex: 2 },
   lineItemAmount: { flex: 1 },
   removeBtn: { padding: 8 },
-  removeBtnText: { fontSize: 14, color: '#8B2E2E' },
+  removeBtnText: { fontSize: 14 },
   presetsRow: { marginTop: 8 },
-  presetChip: { backgroundColor: '#F5F1EA', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginRight: 6 },
-  presetChipText: { fontSize: 11, color: '#2C4A35', fontWeight: '500' },
-  addLineBtn: { marginTop: 8, padding: 12, borderWidth: 1.5, borderColor: '#2C4A35', borderRadius: 10, alignItems: 'center', borderStyle: 'dashed' },
-  addLineBtnHovered: { backgroundColor: '#EDF5EF' },
-  addLineBtnText: { fontSize: 13, color: '#2C4A35', fontWeight: '600' },
-  errorText: { color: '#8B2E2E', fontSize: 13, padding: 16 },
-  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
+  presetChip: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5, marginRight: 6 },
+  presetChipText: { fontSize: 11, fontWeight: '500' },
+  addLineBtn: { marginTop: 8, padding: 12, borderWidth: 1.5, borderRadius: 10, alignItems: 'center', borderStyle: 'dashed' },
+  addLineBtnText: { fontSize: 13, fontWeight: '600' },
+  errorText: { fontSize: 13, padding: 16 },
 });

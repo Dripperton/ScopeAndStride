@@ -1,14 +1,19 @@
-import { Home, useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pin, Trash2, FileText } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
+import { formatRelativeDate, getRoleLabel as _getRoleLabel } from '../../lib/dateUtils';
 
 export default function PostDetail() {
   const router = useRouter();
   const { postId } = useLocalSearchParams();
   const { profile, isOwner, isStaff } = useProfile();
+  const { t } = useLanguage();
+  const theme = useTheme(); const C = theme.colors; const F = theme.fonts;
   const [post, setPost] = useState<any>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,38 +122,21 @@ export default function PostDetail() {
     }
   }
 
-  function formatDate(dateStr: string) {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  function getRoleLabel(role: string) {
-    if (role === 'owner') return 'Barn Manager';
-    if (role === 'staff') return 'Staff';
-    return 'Horse Owner';
-  }
+  const formatDate = (dateStr: string) => formatRelativeDate(dateStr, t);
+  const getRoleLabel = (role: string) => _getRoleLabel(role, t);
 
   const canDeletePost = isOwner || isStaff || post?.author_id === profile?.id;
   const canPin = isOwner || isStaff;
 
   if (loading) return (
-    <View style={styles.container}>
-      <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 80 }} />
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 80 }} />
     </View>
   );
 
   if (!post) return (
-    <View style={styles.container}>
-      <Text style={{ padding: 40, color: '#9A9285', textAlign: 'center' }}>Post not found.</Text>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <Text style={{ padding: 40, color: C.textMuted, textAlign: 'center', fontFamily: F.sans }}>Post not found.</Text>
     </View>
   );
 
@@ -156,20 +144,22 @@ export default function PostDetail() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: C.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
-      <View style={styles.header}>
-        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
-        <Text style={styles.headerTitle}>{isAnnouncement ? 'Announcement' : 'Post'}</Text>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
+        <Pressable onPress={() => router.back()}>
+          <Text style={[styles.backText, { fontFamily: F.sans }]}>← {t('Board')}</Text>
+        </Pressable>
+        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{isAnnouncement ? t('Announcement') : t('Post')}</Text>
         <View style={styles.headerActions}>
           {canPin && (
             <Pressable
               style={({ hovered }: any) => [styles.headerIconBtn, hovered && styles.headerIconBtnHovered]}
               onPress={handlePin}
             >
-              <Pin size={16} color={post.pinned ? '#C9A85C' : 'rgba(255,255,255,0.5)'} fill={post.pinned ? '#C9A85C' : 'none'} />
+              <Pin size={16} color={post.pinned ? C.secondary : 'rgba(255,255,255,0.5)'} fill={post.pinned ? C.secondary : 'none'} />
             </Pressable>
           )}
           {canDeletePost && (
@@ -185,62 +175,62 @@ export default function PostDetail() {
 
       <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false}>
         {/* Post */}
-        <View style={[styles.postCard, isAnnouncement && styles.postCardAnnouncement]}>
+        <View style={[styles.postCard, { backgroundColor: C.card, borderColor: C.cardBorder }, isAnnouncement && { borderColor: C.secondary, backgroundColor: '#FFFDF7' }]}>
           <View style={styles.postHeader}>
-            <View style={[styles.avatar, isAnnouncement && styles.avatarAnnouncement]}>
-              <Text style={[styles.avatarText, isAnnouncement && styles.avatarTextAnnouncement]}>
+            <View style={[styles.avatar, { backgroundColor: C.activeBg }, isAnnouncement && { backgroundColor: C.secondaryAlpha15 }]}>
+              <Text style={[styles.avatarText, { color: C.primary, fontFamily: F.sansBold }, isAnnouncement && { color: C.headerText }]}>
                 {(post.profiles?.full_name || '?')[0].toUpperCase()}
               </Text>
             </View>
             <View style={styles.postMeta}>
               <View style={styles.postMetaTop}>
-                <Text style={styles.postAuthor}>{post.profiles?.full_name || 'Unknown'}</Text>
+                <Text style={[styles.postAuthor, { color: C.text, fontFamily: F.sansBold }]}>{post.profiles?.full_name || 'Unknown'}</Text>
                 {isAnnouncement && (
-                  <View style={styles.announcementBadge}>
-                    <Text style={styles.announcementBadgeText}>Announcement</Text>
+                  <View style={[styles.announcementBadge, { backgroundColor: C.secondaryAlpha15 }]}>
+                    <Text style={[styles.announcementBadgeText, { color: C.text, fontFamily: F.sansBold }]}>{t('Announcement')}</Text>
                   </View>
                 )}
                 {post.pinned && (
-                  <View style={styles.pinnedBadge}>
+                  <View style={[styles.pinnedBadge, { backgroundColor: C.warningBg }]}>
                     <Pin size={10} color="#B08C4A" fill="#B08C4A" />
-                    <Text style={styles.pinnedBadgeText}>Pinned</Text>
+                    <Text style={[styles.pinnedBadgeText, { color: C.text, fontFamily: F.sansBold }]}>{t('Pinned')}</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.postMetaSub}>
+              <Text style={[styles.postMetaSub, { color: C.textMuted, fontFamily: F.sans }]}>
                 {getRoleLabel(post.profiles?.role)} · {formatDate(post.created_at)}
               </Text>
             </View>
           </View>
-          <Text style={styles.postContent}>{post.content}</Text>
+          <Text style={[styles.postContent, { color: C.text, fontFamily: F.sans }]}>{post.content}</Text>
           {/* Attachments */}
           {(post.post_attachments || []).length > 0 && (
             <View style={styles.detailAttachments}>
               {post.post_attachments.map((att: any) => (
                 att.type === 'image' || att.type === 'gif' ? (
-                  <Image key={att.id} source={{ uri: att.url }} style={styles.detailAttachImage} resizeMode="cover" />
+                  <Image key={att.id} source={{ uri: att.url }} style={[styles.detailAttachImage, { backgroundColor: C.cardSeparator }]} resizeMode="cover" />
                 ) : (
                   <Pressable
                     key={att.id}
-                    style={({ hovered }: any) => [styles.detailAttachPdf, hovered && styles.detailAttachPdfHovered]}
+                    style={({ hovered }: any) => [styles.detailAttachPdf, { backgroundColor: C.cardSeparator }, hovered && { backgroundColor: C.activeBg }]}
                     onPress={() => Linking.openURL(att.url)}
                   >
-                    <FileText size={20} color="#2C4A35" />
-                    <Text style={styles.detailAttachPdfName} numberOfLines={2}>{att.filename || 'Document'}</Text>
-                    <Text style={styles.detailAttachPdfOpen}>Open →</Text>
+                    <FileText size={20} color={C.primary} />
+                    <Text style={[styles.detailAttachPdfName, { color: C.primary, fontFamily: F.sansMedium }]} numberOfLines={2}>{att.filename || 'Document'}</Text>
+                    <Text style={[styles.detailAttachPdfOpen, { color: C.textMuted, fontFamily: F.sans }]}>Open →</Text>
                   </Pressable>
                 )
               ))}
             </View>
           )}
 
-          <View style={styles.postActions}>
+          <View style={[styles.postActions, { borderTopColor: C.cardSeparator }]}>
             <Pressable
-              style={({ hovered }: any) => [styles.likeBtn, (post.post_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.likeBtnActive, hovered && styles.likeBtnHovered]}
+              style={({ hovered }: any) => [styles.likeBtn, (post.post_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.likeBtnActive, hovered && { backgroundColor: C.cardSeparator }]}
               onPress={handleLike}
             >
               <Text style={[(post.post_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.likeIconActive : styles.likeIcon]}>♥</Text>
-              <Text style={[(post.post_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.likeCountActive : styles.likeCount]}>
+              <Text style={[(post.post_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.likeCountActive : [styles.likeCount, { color: C.textMuted }]]}>
                 {post.post_reactions?.length > 0 ? `${post.post_reactions.length} like${post.post_reactions.length !== 1 ? 's' : ''}` : 'Like'}
               </Text>
             </Pressable>
@@ -249,34 +239,34 @@ export default function PostDetail() {
 
         {/* Comments */}
         {comments.length > 0 && (
-          <View style={styles.commentsSection}>
-            <Text style={styles.commentsLabel}>{comments.length} Comment{comments.length !== 1 ? 's' : ''}</Text>
+          <View style={[styles.commentsSection, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+            <Text style={[styles.commentsLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{comments.length} Comment{comments.length !== 1 ? 's' : ''}</Text>
             {comments.map((c, index) => {
               const isCommentAuthor = c.author_id === profile?.id;
               const canDelete = isOwner || isStaff || isCommentAuthor;
               const isLast = index === comments.length - 1;
               return (
-                <View key={c.id} style={[styles.commentRow, isLast && styles.commentRowLast]}>
-                  <View style={styles.commentAvatar}>
-                    <Text style={styles.commentAvatarText}>
+                <View key={c.id} style={[styles.commentRow, { borderBottomColor: C.cardSeparator }, isLast && styles.commentRowLast]}>
+                  <View style={[styles.commentAvatar, { backgroundColor: C.cardSeparator }]}>
+                    <Text style={[styles.commentAvatarText, { color: C.textMuted, fontFamily: F.sansBold }]}>
                       {(c.profiles?.full_name || '?')[0].toUpperCase()}
                     </Text>
                   </View>
                   <View style={styles.commentContent}>
                     <View style={styles.commentHeader}>
-                      <Text style={styles.commentAuthor}>{c.profiles?.full_name || 'Unknown'}</Text>
+                      <Text style={[styles.commentAuthor, { color: C.text, fontFamily: F.sansBold }]}>{c.profiles?.full_name || 'Unknown'}</Text>
                       <Text style={styles.commentTime}>{formatDate(c.created_at)}</Text>
                     </View>
-                    <Text style={styles.commentText}>{c.content}</Text>
+                    <Text style={[styles.commentText, { color: C.text, fontFamily: F.sans }]}>{c.content}</Text>
                   </View>
                   <View style={styles.commentActions}>
                     <Pressable
-                      style={({ hovered }: any) => [styles.commentLikeBtn, (c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.commentLikeBtnActive, hovered && styles.commentLikeBtnHovered]}
+                      style={({ hovered }: any) => [styles.commentLikeBtn, (c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) && styles.commentLikeBtnActive, hovered && { backgroundColor: C.cardSeparator }]}
                       onPress={() => handleLikeComment(c)}
                     >
                       <Text style={(c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.commentLikeIconActive : styles.commentLikeIcon}>♥</Text>
                       {(c.comment_reactions || []).length > 0 && (
-                        <Text style={(c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.commentLikeCountActive : styles.commentLikeCount}>
+                        <Text style={(c.comment_reactions || []).some((r: any) => r.user_id === profile?.id) ? styles.commentLikeCountActive : [styles.commentLikeCount, { color: C.textMuted }]}>
                           {c.comment_reactions.length}
                         </Text>
                       )}
@@ -300,27 +290,27 @@ export default function PostDetail() {
       </ScrollView>
 
       {/* Comment input */}
-      <View style={styles.commentInputWrap}>
-        <View style={styles.commentInputAvatar}>
-          <Text style={styles.commentInputAvatarText}>
+      <View style={[styles.commentInputWrap, { backgroundColor: C.card, borderTopColor: C.cardBorder }]}>
+        <View style={[styles.commentInputAvatar, { backgroundColor: C.activeBg }]}>
+          <Text style={[styles.commentInputAvatarText, { color: C.primary, fontFamily: F.sansBold }]}>
             {(profile?.full_name || '?')[0].toUpperCase()}
           </Text>
         </View>
         <TextInput
-          style={styles.commentInput}
+          style={[styles.commentInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
           value={comment}
           onChangeText={setComment}
-          placeholder="Write a comment..."
+          placeholder={t('Write a comment...')}
           placeholderTextColor="#C4BAA8"
           multiline
           maxLength={500}
         />
         <Pressable
-          style={({ hovered }: any) => [styles.sendBtn, !comment.trim() && styles.sendBtnDisabled, hovered && comment.trim() && styles.sendBtnHovered]}
+          style={({ hovered }: any) => [styles.sendBtn, { backgroundColor: C.primary }, !comment.trim() && styles.sendBtnDisabled, hovered && comment.trim() && { backgroundColor: C.primaryDark }]}
           onPress={handleComment}
           disabled={posting || !comment.trim()}
         >
-          {posting ? <ActivityIndicator size="small" color="white" /> : <Text style={styles.sendBtnText}>Post</Text>}
+          {posting ? <ActivityIndicator size="small" color="white" /> : <Text style={[styles.sendBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Post')}</Text>}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -328,74 +318,67 @@ export default function PostDetail() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C' },
+  headerTitle: { fontSize: 16, fontWeight: '600' },
   headerActions: { flexDirection: 'row', gap: 4 },
   headerIconBtn: { padding: 8, borderRadius: 6 },
   headerIconBtnHovered: { backgroundColor: 'rgba(255,255,255,0.1)' },
   body: { flex: 1 },
-  postCard: { margin: 16, marginBottom: 0, backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#E8E0CC', padding: 16 },
-  postCardAnnouncement: { borderColor: '#C9A85C', backgroundColor: '#FFFDF7' },
+  postCard: { margin: 16, marginBottom: 0, borderRadius: 14, borderWidth: 1, padding: 16 },
   postHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center' },
-  avatarAnnouncement: { backgroundColor: 'rgba(201,168,92,0.15)' },
-  avatarText: { fontSize: 16, fontWeight: '700', color: '#2C4A35' },
-  avatarTextAnnouncement: { color: '#C9A85C' },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 16, fontWeight: '700' },
   postMeta: { flex: 1 },
   postMetaTop: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  postAuthor: { fontSize: 14, fontWeight: '600', color: '#1A1A14' },
-  announcementBadge: { backgroundColor: 'rgba(201,168,92,0.15)', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
-  announcementBadgeText: { fontSize: 10, color: '#B08C4A', fontWeight: '600' },
-  pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#FEF6E4', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
-  pinnedBadgeText: { fontSize: 10, color: '#B08C4A', fontWeight: '600' },
-  postMetaSub: { fontSize: 11, color: '#9A9285', marginTop: 2 },
-  postContent: { fontSize: 15, color: '#1A1A14', lineHeight: 23 },
-  commentsSection: { margin: 16, marginTop: 12, backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#E8E0CC', padding: 16 },
-  commentsLabel: { fontSize: 11, fontWeight: '700', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 },
-  commentRow: { flexDirection: 'row', gap: 10, paddingBottom: 14, marginBottom: 14, borderBottomWidth: 1, borderBottomColor: '#F5F1EA' },
+  postAuthor: { fontSize: 14, fontWeight: '600' },
+  announcementBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
+  announcementBadgeText: { fontSize: 10, fontWeight: '600' },
+  pinnedBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
+  pinnedBadgeText: { fontSize: 10, fontWeight: '600' },
+  postMetaSub: { fontSize: 11, marginTop: 2 },
+  postContent: { fontSize: 15, lineHeight: 23 },
+  commentsSection: { margin: 16, marginTop: 12, borderRadius: 14, borderWidth: 1, padding: 16 },
+  commentsLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 14 },
+  commentRow: { flexDirection: 'row', gap: 10, paddingBottom: 14, marginBottom: 14, borderBottomWidth: 1 },
   commentRowLast: { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 },
-  commentAvatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#F5F1EA', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  commentAvatarText: { fontSize: 12, fontWeight: '700', color: '#9A9285' },
+  commentAvatar: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  commentAvatarText: { fontSize: 12, fontWeight: '700' },
   commentContent: { flex: 1 },
   commentHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 },
-  commentAuthor: { fontSize: 13, fontWeight: '600', color: '#1A1A14' },
+  commentAuthor: { fontSize: 13, fontWeight: '600' },
   commentTime: { fontSize: 11, color: '#C4BAA8' },
-  commentText: { fontSize: 13, color: '#3A3830', lineHeight: 19 },
+  commentText: { fontSize: 13, lineHeight: 19 },
   commentActions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
   commentLikeBtn: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
   commentLikeBtnActive: { backgroundColor: '#FEF0F0' },
-  commentLikeBtnHovered: { backgroundColor: '#F5F1EA' },
   commentLikeIcon: { fontSize: 12, color: '#C4BAA8' },
   commentLikeIconActive: { fontSize: 12, color: '#C0392B' },
-  commentLikeCount: { fontSize: 11, color: '#9A9285' },
+  commentLikeCount: { fontSize: 11 },
   commentLikeCountActive: { fontSize: 11, color: '#C0392B', fontWeight: '600' },
   deleteCommentBtn: { padding: 4, borderRadius: 4 },
   deleteCommentBtnHovered: { backgroundColor: '#FFF5F5' },
   detailAttachments: { gap: 10, marginTop: 14 },
-  detailAttachImage: { width: '100%', aspectRatio: 4/3, borderRadius: 10, backgroundColor: '#F5F1EA' },
-  detailAttachPdf: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F5F1EA', borderRadius: 10, padding: 14 },
-  detailAttachPdfHovered: { backgroundColor: '#EDF5EF' },
-  detailAttachPdfName: { flex: 1, fontSize: 13, color: '#2C4A35', fontWeight: '500' },
-  detailAttachPdfOpen: { fontSize: 12, color: '#9A9285' },
-  postActions: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F5F1EA' },
+  detailAttachImage: { width: '100%', aspectRatio: 4/3, borderRadius: 10 },
+  detailAttachPdf: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 10, padding: 14 },
+  detailAttachPdfName: { flex: 1, fontSize: 13, fontWeight: '500' },
+  detailAttachPdfOpen: { fontSize: 12 },
+  postActions: { flexDirection: 'row', marginTop: 14, paddingTop: 12, borderTopWidth: 1 },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   likeBtnActive: { backgroundColor: '#FEF0F0' },
-  likeBtnHovered: { backgroundColor: '#F5F1EA' },
   likeIcon: { fontSize: 15, color: '#C4BAA8' },
   likeIconActive: { fontSize: 15, color: '#C0392B' },
-  likeCount: { fontSize: 13, color: '#9A9285', fontWeight: '500' },
+  likeCount: { fontSize: 13, fontWeight: '500' },
   likeCountActive: { fontSize: 13, color: '#C0392B', fontWeight: '600' },
-  commentInputWrap: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, padding: 12, paddingBottom: 28, backgroundColor: 'white', borderTopWidth: 1, borderTopColor: '#E8E0CC' },
-  commentInputAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDF5EF', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  commentInputAvatarText: { fontSize: 12, fontWeight: '700', color: '#2C4A35' },
-  commentInput: { flex: 1, backgroundColor: '#FAF7F2', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#1A1A14', maxHeight: 100 },
-  sendBtn: { backgroundColor: '#2C4A35', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
+  commentInputWrap: { flexDirection: 'row', alignItems: 'flex-end', gap: 10, padding: 12, paddingBottom: 28, borderTopWidth: 1 },
+  commentInputAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  commentInputAvatarText: { fontSize: 12, fontWeight: '700' },
+  commentInput: { flex: 1, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, maxHeight: 100 },
+  sendBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20 },
   sendBtnDisabled: { opacity: 0.4 },
-  sendBtnHovered: { backgroundColor: '#1A3A25' },
-  sendBtnText: { color: '#C9A85C', fontSize: 13, fontWeight: '600' },
+  sendBtnText: { fontSize: 13, fontWeight: '600' },
 
-  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
+  homeBtn: { width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  homeBtnHovered: { backgroundColor: 'rgba(255,255,255,0.32)' },
 });

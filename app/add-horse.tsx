@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../lib/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
 
 const BOARD_TYPES = ['Full Board', 'Training Board', 'Partial Board', 'Pasture Board'];
 const COLORS = ['#D4E8D4', '#E8E8F0', '#F0E0D0', '#F0D8C8', '#F0F0E8', '#E8F0E8'];
 
 export default function AddHorse() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
   const [stall, setStall] = useState('');
@@ -19,7 +25,7 @@ export default function AddHorse() {
 
   async function handleSave() {
     if (!name || !breed || !stall || !owner) {
-      setError('Please fill in all fields.');
+      setError(t('Please fill in all fields.'));
       return;
     }
     setLoading(true);
@@ -36,46 +42,47 @@ export default function AddHorse() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && styles.backBtnHovered]}>
-          <Text style={styles.backText}>← Back</Text>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
+        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: C.secondaryAlpha15 }]}>
+          <Text style={[styles.backText, { color: C.headerText, fontFamily: F.sans }]}>← {t('Back')}</Text>
         </Pressable>
-        <Text style={styles.headerName}>Add Horse</Text>
+        <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Add Horse')}</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        <Text style={styles.label}>Horse Name</Text>
-        <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="e.g. Sterling" placeholderTextColor="#C4BAA8" />
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Horse Name')}</Text>
+        <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={name} onChangeText={setName} placeholder="e.g. Sterling" placeholderTextColor={C.cardBorder} />
 
-        <Text style={styles.label}>Breed</Text>
-        <TextInput style={styles.input} value={breed} onChangeText={setBreed} placeholder="e.g. Dutch Warmblood" placeholderTextColor="#C4BAA8" />
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Breed')}</Text>
+        <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={breed} onChangeText={setBreed} placeholder="e.g. Dutch Warmblood" placeholderTextColor={C.cardBorder} />
 
-        <Text style={styles.label}>Stall Number</Text>
-        <TextInput style={styles.input} value={stall} onChangeText={setStall} placeholder="e.g. 4" placeholderTextColor="#C4BAA8" keyboardType="numeric" />
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Stall')}</Text>
+        <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={stall} onChangeText={setStall} placeholder="e.g. 4" placeholderTextColor={C.cardBorder} keyboardType="numeric" />
 
-        <Text style={styles.label}>Owner Name</Text>
-        <TextInput style={styles.input} value={owner} onChangeText={setOwner} placeholder="e.g. Robert Henderson" placeholderTextColor="#C4BAA8" />
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Owner Name')}</Text>
+        <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={owner} onChangeText={setOwner} placeholder="e.g. Robert Henderson" placeholderTextColor={C.cardBorder} />
 
-        <Text style={styles.label}>Board Type</Text>
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Board Type')}</Text>
         <View style={styles.optionRow}>
           {BOARD_TYPES.map((type) => (
             <Pressable
               key={type}
               style={({ hovered }: any) => [
                 styles.optionBtn,
-                boardType === type && styles.optionBtnActive,
-                hovered && boardType !== type && styles.optionBtnHovered,
+                { borderColor: C.cardBorder, backgroundColor: C.card },
+                boardType === type && { backgroundColor: C.primary, borderColor: C.primary },
+                hovered && boardType !== type && { backgroundColor: C.activeBg, borderColor: C.primary },
               ]}
               onPress={() => setBoardType(type)}
             >
-              <Text style={[styles.optionText, boardType === type && styles.optionTextActive]}>{type}</Text>
+              <Text style={[styles.optionText, { color: C.text, fontFamily: F.sans }, boardType === type && { color: C.card, fontFamily: F.sansBold }]}>{type}</Text>
             </Pressable>
           ))}
         </View>
 
-        <Text style={styles.label}>Card Color</Text>
+        <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Card Color')}</Text>
         <View style={styles.colorRow}>
           {COLORS.map((c) => (
             <Pressable
@@ -83,22 +90,22 @@ export default function AddHorse() {
               style={({ hovered }: any) => [
                 styles.colorSwatch,
                 { backgroundColor: c },
-                color === c && styles.colorSwatchActive,
-                hovered && styles.colorSwatchHovered,
+                color === c && { borderColor: C.primary },
+                hovered && { opacity: 0.75, borderColor: C.secondaryDark },
               ]}
               onPress={() => setColor(c)}
             />
           ))}
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
 
         <Pressable
-          style={({ hovered }: any) => [styles.saveBtn, hovered && styles.saveBtnHovered]}
+          style={({ hovered }: any) => [styles.saveBtn, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
           onPress={handleSave}
           disabled={loading}
         >
-          {loading ? <ActivityIndicator color="white" /> : <Text style={styles.saveBtnText}>Save Horse</Text>}
+          {loading ? <ActivityIndicator color="white" /> : <Text style={[styles.saveBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Save Horse')}</Text>}
         </Pressable>
 
         <View style={{ height: 40 }} />
@@ -108,27 +115,20 @@ export default function AddHorse() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backBtn: { width: 60, padding: 4, borderRadius: 6 },
-  backBtnHovered: { backgroundColor: 'rgba(201,168,92,0.15)' },
-  backText: { color: '#C9A85C', fontSize: 14 },
-  headerName: { fontSize: 15, fontWeight: '600', color: '#C9A85C' },
+  backText: { fontSize: 14 },
+  headerName: { fontSize: 15, fontWeight: '600' },
   body: { flex: 1, padding: 20 },
-  label: { fontSize: 12, fontWeight: '600', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 16 },
-  input: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 8, padding: 12, fontSize: 15, color: '#1A1A14' },
+  label: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginTop: 16 },
+  input: { borderWidth: 1, borderRadius: 8, padding: 12, fontSize: 15 },
   optionRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  optionBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6, borderWidth: 1, borderColor: '#E8E0CC', backgroundColor: 'white' },
-  optionBtnActive: { backgroundColor: '#2C4A35', borderColor: '#2C4A35' },
-  optionBtnHovered: { backgroundColor: '#EDF5EF', borderColor: '#2C4A35' },
-  optionText: { fontSize: 13, color: '#3A3830' },
-  optionTextActive: { color: 'white', fontWeight: '600' },
+  optionBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6, borderWidth: 1 },
+  optionText: { fontSize: 13 },
   colorRow: { flexDirection: 'row', gap: 12 },
   colorSwatch: { width: 36, height: 36, borderRadius: 8, borderWidth: 2, borderColor: 'transparent' },
-  colorSwatchActive: { borderColor: '#2C4A35' },
-  colorSwatchHovered: { opacity: 0.75, borderColor: '#B08C4A' },
-  errorText: { color: '#8B2E2E', fontSize: 13, marginTop: 16 },
-  saveBtn: { backgroundColor: '#2C4A35', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 32 },
-  saveBtnHovered: { backgroundColor: '#3D6B4A' },
-  saveBtnText: { color: '#C9A85C', fontSize: 15, fontWeight: '600', letterSpacing: 0.5 },
+  errorText: { fontSize: 13, marginTop: 16 },
+  saveBtn: { padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 32 },
+  saveBtnText: { fontSize: 15, fontWeight: '600', letterSpacing: 0.5 },
 });

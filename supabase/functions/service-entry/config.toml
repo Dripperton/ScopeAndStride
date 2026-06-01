@@ -1,0 +1,2 @@
+[functions.service-entry]
+verify_jwt = false

@@ -2,8 +2,11 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { Home, RefreshCw } from 'lucide-react-native';
+import { RefreshCw } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
+import { useLanguage } from '../../lib/LanguageContext';
+import { useTheme } from '../../context/ThemeContext';
+import HomeButton from '../../lib/HomeButton';
 
 function getNextDueDate(interval: string, dueDay: number) {
   const today = new Date();
@@ -23,6 +26,10 @@ function getNextDueDate(interval: string, dueDay: number) {
 
 export default function RecurringTemplates() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -33,7 +40,7 @@ export default function RecurringTemplates() {
   }, []));
 
   async function fetchTemplates() {
-    setLoading(true);
+    if (templates.length === 0) setLoading(true);
     const { data } = await supabase
       .from('recurring_templates')
       .select('*, recurring_template_line_items(*), horses(name)')
@@ -85,70 +92,70 @@ export default function RecurringTemplates() {
   const activeCount = templates.filter(t => t.active).length;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}><Home size={18} color="#C9A85C" /></Pressable>
-        <Text style={styles.headerTitle}>Recurring Templates</Text>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
+        <HomeButton />
+        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Recurring Templates')}</Text>
         <Pressable
-          style={({ hovered }: any) => [styles.addBtn, hovered && styles.addBtnHovered]}
+          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
           onPress={() => router.push('/billing/add-template')}
         >
-          <Text style={styles.addBtnText}>+ New</Text>
+          <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ {t('New')}</Text>
         </Pressable>
       </View>
 
       {activeCount > 0 && (
         <Pressable
-          style={({ hovered }: any) => [styles.generateBanner, hovered && styles.generateBannerHovered]}
+          style={({ hovered }: any) => [styles.generateBanner, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
           onPress={generateInvoices}
           disabled={generating}
         >
           {generating
             ? <ActivityIndicator color="white" size="small" />
             : <>
-                <Text style={styles.generateBannerTitle}>Generate Invoices</Text>
-                <Text style={styles.generateBannerSub}>{activeCount} active template{activeCount !== 1 ? 's' : ''} ready</Text>
+                <Text style={[styles.generateBannerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Generate Invoices')}</Text>
+                <Text style={[styles.generateBannerSub, { fontFamily: F.sans }]}>{activeCount} active template{activeCount !== 1 ? 's' : ''} ready</Text>
               </>
           }
         </Pressable>
       )}
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 40 }} />
+        {loading && templates.length === 0 ? (
+          <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : templates.length === 0 ? (
           <View style={styles.emptyState}>
-            <RefreshCw size={40} color="#C4BAA8" />
-            <Text style={styles.emptyTitle}>No templates yet</Text>
-            <Text style={styles.emptyText}>Tap + New to create a recurring invoice template.</Text>
+            <RefreshCw size={40} color={C.cardBorder} />
+            <Text style={[styles.emptyTitle, { color: C.text, fontFamily: F.sansBold }]}>{t('No templates yet')}</Text>
+            <Text style={[styles.emptyText, { color: C.textMuted, fontFamily: F.sans }]}>{t('Tap + New to create a recurring invoice template.')}</Text>
           </View>
         ) : (
           templates.map(template => (
             <Pressable
               key={template.id}
-              style={({ hovered }: any) => [styles.templateCard, !template.active && styles.templateCardInactive, hovered && styles.templateCardHovered]}
+              style={({ hovered }: any) => [styles.templateCard, { backgroundColor: C.card, borderColor: C.cardBorder }, !template.active && styles.templateCardInactive, hovered && { backgroundColor: C.cardSeparator, borderColor: C.secondary }]}
               onPress={() => router.push({ pathname: '/billing/add-template', params: { templateId: template.id } })}
             >
               <View style={styles.templateLeft}>
                 <View style={styles.templateNameRow}>
-                  <Text style={styles.templateHorse}>{template.horses?.name || '—'}</Text>
-                  <View style={[styles.intervalBadge, template.interval === 'weekly' && styles.intervalBadgeWeekly]}>
-                    <Text style={styles.intervalBadgeText}>{template.interval}</Text>
+                  <Text style={[styles.templateHorse, { color: C.text, fontFamily: F.serif }]}>{template.horses?.name || '—'}</Text>
+                  <View style={[styles.intervalBadge, { backgroundColor: C.activeBg }, template.interval === 'weekly' && styles.intervalBadgeWeekly]}>
+                    <Text style={[styles.intervalBadgeText, { color: C.primary, fontFamily: F.sansBold }]}>{template.interval}</Text>
                   </View>
                 </View>
-                <Text style={styles.templateOwner}>{template.owner_name || '—'}</Text>
-                <Text style={styles.templateItems}>
+                <Text style={[styles.templateOwner, { color: C.textMuted, fontFamily: F.sans }]}>{template.owner_name || '—'}</Text>
+                <Text style={[styles.templateItems, { color: C.secondary, fontFamily: F.sans }]}>
                   {(template.recurring_template_line_items || []).length} line item{(template.recurring_template_line_items || []).length !== 1 ? 's' : ''} · Due day {template.due_day || 1}
                 </Text>
               </View>
               <View style={styles.templateRight}>
-                <Text style={styles.templateTotal}>${getTotal(template).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
+                <Text style={[styles.templateTotal, { color: C.text, fontFamily: F.sansBold }]}>${getTotal(template).toLocaleString('en-US', { minimumFractionDigits: 2 })}</Text>
                 <Pressable
-                  style={[styles.toggleBtn, template.active && styles.toggleBtnActive]}
+                  style={[styles.toggleBtn, { borderColor: C.cardBorder, backgroundColor: C.card }, template.active && { borderColor: C.primary, backgroundColor: C.activeBg }]}
                   onPress={() => toggleActive(template)}
                 >
-                  <Text style={[styles.toggleBtnText, template.active && styles.toggleBtnTextActive]}>
-                    {template.active ? 'Active' : 'Paused'}
+                  <Text style={[styles.toggleBtnText, { color: C.textMuted, fontFamily: F.sansMedium }, template.active && { color: C.primary, fontWeight: '600' }]}>
+                    {template.active ? t('Active') : t('Paused')}
                   </Text>
                 </Pressable>
               </View>
@@ -162,36 +169,30 @@ export default function RecurringTemplates() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C' },
-  addBtn: { backgroundColor: 'rgba(201,168,92,0.15)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
-  addBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
-  addBtnText: { color: '#C9A85C', fontSize: 13, fontWeight: '600' },
-  generateBanner: { backgroundColor: '#2C4A35', margin: 16, marginBottom: 0, borderRadius: 12, padding: 16, alignItems: 'center' },
-  generateBannerHovered: { backgroundColor: '#1A3A25' },
-  generateBannerTitle: { fontSize: 15, fontWeight: '700', color: '#C9A85C' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerTitle: { fontSize: 16, fontWeight: '600' },
+  addBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
+  addBtnText: { fontSize: 13, fontWeight: '600' },
+  generateBanner: { margin: 16, marginBottom: 0, borderRadius: 12, padding: 16, alignItems: 'center' },
+  generateBannerTitle: { fontSize: 15, fontWeight: '700' },
   generateBannerSub: { fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 },
   body: { flex: 1, padding: 16 },
   emptyState: { alignItems: 'center', paddingTop: 60, gap: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#1A1A14' },
-  emptyText: { fontSize: 13, color: '#9A9285', textAlign: 'center' },
-  templateCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  emptyTitle: { fontSize: 16, fontWeight: '600' },
+  emptyText: { fontSize: 13, textAlign: 'center' },
+  templateCard: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
   templateCardInactive: { opacity: 0.5 },
-  templateCardHovered: { backgroundColor: '#F5F1EA', borderColor: '#C9A85C' },
   templateLeft: { flex: 1 },
   templateNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  templateHorse: { fontSize: 15, fontWeight: '700', color: '#1A1A14', fontStyle: 'italic' },
-  intervalBadge: { backgroundColor: '#EDF5EF', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
+  templateHorse: { fontSize: 15, fontWeight: '700', fontStyle: 'italic' },
+  intervalBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 5 },
   intervalBadgeWeekly: { backgroundColor: '#EDE8F5' },
-  intervalBadgeText: { fontSize: 10, color: '#2C4A35', fontWeight: '600', textTransform: 'capitalize' },
-  templateOwner: { fontSize: 12, color: '#9A9285', marginBottom: 2 },
-  templateItems: { fontSize: 11, color: '#B08C4A' },
+  intervalBadgeText: { fontSize: 10, fontWeight: '600', textTransform: 'capitalize' },
+  templateOwner: { fontSize: 12, marginBottom: 2 },
+  templateItems: { fontSize: 11 },
   templateRight: { alignItems: 'flex-end', gap: 6 },
-  templateTotal: { fontSize: 16, fontWeight: '700', color: '#1A1A14' },
-  toggleBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1, borderColor: '#E8E0CC', backgroundColor: 'white' },
-  toggleBtnActive: { borderColor: '#2C4A35', backgroundColor: '#EDF5EF' },
-  toggleBtnText: { fontSize: 11, color: '#9A9285', fontWeight: '500' },
-  toggleBtnTextActive: { color: '#2C4A35', fontWeight: '600' },
+  templateTotal: { fontSize: 16, fontWeight: '700' },
+  toggleBtn: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, borderWidth: 1 },
+  toggleBtnText: { fontSize: 11, fontWeight: '500' },
 });

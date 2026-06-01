@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ScopeAndStride",
+    "name": "Scope & Stride",
     "slug": "ScopeAndStride",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -13,8 +13,10 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Scope & Stride needs camera access to add photos to posts.",
         "NSPhotoLibraryUsageDescription": "Scope & Stride needs photo library access to add images to posts.",
-        "NSPhotoLibraryAddUsageDescription": "Scope & Stride needs permission to save photos."
-      }
+        "NSPhotoLibraryAddUsageDescription": "Scope & Stride needs permission to save photos.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.scopeandstride.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -26,9 +28,10 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "WRITE_EXTERNAL_STORAGE",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -56,11 +59,24 @@
           "photosPermission": "Scope & Stride needs access to your photos to add images to posts.",
           "cameraPermission": "Scope & Stride needs camera access to add photos to posts."
         }
-      ]
+      ],
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.scopeandstride"
+        }
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7996625c-8ad6-4598-aacc-3bf5097e556c"
+      }
     }
   }
 }

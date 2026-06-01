@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 import DateInput from '../../../lib/DateInput';
+import { useLanguage } from '../../../lib/LanguageContext';
+import { useTheme } from '../../../context/ThemeContext';
 
 const TYPES = [
   { value: 'coggins', label: 'Coggins', icon: '📋' },
@@ -15,6 +17,10 @@ const TYPES = [
 export default function AddMedicalEntry() {
   const router = useRouter();
   const { horseId, defaultType } = useLocalSearchParams();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [type, setType] = useState((defaultType as string) || 'vaccination');
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
@@ -43,68 +49,76 @@ export default function AddMedicalEntry() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.backText}>Cancel</Text>
+          <Text style={[styles.backText, { fontFamily: F.sans }]}>{t('Cancel')}</Text>
         </Pressable>
-        <Text style={styles.headerTitle}>Add Medical Entry</Text>
+        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Add Medical Entry')}</Text>
         <Pressable
-          style={({ hovered }: any) => [styles.saveBtn, hovered && styles.saveBtnHovered]}
+          style={{ backgroundColor: 'transparent' }}
           onPress={handleSave}
           disabled={saving}
         >
-          {saving ? <ActivityIndicator color="#1A1A14" size="small" /> : <Text style={styles.saveBtnText}>Save</Text>}
+          {saving ? <ActivityIndicator color="#1A1A14" size="small" /> : <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700', fontFamily: F.sansBold }}>{t('Save')}</Text>}
         </Pressable>
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Entry Type</Text>
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Entry Type')}</Text>
           <View style={styles.typeGrid}>
-            {TYPES.map(t => (
+            {TYPES.map(tp => (
               <Pressable
-                key={t.value}
-                style={[styles.typeOption, type === t.value && styles.typeOptionSelected]}
-                onPress={() => setType(t.value)}
+                key={tp.value}
+                style={[
+                  styles.typeOption,
+                  { borderWidth: 1.5, borderColor: C.cardBorder, backgroundColor: C.card },
+                  type === tp.value && { borderColor: C.primary, backgroundColor: C.activeBg },
+                ]}
+                onPress={() => setType(tp.value)}
               >
-                <Text style={styles.typeIcon}>{t.icon}</Text>
-                <Text style={[styles.typeLabel, type === t.value && styles.typeLabelSelected]}>{t.label}</Text>
+                <Text style={styles.typeIcon}>{tp.icon}</Text>
+                <Text style={[
+                  styles.typeLabel,
+                  { color: C.textMuted, fontFamily: F.sansMedium },
+                  type === tp.value && { color: C.primary, fontFamily: F.sansBold, fontWeight: '700' },
+                ]}>{t(tp.label)}</Text>
               </Pressable>
             ))}
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Details</Text>
-          <Text style={styles.fieldLabel}>TITLE</Text>
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Details')}</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Title').toUpperCase()}</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
             value={title}
             onChangeText={setTitle}
             placeholder={selectedType?.label || 'e.g. Rabies Vaccine'}
-            placeholderTextColor="#9A9285"
+            placeholderTextColor={C.textMuted}
           />
-          <Text style={styles.fieldLabel}>DATE</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('DATE')}</Text>
           <DateInput value={date} onChange={setDate} placeholder="Select date" />
           {showExpiry ? (
             <View>
-              <Text style={styles.fieldLabel}>EXPIRY DATE</Text>
+              <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('EXPIRY DATE')}</Text>
               <DateInput value={expiryDate} onChange={setExpiryDate} placeholder="Select date" />
             </View>
           ) : null}
-          <Text style={styles.fieldLabel}>NOTES</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('NOTES')}</Text>
           <TextInput
-            style={[styles.input, styles.notesInput]}
+            style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
             value={notes}
             onChangeText={setNotes}
             placeholder="Any additional notes..."
-            placeholderTextColor="#9A9285"
+            placeholderTextColor={C.textMuted}
             multiline
           />
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -112,24 +126,19 @@ export default function AddMedicalEntry() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
-  headerTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C' },
-  saveBtn: { backgroundColor: '#C9A85C', paddingHorizontal: 16, paddingVertical: 7, borderRadius: 6 },
-  saveBtnHovered: { backgroundColor: '#B08C4A' },
-  saveBtnText: { color: '#1A1A14', fontSize: 13, fontWeight: '700' },
+  headerTitle: { fontSize: 16, fontWeight: '600' },
   body: { flex: 1 },
-  section: { margin: 16, marginBottom: 0, backgroundColor: 'white', borderRadius: 14, borderWidth: 1, borderColor: '#E8E0CC', padding: 16 },
-  sectionTitle: { fontSize: 11, fontWeight: '700', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
+  section: { margin: 16, marginBottom: 0, borderRadius: 14, borderWidth: 1, padding: 16 },
+  sectionTitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 },
   typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  typeOption: { borderWidth: 1.5, borderColor: '#E8E0CC', borderRadius: 10, padding: 12, alignItems: 'center', minWidth: 80, flex: 1 },
-  typeOptionSelected: { borderColor: '#2C4A35', backgroundColor: '#EDF5EF' },
+  typeOption: { borderRadius: 10, padding: 12, alignItems: 'center', minWidth: 80, flex: 1 },
   typeIcon: { fontSize: 20, marginBottom: 4 },
-  typeLabel: { fontSize: 11, color: '#9A9285', fontWeight: '500' },
-  typeLabelSelected: { color: '#2C4A35', fontWeight: '700' },
-  fieldLabel: { fontSize: 10, fontWeight: '600', color: '#9A9285', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
-  input: { backgroundColor: '#FAF7F2', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, padding: 12, fontSize: 14, color: '#1A1A14' },
+  typeLabel: { fontSize: 11, fontWeight: '500' },
+  fieldLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 1, marginBottom: 6, marginTop: 12 },
+  input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14 },
   notesInput: { minHeight: 80, textAlignVertical: 'top' },
-  errorText: { color: '#8B2E2E', fontSize: 13, padding: 16 },
+  errorText: { fontSize: 13, padding: 16 },
 });

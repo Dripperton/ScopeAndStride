@@ -1,144 +1,300 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, Pressable, View } from 'react-native';
-import { Home, ChessKnight, Calendar, DollarSign, MoreHorizontal } from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Home, Send, Sparkles, RotateCcw } from 'lucide-react-native';
+import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
+import { useLanguage } from '../lib/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
+import Brand from '../constants/brand';
 
-const audits = [
-  { id: 1, category: 'Feed Management', score: 92, status: 'Excellent', color: '#EDF5EF', textColor: '#2C4A35' },
-  { id: 2, category: 'Medical Records', score: 78, status: 'Good', color: '#EAD9A8', textColor: '#6B4F1A' },
-  { id: 3, category: 'Billing Compliance', score: 65, status: 'Needs Work', color: '#FDECEA', textColor: '#8B2E2E' },
-  { id: 4, category: 'Staff Scheduling', score: 88, status: 'Good', color: '#EAD9A8', textColor: '#6B4F1A' },
-  { id: 5, category: 'Facility Maintenance', score: 95, status: 'Excellent', color: '#EDF5EF', textColor: '#2C4A35' },
-  { id: 6, category: 'Owner Communication', score: 70, status: 'Good', color: '#EAD9A8', textColor: '#6B4F1A' },
+const SUGGESTED_QUESTIONS = [
+  'Which horses have alerts right now?',
+  'What events are coming up this week?',
+  'How much is outstanding in unpaid invoices?',
+  'When is the next farrier appointment?',
+  'Give me an operational summary of the barn.',
 ];
 
-const tasks = [
-  { id: 1, title: 'Update Coggins records for 3 horses', priority: 'High', done: false },
-  { id: 2, title: 'Send March invoices to all owners', priority: 'High', done: false },
-  { id: 3, title: 'Schedule spring vet wellness checks', priority: 'Medium', done: false },
-  { id: 4, title: 'Review feed supplier contract', priority: 'Low', done: true },
-  { id: 5, title: 'Update emergency contact list', priority: 'Medium', done: true },
+const HORSE_OWNER_SUGGESTIONS = [
+  "When is my horse's next farrier appointment?",
+  'Do I have any outstanding invoices?',
+  "Is my horse's coggins up to date?",
+  "What's my horse's board type?",
 ];
 
 export default function Concierge() {
   const router = useRouter();
-  const { isOwner } = useProfile();
-  const overallScore = 81;
+  const { profile, isOwner, isStaff, isHorseOwner, horseLinks } = useProfile();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
 
-  if (!isOwner) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.headerIcon}>
-              <Text style={styles.headerIconText}>S{'\n'}S</Text>
-            </View>
-            <View>
-              <Text style={styles.headerName}>Concierge</Text>
-              <Text style={styles.headerBarn}>Operational Audit</Text>
-            </View>
-          </View>
-        </View>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
-          <Text style={{ fontSize: 16, color: '#9A9285', textAlign: 'center' }}>You don't have permission to view this page.</Text>
-        </View>
-      </View>
-    );
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [askedQuestion, setAskedQuestion] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const inputRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const suggestions = isHorseOwner ? HORSE_OWNER_SUGGESTIONS : SUGGESTED_QUESTIONS;
+
+  async function askConcierge(q: string) {
+    if (!q.trim() || !profile?.id) return;
+
+    setAskedQuestion(q.trim());
+    setQuestion('');
+    setAnswer('');
+    setError('');
+    setLoading(true);
+
+    try {
+      const { data, error: fnError } = await supabase.functions.invoke('concierge-chat', {
+        body: {
+          question: q.trim(),
+          userId: profile.id,
+          role: profile.role,
+          horseIds: horseLinks.map(l => l.horse_id),
+        },
+      });
+
+      if (fnError || data?.error) {
+        setError(data?.error || 'Could not reach the AI. Please try again.');
+      } else {
+        setAnswer(data.answer);
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }
+  }
+
+  function handleReset() {
+    setQuestion('');
+    setAnswer('');
+    setAskedQuestion('');
+    setError('');
+    inputRef.current?.focus();
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: C.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
         <View style={styles.headerLeft}>
-          <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
-            <Home size={18} color="#C9A85C" />
+          <Pressable
+            style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]}
+            onPress={() => router.dismissTo('/dashboard')}
+          >
+            <Home size={18} color={C.secondary} />
           </Pressable>
           <View>
-            <Text style={styles.headerName}>Concierge</Text>
-            <Text style={styles.headerBarn}>Operational Audit</Text>
-          </View>
-        </View>
-        <View style={styles.scoreBadge}>
-          <Text style={styles.scoreNum}>{overallScore}</Text>
-          <Text style={styles.scoreLabel}>Score</Text>
-        </View>
-      </View>
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.overallCard}>
-          <Text style={styles.overallTitle}>Hollow Creek Equestrian</Text>
-          <Text style={styles.overallSub}>Overall operational health</Text>
-          <View style={styles.scoreBar}>
-            <View style={[styles.scoreBarFill, { width: '81%' }]} />
-          </View>
-          <Text style={styles.overallScore}>81/100 — Good Standing</Text>
-        </View>
-        <Text style={styles.sectionTitle}>Category Scores</Text>
-        {audits.map((audit) => (
-          <View key={audit.id} style={styles.auditCard}>
-            <View style={styles.auditInfo}>
-              <Text style={styles.auditCategory}>{audit.category}</Text>
-              <View style={styles.auditBar}>
-                <View style={[styles.auditBarFill, { width: `${audit.score}%`, backgroundColor: audit.score >= 90 ? '#2C4A35' : audit.score >= 75 ? '#C9A85C' : '#8B2E2E' }]} />
+            <View style={styles.headerTitleRow}>
+              <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Concierge')}</Text>
+              <View style={[styles.aiBadge, { backgroundColor: C.secondaryAlpha20 }]}>
+                <Text style={[styles.aiBadgeText, { color: C.secondary, fontFamily: F.sansBold }]}>AI</Text>
               </View>
             </View>
-            <View style={[styles.auditBadge, { backgroundColor: audit.color }]}>
-              <Text style={[styles.auditScore, { color: audit.textColor }]}>{audit.score}</Text>
+            <Text style={styles.headerSub}>{t('Ask anything about your barn')}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Content */}
+      <ScrollView
+        ref={scrollRef}
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Empty state — suggestions */}
+        {!askedQuestion && !loading && (
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIcon, { backgroundColor: C.secondaryAlpha10 }]}>
+              <Sparkles size={28} color={C.secondary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: C.text, fontFamily: F.serif }]}>
+              {t('How can I help?')}
+            </Text>
+            <Text style={[styles.emptySubtitle, { color: C.textMuted, fontFamily: F.sans }]}>
+              {t('I have access to your barn data — horses, schedule, billing, and more.')}
+            </Text>
+
+            <Text style={[styles.suggestionsLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>
+              {t('Try asking...')}
+            </Text>
+            {suggestions.map((s, i) => (
+              <Pressable
+                key={i}
+                style={({ hovered }: any) => [
+                  styles.suggestionChip,
+                  { backgroundColor: C.card, borderColor: C.cardBorder },
+                  hovered && { borderColor: C.secondary, backgroundColor: C.activeBg },
+                ]}
+                onPress={() => askConcierge(s)}
+              >
+                <Text style={[styles.suggestionText, { color: C.text, fontFamily: F.sans }]}>{s}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
+        {/* Question bubble */}
+        {askedQuestion !== '' && (
+          <View style={styles.questionBubbleRow}>
+            <View style={[styles.questionBubble, { backgroundColor: C.secondary }]}>
+              <Text style={[styles.questionText, { fontFamily: F.sans }]}>{askedQuestion}</Text>
             </View>
           </View>
-        ))}
-        <Text style={styles.sectionTitle}>Action Items</Text>
-        {tasks.map((task) => (
-          <View key={task.id} style={[styles.taskCard, task.done && styles.taskDone]}>
-            <View style={[styles.taskCheck, task.done && styles.taskCheckDone]}>
-              {task.done && <Text style={styles.taskCheckMark}>✓</Text>}
-            </View>
-            <View style={styles.taskInfo}>
-              <Text style={[styles.taskTitle, task.done && styles.taskTitleDone]}>{task.title}</Text>
-              <Text style={styles.taskPriority}>{task.priority} Priority</Text>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <View style={styles.loadingRow}>
+            <View style={[styles.loadingBubble, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+              <ActivityIndicator size="small" color={C.secondary} />
+              <Text style={[styles.loadingText, { color: C.textMuted, fontFamily: F.sans }]}>{t('Thinking...')}</Text>
             </View>
           </View>
-        ))}
+        )}
+
+        {/* Answer bubble */}
+        {answer !== '' && (
+          <View style={styles.answerRow}>
+            <View style={[styles.answerIconCol]}>
+              <View style={[styles.answerIcon, { backgroundColor: C.secondaryAlpha15 }]}>
+                <Sparkles size={14} color={C.secondary} />
+              </View>
+            </View>
+            <View style={[styles.answerBubble, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+              <Text style={[styles.answerText, { color: C.text, fontFamily: F.sans }]}>{answer}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Error */}
+        {error !== '' && (
+          <View style={styles.answerRow}>
+            <View style={[styles.answerBubble, { backgroundColor: C.errorBg, borderColor: C.error }]}>
+              <Text style={[styles.answerText, { color: C.error, fontFamily: F.sans }]}>{error}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Ask another */}
+        {(answer || error) && !loading && (
+          <Pressable
+            style={({ hovered }: any) => [styles.resetBtn, hovered && { backgroundColor: C.activeBg }]}
+            onPress={handleReset}
+          >
+            <RotateCcw size={14} color={C.secondary} />
+            <Text style={[styles.resetText, { color: C.secondary, fontFamily: F.sansMedium }]}>{t('Ask another question')}</Text>
+          </Pressable>
+        )}
+
         <View style={{ height: 20 }} />
       </ScrollView>
-    </View>
+
+      {/* Input bar */}
+      <View style={[styles.inputBar, { backgroundColor: C.card, borderTopColor: C.cardBorder }]}>
+        <TextInput
+          ref={inputRef}
+          style={[styles.input, { color: C.text, fontFamily: F.sans, borderColor: C.cardBorder }]}
+          placeholder={t('Ask Concierge anything...')}
+          placeholderTextColor={C.textMuted}
+          value={question}
+          onChangeText={setQuestion}
+          onSubmitEditing={() => askConcierge(question)}
+          returnKeyType="send"
+          editable={!loading}
+          multiline={false}
+        />
+        <Pressable
+          style={({ hovered }: any) => [
+            styles.sendBtn,
+            { backgroundColor: question.trim() ? C.secondary : C.cardBorder },
+            hovered && question.trim() && { backgroundColor: C.secondaryDark },
+          ]}
+          onPress={() => askConcierge(question)}
+          disabled={loading || !question.trim()}
+        >
+          {loading
+            ? <ActivityIndicator size="small" color="white" />
+            : <Send size={16} color="white" />}
+        </Pressable>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+
+  // Header
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerIcon: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  headerIconText: { fontSize: 10, fontWeight: '700', color: '#C9A85C', textAlign: 'center', lineHeight: 11 },
-  headerName: { fontSize: 15, fontWeight: '600', color: '#C9A85C' },
-  headerBarn: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
-  scoreBadge: { backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, padding: 10, alignItems: 'center' },
-  scoreNum: { fontSize: 22, fontWeight: '700', color: '#C9A85C' },
-  scoreLabel: { fontSize: 9, color: 'rgba(201,168,92,0.6)', textTransform: 'uppercase', letterSpacing: 1 },
-  body: { flex: 1, padding: 12 },
-  overallCard: { backgroundColor: '#2C4A35', borderRadius: 12, padding: 20, marginBottom: 16 },
-  overallTitle: { fontSize: 16, fontWeight: '600', color: '#C9A85C', marginBottom: 2 },
-  overallSub: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginBottom: 14 },
-  scoreBar: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, height: 6, marginBottom: 8 },
-  scoreBarFill: { backgroundColor: '#C9A85C', borderRadius: 4, height: 6 },
-  overallScore: { fontSize: 12, color: 'rgba(201,168,92,0.7)' },
-  sectionTitle: { fontSize: 11, fontWeight: '700', color: '#9A9285', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10, marginTop: 4 },
-  auditCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 8, gap: 12 },
-  auditInfo: { flex: 1 },
-  auditCategory: { fontSize: 13, fontWeight: '500', color: '#1A1A14', marginBottom: 6 },
-  auditBar: { backgroundColor: '#F0EAD6', borderRadius: 3, height: 4 },
-  auditBarFill: { borderRadius: 3, height: 4 },
-  auditBadge: { width: 40, height: 40, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  auditScore: { fontSize: 15, fontWeight: '700' },
-  taskCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 8, gap: 12 },
-  taskDone: { opacity: 0.5 },
-  taskCheck: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#2C4A35', alignItems: 'center', justifyContent: 'center' },
-  taskCheckDone: { backgroundColor: '#2C4A35' },
-  taskCheckMark: { fontSize: 12, color: 'white', fontWeight: '700' },
-  taskInfo: { flex: 1 },
-  taskTitle: { fontSize: 13, color: '#1A1A14', fontWeight: '500' },
-  taskTitleDone: { textDecorationLine: 'line-through', color: '#9A9285' },
-  taskPriority: { fontSize: 10, color: '#9A9285', marginTop: 2 },
-  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
+  homeBtn: { width: 36, height: 36, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.12)' },
+  homeBtnHovered: { backgroundColor: 'rgba(255,255,255,0.24)' },
+  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerName: { fontSize: 16 },
+  aiBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  aiBadgeText: { fontSize: 10, letterSpacing: 0.5 },
+  headerSub: { fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 1 },
+
+  // Body
+  body: { flex: 1 },
+  bodyContent: { padding: 16 },
+
+  // Empty state
+  emptyState: { alignItems: 'center', paddingTop: 40 },
+  emptyIcon: { width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  emptyTitle: { fontSize: 24, marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, textAlign: 'center', maxWidth: 300, lineHeight: 20, marginBottom: 32 },
+  suggestionsLabel: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10, alignSelf: 'flex-start' },
+  suggestionChip: { alignSelf: 'stretch', borderWidth: 1, borderRadius: 10, padding: 14, marginBottom: 8 },
+  suggestionText: { fontSize: 14 },
+
+  // Question bubble
+  questionBubbleRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 12 },
+  questionBubble: { borderRadius: 16, borderBottomRightRadius: 4, padding: 14, maxWidth: '85%' },
+  questionText: { color: 'white', fontSize: 14, lineHeight: 20 },
+
+  // Loading
+  loadingRow: { marginBottom: 12 },
+  loadingBubble: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 16, borderWidth: 1, padding: 14, alignSelf: 'flex-start' },
+  loadingText: { fontSize: 13 },
+
+  // Answer bubble
+  answerRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  answerIconCol: { paddingTop: 2 },
+  answerIcon: { width: 24, height: 24, borderRadius: 6, alignItems: 'center', justifyContent: 'center' },
+  answerBubble: { flex: 1, borderRadius: 16, borderBottomLeftRadius: 4, borderWidth: 1, padding: 14 },
+  answerText: { fontSize: 14, lineHeight: 22 },
+
+  // Reset
+  resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'center', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8, marginTop: 8 },
+  resetText: { fontSize: 13 },
+
+  // Input bar
+  inputBar: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderTopWidth: 1 },
+  input: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14 },
+  sendBtn: { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
 });

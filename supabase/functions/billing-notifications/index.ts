@@ -5,7 +5,10 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { persistSession: false },
+  global: { headers: { Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` } },
+})
 
 function daysUntil(dateStr: string): number {
   const diff = new Date(dateStr).getTime() - new Date().getTime()
@@ -29,12 +32,12 @@ async function sendEmail(to: string, subject: string, html: string) {
   return res.ok
 }
 
-function dueSoonEmail(horseName: string, ownerName: string, amount: number, dueDate: string, daysLeft: number): string {
+function dueSoonEmail(horseName: string, ownerName: string, amount: number, dueDate: string, daysLeft: number, barnName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
       <div style="background: #2C4A35; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <h1 style="color: #C9A85C; margin: 0; font-size: 24px;">Scope & Stride</h1>
-        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">Hollow Creek Equestrian</p>
+        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">${barnName}</p>
       </div>
       <h2 style="color: #1A1A14;">Invoice Due in ${daysLeft} Day${daysLeft !== 1 ? 's' : ''}</h2>
       <p style="color: #3A3830;">Hi ${ownerName},</p>
@@ -48,12 +51,12 @@ function dueSoonEmail(horseName: string, ownerName: string, amount: number, dueD
   `
 }
 
-function overdueEmail(horseName: string, ownerName: string, amount: number, dueDate: string): string {
+function overdueEmail(horseName: string, ownerName: string, amount: number, dueDate: string, barnName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
       <div style="background: #2C4A35; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
         <h1 style="color: #C9A85C; margin: 0; font-size: 24px;">Scope & Stride</h1>
-        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">Hollow Creek Equestrian</p>
+        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">${barnName}</p>
       </div>
       <h2 style="color: #8B2E2E;">Invoice Overdue</h2>
       <p style="color: #3A3830;">Hi ${ownerName},</p>
@@ -69,6 +72,13 @@ function overdueEmail(horseName: string, ownerName: string, amount: number, dueD
 
 serve(async () => {
   try {
+    // Fetch barn name from settings
+    const { data: barnSettings } = await supabase
+      .from('barn_settings')
+      .select('barn_name')
+      .single()
+    const barnName = barnSettings?.barn_name ?? 'Hollow Creek'
+
     // Fetch all pending/overdue invoices with horse and profile info
     const { data: invoices, error } = await supabase
       .from('invoices')
@@ -107,13 +117,13 @@ serve(async () => {
         emailSent = await sendEmail(
           profile.email,
           `Invoice due in 5 days — ${horseName}`,
-          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 5)
+          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 5, barnName)
         )
       } else if (daysLeft === 1) {
         emailSent = await sendEmail(
           profile.email,
           `Invoice due tomorrow — ${horseName}`,
-          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 1)
+          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 1, barnName)
         )
       } else if (daysLeft <= 0 && invoice.status !== 'overdue') {
         // Mark as overdue and send notice
@@ -121,13 +131,13 @@ serve(async () => {
         emailSent = await sendEmail(
           profile.email,
           `Invoice overdue — ${horseName}`,
-          overdueEmail(horseName, ownerName, amount, invoice.due_date)
+          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName)
         )
       } else if (invoice.status === 'overdue') {
         emailSent = await sendEmail(
           profile.email,
           `Invoice overdue — ${horseName}`,
-          overdueEmail(horseName, ownerName, amount, invoice.due_date)
+          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName)
         )
       }
 

@@ -1,11 +1,19 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Home, ChessKnight } from 'lucide-react-native';
+import { ChessKnight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../lib/LanguageContext';
+import { useTheme } from '../context/ThemeContext';
+import HomeButton from '../lib/HomeButton';
+import Brand from '../constants/brand';
 
 export default function Horses() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const theme = useTheme();
+  const C = theme.colors;
+  const F = theme.fonts;
   const [horses, setHorses] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,57 +28,55 @@ export default function Horses() {
   }
 
   async function handleDelete(id: number, name: string) {
-    if (!confirm(`Remove ${name} from Hollow Creek?`)) return;
+    if (!confirm(t('Remove {name} from {barn}?', { name, barn: Brand.barnName }))) return;
     await supabase.from('horses').delete().eq('id', id);
     setHorses((prev: any) => prev.filter((h: any) => h.id !== id));
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: C.background }]}>
+      <View style={[styles.header, { backgroundColor: C.primary }]}>
         <View style={styles.headerLeft}>
-          <Pressable style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]} onPress={() => router.push('/dashboard')}>
-            <Home size={18} color="#C9A85C" />
-          </Pressable>
+          <HomeButton />
           <View>
-            <Text style={styles.headerName}>Horses</Text>
-            <Text style={styles.headerBarn}>{horses.length} horses · Hollow Creek</Text>
+            <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Horses')}</Text>
+            <Text style={styles.headerBarn}>{horses.length} {t('horses')} · {Brand.barnName}</Text>
           </View>
         </View>
         <View style={styles.headerButtons}>
           <Pressable
-            style={({ hovered }: any) => [styles.addBtn, hovered && styles.addBtnHovered]}
+            style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
             onPress={() => router.push('/import-horses')}
           >
-            <Text style={styles.addBtnText}>⬆ Import</Text>
+            <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>⬆ Import</Text>
           </Pressable>
           <Pressable
-            style={({ hovered }: any) => [styles.addBtn, hovered && styles.addBtnHovered]}
+            style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
             onPress={() => router.push('/add-horse')}
           >
-            <Text style={styles.addBtnText}>+ Add</Text>
+            <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ Add</Text>
           </Pressable>
         </View>
       </View>
 
-      <View style={styles.searchBar}>
-        <Text style={styles.searchText}>🔍  Search horses, owners, stalls…</Text>
+      <View style={[styles.searchBar, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+        <Text style={[styles.searchText, { color: C.textMuted }]}>🔍  {t('Search horses, owners, stalls…')}</Text>
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <ActivityIndicator size="large" color="#2C4A35" style={{ marginTop: 40 }} />
+          <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : horses.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🐴</Text>
-            <Text style={styles.emptyTitle}>No horses yet</Text>
-            <Text style={styles.emptyText}>Add your first horse or import a CSV to get started.</Text>
+            <Text style={[styles.emptyTitle, { color: C.text, fontFamily: F.sansBold }]}>{t('No horses yet.')}</Text>
+            <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('Add your first horse or import a CSV to get started.')}</Text>
           </View>
         ) : (
           horses.map((horse: any) => (
             <Pressable
               key={horse.id}
-              style={({ hovered }: any) => [styles.horseCard, hovered && styles.horseCardHovered]}
+              style={({ hovered }: any) => [styles.horseCard, { backgroundColor: C.card, borderColor: C.cardBorder }, hovered && { backgroundColor: C.cardSeparator, borderColor: C.secondary }]}
               onPress={() => router.push(`/horse/${horse.id}`)}
             >
               {({ hovered }: any) => (
@@ -80,22 +86,22 @@ export default function Horses() {
                   </View>
                   <View style={styles.horseInfo}>
                     <View style={styles.horseNameRow}>
-                      <Text style={styles.horseName}>{horse.name}</Text>
-                      {horse.alert && <View style={styles.alertDot} />}
+                      <Text style={[styles.horseName, { color: C.text, fontFamily: F.serif }]}>{horse.name}</Text>
+                      {horse.alert && <View style={[styles.alertDot, { backgroundColor: C.error }]} />}
                     </View>
-                    <Text style={styles.horseMeta}>Stall {horse.stall} · {horse.owner}</Text>
-                    <Text style={styles.horseBreed}>{horse.breed}</Text>
+                    <Text style={[styles.horseMeta, { color: C.textMuted }]}>Stall {horse.stall} · {horse.owner}</Text>
+                    <Text style={[styles.horseBreed, { color: C.textWarm }]}>{horse.breed}</Text>
                   </View>
                   {hovered ? (
                     <Pressable
-                      style={({ hovered: h }: any) => [styles.deleteBtn, h && styles.deleteBtnHovered]}
+                      style={({ hovered: h }: any) => [styles.deleteBtn, { backgroundColor: C.errorBg }, h && { backgroundColor: C.error }]}
                       onPress={() => handleDelete(horse.id, horse.name)}
                     >
-                      <Text style={styles.deleteBtnText}>Remove</Text>
+                      <Text style={[styles.deleteBtnText, { color: C.error }]}>{t('Remove')}</Text>
                     </Pressable>
                   ) : (
-                    <View style={styles.horseBadge}>
-                      <Text style={styles.horseBadgeText}>{horse.board_type}</Text>
+                    <View style={[styles.horseBadge, { backgroundColor: C.activeBg }]}>
+                      <Text style={[styles.horseBadgeText, { color: C.primary, fontFamily: F.sansMedium }]}>{horse.board_type}</Text>
                     </View>
                   )}
                 </>
@@ -110,39 +116,32 @@ export default function Horses() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FAF7F2' },
-  header: { backgroundColor: '#2C4A35', padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  container: { flex: 1 },
+  header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerIcon: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  headerIconText: { fontSize: 10, fontWeight: '700', color: '#C9A85C', textAlign: 'center', lineHeight: 11 },
-  headerName: { fontSize: 15, fontWeight: '600', color: '#C9A85C' },
+  headerName: { fontSize: 15, fontWeight: '600' },
   headerBarn: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
   headerButtons: { flexDirection: 'row', gap: 8 },
-  addBtn: { backgroundColor: 'rgba(201,168,92,0.15)', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
-  addBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
-  addBtnText: { color: '#C9A85C', fontSize: 13, fontWeight: '600' },
-  searchBar: { backgroundColor: 'white', margin: 12, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#E8E0CC' },
-  searchText: { fontSize: 13, color: '#9A9285' },
+  addBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
+  addBtnText: { fontSize: 13, fontWeight: '600' },
+  searchBar: { margin: 12, borderRadius: 10, padding: 12, borderWidth: 1 },
+  searchText: { fontSize: 13 },
   body: { flex: 1, paddingHorizontal: 12 },
   emptyState: { alignItems: 'center', paddingTop: 60 },
   emptyIcon: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 16, fontWeight: '600', color: '#1A1A14', marginBottom: 8 },
-  emptyText: { fontSize: 13, color: '#9A9285', textAlign: 'center' },
-  horseCard: { backgroundColor: 'white', borderWidth: 1, borderColor: '#E8E0CC', borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 8, gap: 12 },
-  horseCardHovered: { backgroundColor: '#F5F1EA', borderColor: '#C9A85C' },
+  emptyTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  emptyText: { fontSize: 13, textAlign: 'center' },
+  horseCard: { borderWidth: 1, borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 8, gap: 12 },
   horseAvatar: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   horseAvatarText: { fontSize: 22 },
   horseInfo: { flex: 1 },
   horseNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  horseName: { fontSize: 15, fontWeight: '600', color: '#1A1A14', fontStyle: 'italic' },
-  alertDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#8B2E2E' },
-  horseMeta: { fontSize: 11, color: '#9A9285', marginTop: 2 },
-  horseBreed: { fontSize: 11, color: '#B08C4A', marginTop: 1 },
-  horseBadge: { backgroundColor: '#EDF5EF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  horseBadgeText: { fontSize: 10, color: '#2C4A35', fontWeight: '500' },
-  deleteBtn: { backgroundColor: '#FDECEA', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
-  deleteBtnHovered: { backgroundColor: '#8B2E2E' },
-  deleteBtnText: { fontSize: 11, fontWeight: '600', color: '#8B2E2E' },
-  homeBtn: { width: 32, height: 32, backgroundColor: 'rgba(201,168,92,0.15)', borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  homeBtnHovered: { backgroundColor: 'rgba(201,168,92,0.3)' },
+  horseName: { fontSize: 15, fontWeight: '600', fontStyle: 'italic' },
+  alertDot: { width: 6, height: 6, borderRadius: 3 },
+  horseMeta: { fontSize: 11, marginTop: 2 },
+  horseBreed: { fontSize: 11, marginTop: 1 },
+  horseBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  horseBadgeText: { fontSize: 10, fontWeight: '500' },
+  deleteBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+  deleteBtnText: { fontSize: 11, fontWeight: '600' },
 });
