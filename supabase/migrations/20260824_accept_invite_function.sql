@@ -25,7 +25,7 @@ BEGIN
 
   -- Update profile with correct role from invite
   UPDATE profiles
-  SET role = invite_role, barn_id = 'default', onboarding_complete = true
+  SET role = invite_role, onboarding_complete = true
   WHERE id = current_user_id;
 
   -- Create horse link if applicable
