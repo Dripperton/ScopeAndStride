@@ -73,49 +73,17 @@ export default function Layout() {
       (async () => {
         const email = session.user.email?.toLowerCase();
 
-        // Check for a pending invite first — regardless of whether a profile exists
-        // (a DB trigger may have already created a profile with a default role)
-        const { data: invite } = await supabase
+        // Check for a pending invite and process it via a SECURITY DEFINER function
+        // that bypasses RLS to correctly set the profile role
+        const { data: hasPendingInvite } = await supabase
           .from('invites')
-          .select('*')
+          .select('id')
           .eq('email', email)
           .eq('accepted', false)
           .single();
 
-        if (invite) {
-          // Map legacy 'rider' role to 'horse_owner'
-          const role = invite.role === 'rider' ? 'horse_owner' : invite.role;
-
-          // Upsert profile with the correct role from the invite
-          await supabase.from('profiles').upsert({
-            id: session.user.id,
-            email,
-            full_name: '',
-            role,
-            barn_id: 'default',
-            onboarding_complete: true, // invited users already have horse assigned
-          });
-
-          // Create horse link if applicable and not already linked
-          if (role === 'horse_owner' && invite.horse_id) {
-            const { data: existingLink } = await supabase
-              .from('horse_users')
-              .select('id')
-              .eq('horse_id', invite.horse_id)
-              .eq('user_id', session.user.id)
-              .single();
-
-            if (!existingLink) {
-              await supabase.from('horse_users').insert({
-                horse_id: invite.horse_id,
-                user_id: session.user.id,
-                relationship: invite.relationship || 'owner',
-                billing_contact: invite.billing_contact || false,
-              });
-            }
-          }
-
-          await supabase.from('invites').update({ accepted: true }).eq('id', invite.id);
+        if (hasPendingInvite) {
+          await supabase.rpc('accept_invite');
           router.replace('/dashboard');
           return;
         }
