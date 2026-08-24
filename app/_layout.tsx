@@ -44,7 +44,7 @@ export default function Layout() {
         setSession(session);
         return;
       }
-      if (event === 'SIGNED_OUT') {
+      if (event === 'SIGNED_OUT' || event === 'SIGNED_IN') {
         hasRedirected.current = false;
       }
       setIsRecovery(false);

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ChessKnight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
+import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
@@ -14,16 +15,24 @@ export default function Horses() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
+  const { isHorseOwner, horseLinks } = useProfile();
   const [horses, setHorses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHorses();
-  }, []);
+  }, [isHorseOwner, horseLinks]);
 
   async function fetchHorses() {
-    const { data } = await supabase.from('horses').select('*');
-    if (data) setHorses(data);
+    if (isHorseOwner) {
+      const ids = horseLinks.map(l => l.horse_id);
+      if (ids.length === 0) { setHorses([]); setLoading(false); return; }
+      const { data } = await supabase.from('horses').select('*').in('id', ids);
+      if (data) setHorses(data);
+    } else {
+      const { data } = await supabase.from('horses').select('*');
+      if (data) setHorses(data);
+    }
     setLoading(false);
   }
 
@@ -43,20 +52,22 @@ export default function Horses() {
             <Text style={styles.headerBarn}>{horses.length} {t('horses')} · {Brand.barnName}</Text>
           </View>
         </View>
-        <View style={styles.headerButtons}>
-          <Pressable
-            style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
-            onPress={() => router.push('/import-horses')}
-          >
-            <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>⬆ Import</Text>
-          </Pressable>
-          <Pressable
-            style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
-            onPress={() => router.push('/add-horse')}
-          >
-            <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ Add</Text>
-          </Pressable>
-        </View>
+        {!isHorseOwner && (
+          <View style={styles.headerButtons}>
+            <Pressable
+              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              onPress={() => router.push('/import-horses')}
+            >
+              <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>⬆ Import</Text>
+            </Pressable>
+            <Pressable
+              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              onPress={() => router.push('/add-horse')}
+            >
+              <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ Add</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <View style={[styles.searchBar, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
@@ -92,7 +103,7 @@ export default function Horses() {
                     <Text style={[styles.horseMeta, { color: C.textMuted }]}>Stall {horse.stall} · {horse.owner}</Text>
                     <Text style={[styles.horseBreed, { color: C.textWarm }]}>{horse.breed}</Text>
                   </View>
-                  {hovered ? (
+                  {hovered && !isHorseOwner ? (
                     <Pressable
                       style={({ hovered: h }: any) => [styles.deleteBtn, { backgroundColor: C.errorBg }, h && { backgroundColor: C.error }]}
                       onPress={() => handleDelete(horse.id, horse.name)}
