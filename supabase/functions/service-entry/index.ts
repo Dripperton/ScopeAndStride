@@ -63,7 +63,7 @@ async function sendVisitEmail(opts: {
   const formattedAmount = opts.amount ? `$${opts.amount.toFixed(2)}` : null;
 
   const paymentSection = opts.barnInvoiced
-    ? `<p style="margin:0;color:#6B7280;font-size:14px;">This visit has been added to your barn invoice.</p>`
+    ? `<p style="margin:0;color:#6B7280;font-size:14px;">This service will appear on your next barn invoice.</p>`
     : opts.paymentUrl && formattedAmount
     ? `<a href="${opts.paymentUrl}" style="display:inline-block;margin-top:4px;background:#2C4A35;color:white;text-decoration:none;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;">Pay ${formattedAmount}</a>`
     : '';
@@ -73,7 +73,8 @@ async function sendVisitEmail(opts: {
     ['Date', formattedDate],
     opts.providerName ? ['Provider', opts.providerName] : null,
     opts.title ? ['What was done', opts.title] : null,
-    formattedAmount ? ['Amount', formattedAmount] : null,
+    // Don't show amount for barn-invoiced visits — billing handled via invoice
+    !opts.barnInvoiced && formattedAmount ? ['Amount', formattedAmount] : null,
   ].filter(Boolean) as [string, string][];
 
   const tableRows = rows.map(([label, value]) => `
