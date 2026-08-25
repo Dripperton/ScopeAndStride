@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
-import { ChessKnight, Calendar, DollarSign, MoreHorizontal, Receipt } from 'lucide-react-native';
+import { Calendar, DollarSign, Receipt, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 import { useLanguage } from '../../lib/LanguageContext';
@@ -18,6 +18,7 @@ export default function Billing() {
   const C = theme.colors;
   const F = theme.fonts;
   const [invoices, setInvoices] = useState<any[]>([]);
+  const [pendingCharges, setPendingCharges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [qbConnected, setQbConnected] = useState(false);
@@ -63,9 +64,43 @@ export default function Billing() {
       query = query.eq('horse_id', profile.horse_id);
     }
 
-    const { data } = await query;
+    const [{ data }, { data: pending }] = await Promise.all([
+      query,
+      isOwner
+        ? supabase
+            .from('service_visits')
+            .select('*, horses(id, name, owner)')
+            .eq('barn_invoiced', true)
+            .is('invoice_id', null)
+            .not('amount', 'is', null)
+            .order('date', { ascending: false })
+        : Promise.resolve({ data: [] }),
+    ]);
+
     setInvoices(data || []);
+    setPendingCharges(pending || []);
     setLoading(false);
+  }
+
+  async function handleAddToInvoice(visit: any) {
+    const horse = visit.horses;
+    if (!horse) return;
+    const serviceLabel = visit.service_type.charAt(0).toUpperCase() + visit.service_type.slice(1);
+    const description = [serviceLabel, visit.title || visit.provider_name].filter(Boolean).join(' — ');
+
+    const { data: invoice, error: invErr } = await supabase
+      .from('invoices')
+      .insert({ horse_id: horse.id, owner_name: horse.owner || horse.name, status: 'pending' })
+      .select()
+      .single();
+    if (invErr || !invoice) { alert('Failed to create invoice'); return; }
+
+    await Promise.all([
+      supabase.from('invoice_line_items').insert({ invoice_id: invoice.id, description, amount: visit.amount }),
+      supabase.from('service_visits').update({ invoice_id: invoice.id }).eq('id', visit.id),
+    ]);
+
+    fetchInvoices();
   }
 
   function getTotal(invoice: any) {
@@ -138,6 +173,38 @@ export default function Billing() {
               </View>
             </View>
           </View>
+        )}
+
+        {isOwner && pendingCharges.length > 0 && (
+          <>
+            <View style={styles.pendingHeader}>
+              <AlertCircle size={13} color={C.warning} />
+              <Text style={[styles.sectionTitle, { color: C.warning, fontFamily: F.sansBold, marginBottom: 0 }]}>{t('Pending Charges')}</Text>
+            </View>
+            {pendingCharges.map(visit => {
+              const serviceLabel = visit.service_type.charAt(0).toUpperCase() + visit.service_type.slice(1);
+              return (
+                <View key={visit.id} style={[styles.pendingCard, { backgroundColor: C.card, borderColor: C.warningBg }]}>
+                  <View style={styles.pendingLeft}>
+                    <Text style={[styles.pendingHorse, { color: C.text, fontFamily: F.sansBold }]}>{visit.horses?.name || '—'}</Text>
+                    <Text style={[styles.pendingMeta, { color: C.textMuted, fontFamily: F.sans }]}>
+                      {serviceLabel}{visit.title ? ` — ${visit.title}` : ''}{visit.provider_name ? ` · ${visit.provider_name}` : ''}
+                    </Text>
+                    <Text style={[styles.pendingDate, { color: C.textMuted, fontFamily: F.sans }]}>{visit.date}</Text>
+                  </View>
+                  <View style={styles.pendingRight}>
+                    <Text style={[styles.pendingAmount, { color: C.text, fontFamily: F.sansBold }]}>${Number(visit.amount).toFixed(2)}</Text>
+                    <Pressable
+                      style={({ hovered }: any) => [styles.addInvoiceBtn, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
+                      onPress={() => handleAddToInvoice(visit)}
+                    >
+                      <Text style={[styles.addInvoiceBtnText, { fontFamily: F.sansBold }]}>{t('Add to Invoice')}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </>
         )}
 
         <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Invoices')}</Text>
@@ -221,4 +288,14 @@ const styles = StyleSheet.create({
   invoiceAmount: { fontSize: 16, fontWeight: '700' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   statusText: { fontSize: 10, fontWeight: '600' },
+  pendingHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10, marginTop: 4 },
+  pendingCard: { borderWidth: 1, borderRadius: 10, flexDirection: 'row', alignItems: 'center', padding: 14, marginBottom: 8, gap: 12 },
+  pendingLeft: { flex: 1 },
+  pendingHorse: { fontSize: 14, fontWeight: '600' },
+  pendingMeta: { fontSize: 12, marginTop: 2 },
+  pendingDate: { fontSize: 11, marginTop: 2 },
+  pendingRight: { alignItems: 'flex-end', gap: 6 },
+  pendingAmount: { fontSize: 15, fontWeight: '700' },
+  addInvoiceBtn: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  addInvoiceBtnText: { color: 'white', fontSize: 12, fontWeight: '600' },
 });
