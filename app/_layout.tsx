@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { View, ActivityIndicator, Text, ScrollView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -27,8 +27,11 @@ import { LanguageProvider } from '../lib/LanguageContext';
 import { ThemeProvider, HHF_THEME } from '../context/ThemeContext';
 import { ProfileProvider } from '../lib/useProfile';
 
+const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
+
 export default function Layout() {
   const router = useRouter();
+  const pathname = usePathname();
   const [session, setSession] = useState<any>(undefined);
   const [isRecovery, setIsRecovery] = useState(false);
   const hasRedirected = useRef(false);
@@ -56,6 +59,8 @@ export default function Layout() {
 
   useEffect(() => {
     if (session === undefined) return;
+    // Don't redirect away from public QR entry routes
+    if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return;
     if (isRecovery) {
       router.replace('/reset-password');
       return;
@@ -105,7 +110,7 @@ export default function Layout() {
         }
       })();
     }
-  }, [session, isRecovery]);
+  }, [session, isRecovery, pathname]);
 
   if (session === undefined) {
     return (
