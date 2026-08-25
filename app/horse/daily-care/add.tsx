@@ -1,11 +1,19 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
 import DateInput from '../../../lib/DateInput';
 import { useLanguage } from '../../../lib/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
+import { Plus, Trash2, X } from 'lucide-react-native';
+
+const STANDARD_TEMPLATES = [
+  'Stays in',
+  'Stall cleaned',
+  'Do not ride',
+  'Lame — monitor',
+];
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -24,11 +32,17 @@ export default function AddDailyCare() {
   const [horseName, setHorseName] = useState('');
 
   const [date, setDate] = useState(today());
-  const [groomed, setGroomed] = useState(false);
+  const [groomed, setGroomed] = useState(!logId);
   const [turnedOut, setTurnedOut] = useState(false);
   const [turnoutDuration, setTurnoutDuration] = useState('');
   const [ridden, setRidden] = useState(false);
   const [notes, setNotes] = useState('');
+
+  const [customTemplates, setCustomTemplates] = useState<{ id: string; text: string }[]>([]);
+  const [addingTemplate, setAddingTemplate] = useState(false);
+  const [newTemplateText, setNewTemplateText] = useState('');
+  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [manageVisible, setManageVisible] = useState(false);
 
   useEffect(() => {
     async function fetchHorse() {
@@ -51,6 +65,33 @@ export default function AddDailyCare() {
       });
     }
   }, [horseId, logId]);
+
+  useEffect(() => {
+    supabase.from('note_templates').select('id, text').order('text').then(({ data }) => {
+      if (data) setCustomTemplates(data);
+    });
+  }, []);
+
+  function applyTemplate(text: string) {
+    setNotes(prev => prev.trim() ? `${prev.trim()}\n${text}` : text);
+  }
+
+  async function saveTemplate() {
+    const text = newTemplateText.trim();
+    if (!text) return;
+    setSavingTemplate(true);
+    await supabase.from('note_templates').insert({ text, created_by: profile?.id });
+    const { data } = await supabase.from('note_templates').select('id, text').order('text');
+    if (data) setCustomTemplates(data);
+    setNewTemplateText('');
+    setAddingTemplate(false);
+    setSavingTemplate(false);
+  }
+
+  async function deleteTemplate(id: string) {
+    await supabase.from('note_templates').delete().eq('id', id);
+    setCustomTemplates(prev => prev.filter(t => t.id !== id));
+  }
 
   async function handleSave() {
     setSaving(true);
@@ -89,6 +130,29 @@ export default function AddDailyCare() {
           {saving ? <ActivityIndicator color="#FFFFFF" size="small" /> : <Text style={[styles.saveBtnText, { fontFamily: F.sansBold }]}>{t('Save')}</Text>}
         </Pressable>
       </View>
+
+      {/* Manage Custom Templates Modal */}
+      <Modal visible={manageVisible} transparent animationType="slide" onRequestClose={() => setManageVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setManageVisible(false)}>
+          <Pressable style={[styles.modalSheet, { backgroundColor: C.card }]} onPress={() => {}}>
+            <Text style={[styles.modalTitle, { color: C.text, fontFamily: F.sansBold }]}>Custom Templates</Text>
+            {customTemplates.length === 0 && (
+              <Text style={[styles.emptyText, { color: C.textMuted, fontFamily: F.sans }]}>No custom templates yet.</Text>
+            )}
+            {customTemplates.map(tmpl => (
+              <View key={tmpl.id} style={[styles.manageRow, { borderColor: C.cardBorder }]}>
+                <Text style={[styles.manageRowText, { color: C.text, fontFamily: F.sans }]}>{tmpl.text}</Text>
+                <Pressable onPress={() => deleteTemplate(tmpl.id)} style={styles.deleteBtn}>
+                  <Trash2 size={14} color={C.error} />
+                </Pressable>
+              </View>
+            ))}
+            <Pressable onPress={() => setManageVisible(false)} style={styles.closeBtn}>
+              <Text style={[styles.closeBtnText, { color: C.textMuted, fontFamily: F.sans }]}>Done</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
@@ -133,6 +197,66 @@ export default function AddDailyCare() {
 
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Notes')}</Text>
+
+          {/* Template chips */}
+          <View style={styles.chipsRow}>
+            {STANDARD_TEMPLATES.map(text => (
+              <Pressable
+                key={text}
+                style={({ hovered }: any) => [styles.chip, { backgroundColor: C.activeBg, borderColor: C.primary }, hovered && { opacity: 0.75 }]}
+                onPress={() => applyTemplate(text)}
+              >
+                <Text style={[styles.chipText, { color: C.primary, fontFamily: F.sansMedium }]}>{text}</Text>
+              </Pressable>
+            ))}
+            {customTemplates.map(tmpl => (
+              <Pressable
+                key={tmpl.id}
+                style={({ hovered }: any) => [styles.chip, { backgroundColor: C.activeBg, borderColor: C.primary }, hovered && { opacity: 0.75 }]}
+                onPress={() => applyTemplate(tmpl.text)}
+              >
+                <Text style={[styles.chipText, { color: C.primary, fontFamily: F.sansMedium }]}>{tmpl.text}</Text>
+              </Pressable>
+            ))}
+            {canEdit && !addingTemplate && (
+              <Pressable
+                style={({ hovered }: any) => [styles.chip, styles.chipAdd, { borderColor: C.cardBorder }, hovered && { backgroundColor: C.activeBg }]}
+                onPress={() => setAddingTemplate(true)}
+              >
+                <Plus size={12} color={C.textMuted} />
+              </Pressable>
+            )}
+            {canEdit && customTemplates.length > 0 && !addingTemplate && (
+              <Pressable onPress={() => setManageVisible(true)} style={styles.manageLink}>
+                <Text style={[styles.manageLinkText, { color: C.textMuted, fontFamily: F.sans }]}>Manage</Text>
+              </Pressable>
+            )}
+          </View>
+
+          {/* Inline add custom template */}
+          {addingTemplate && (
+            <View style={[styles.inlineAddRow, { borderColor: C.cardBorder }]}>
+              <TextInput
+                style={[styles.inlineAddInput, { color: C.text, fontFamily: F.sans }]}
+                value={newTemplateText}
+                onChangeText={setNewTemplateText}
+                placeholder="New template text..."
+                placeholderTextColor={C.textMuted}
+                autoFocus
+              />
+              <Pressable
+                style={[styles.inlineAddSave, { backgroundColor: C.primary }, (!newTemplateText.trim() || savingTemplate) && { opacity: 0.4 }]}
+                onPress={saveTemplate}
+                disabled={!newTemplateText.trim() || savingTemplate}
+              >
+                <Text style={[styles.inlineAddSaveText, { color: C.card, fontFamily: F.sansBold }]}>Save</Text>
+              </Pressable>
+              <Pressable onPress={() => { setAddingTemplate(false); setNewTemplateText(''); }} style={styles.inlineAddCancel}>
+                <X size={16} color={C.textMuted} />
+              </Pressable>
+            </View>
+          )}
+
           <TextInput
             style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
             value={notes}
@@ -167,4 +291,24 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14 },
   durationInput: { marginTop: 8, marginLeft: 34 },
   notesInput: { minHeight: 96, textAlignVertical: 'top' },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12, alignItems: 'center' },
+  chip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
+  chipAdd: { paddingHorizontal: 8, paddingVertical: 6 },
+  chipText: { fontSize: 13 },
+  manageLink: { paddingHorizontal: 4 },
+  manageLinkText: { fontSize: 12, textDecorationLine: 'underline' },
+  inlineAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 10 },
+  inlineAddInput: { flex: 1, fontSize: 14, paddingVertical: 4 },
+  inlineAddSave: { borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+  inlineAddSaveText: { fontSize: 13, fontWeight: '700' },
+  inlineAddCancel: { padding: 4 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalSheet: { borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 24, paddingBottom: 40, maxHeight: '80%' },
+  modalTitle: { fontSize: 16, fontWeight: '700', marginBottom: 16 },
+  manageRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, marginBottom: 8 },
+  manageRowText: { flex: 1, fontSize: 14 },
+  emptyText: { fontSize: 13, fontStyle: 'italic', marginBottom: 12 },
+  deleteBtn: { paddingLeft: 12 },
+  closeBtn: { alignSelf: 'center', marginTop: 12, paddingVertical: 4 },
+  closeBtnText: { fontSize: 13 },
 });

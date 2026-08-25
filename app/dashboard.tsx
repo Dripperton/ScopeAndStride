@@ -32,6 +32,7 @@ import {
   SlidersHorizontal,
   RotateCcw,
   Building2,
+  CalendarDays,
 } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
@@ -507,8 +508,9 @@ export default function Dashboard() {
                     <ActionTile icon={<ChessKnight size={28} color="white" />} label={t('Horses')} badge={false} badgeCount={horseCount || undefined} onPress={() => router.push('/horses')} C={C} />
                   )}
                   {isWidget('qa_schedule') && (
-                    <ActionTile icon={<Calendar size={28} color="white" />} label={t('Schedule')} badgeCount={todayEventCount || undefined} onPress={() => router.push('/schedule')} C={C} />
-                  )}
+                    <ActionTile icon={<Calendar size={28} color="white" />} label={t('Calendar')} badgeCount={todayEventCount || undefined} onPress={() => router.push('/schedule')} C={C} />
+)}
+                  <ActionTile icon={<CalendarDays size={28} color="white" />} label={t('Lessons')} onPress={() => router.push('/scheduling')} C={C} />
                   {isOwner && isWidget('qa_billing') && (
                     <ActionTile icon={<DollarSign size={28} color="white" />} label={t('Billing')} badgeCount={outstanding > 0 ? undefined : undefined} onPress={() => router.push('/billing')} C={C} />
                   )}
@@ -723,8 +725,9 @@ export default function Dashboard() {
                       <ActionTile icon={<ChessKnight size={28} color="white" />} label={t('My Horse')} onPress={() => router.push(`/horse/${myHorse.id}`)} C={C} />
                     )}
                     {isWidget('qa_schedule') && (
-                      <ActionTile icon={<Calendar size={28} color="white" />} label={t('Schedule')} onPress={() => router.push('/schedule')} C={C} />
+                      <ActionTile icon={<Calendar size={28} color="white" />} label={t('Calendar')} onPress={() => router.push('/schedule')} C={C} />
                     )}
+                    <ActionTile icon={<CalendarDays size={28} color="white" />} label={t('Lessons')} onPress={() => router.push('/scheduling')} C={C} />
                     {isWidget('qa_billing') && (
                       <ActionTile icon={<DollarSign size={28} color="white" />} label={t('Billing')} onPress={() => router.push('/billing')} C={C} />
                     )}

@@ -1,4 +1,4 @@
-import { InteractionManager, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Home } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -14,11 +14,7 @@ export default function HomeButton() {
         { backgroundColor: 'rgba(255,255,255,0.18)' },
         hovered && { backgroundColor: 'rgba(255,255,255,0.32)' },
       ]}
-      onPress={() => {
-        InteractionManager.runAfterInteractions(() => {
-          router.dismissTo('/dashboard');
-        });
-      }}
+      onPress={() => router.dismissTo('/dashboard')}
     >
       <Home size={18} color={C.secondary} />
     </Pressable>

@@ -39,6 +39,9 @@ export default function EditHorse() {
   const [emergencyContactPhone, setEmergencyContactPhone] = useState('');
   const [cogginsExpiryDate, setCogginsExpiryDate] = useState('');
   const [cogginsImageUrl, setCogginsImageUrl] = useState('');
+  const [insuranceCompany, setInsuranceCompany] = useState('');
+  const [insurancePhone, setInsurancePhone] = useState('');
+  const [insurancePolicyNumber, setInsurancePolicyNumber] = useState('');
 
   useEffect(() => {
     if (profileLoading) return; if (canEdit === false) { router.replace("/horses"); return; }
@@ -63,6 +66,9 @@ export default function EditHorse() {
         setEmergencyContactPhone(data.emergency_contact_phone || '');
         setCogginsExpiryDate(data.coggins_expiry_date || '');
         setCogginsImageUrl(data.coggins_image_url || '');
+        setInsuranceCompany(data.insurance_company || '');
+        setInsurancePhone(data.insurance_phone || '');
+        setInsurancePolicyNumber(data.insurance_policy_number || '');
         setPhotoUrl(data.photo_url || '');
       }
       setLoading(false);
@@ -102,6 +108,9 @@ export default function EditHorse() {
       emergency_contact_phone: emergencyContactPhone,
       coggins_expiry_date: cogginsExpiryDate || null,
       coggins_image_url: cogginsImageUrl.trim() || null,
+      insurance_company: insuranceCompany.trim() || null,
+      insurance_phone: insurancePhone.trim() || null,
+      insurance_policy_number: insurancePolicyNumber.trim() || null,
       photo_url: photoUrl,
     }).eq('id', id);
     setSaving(false);
@@ -255,6 +264,16 @@ export default function EditHorse() {
             autoCapitalize="none"
             keyboardType="url"
           />
+        </View>
+
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Insurance')}</Text>
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>COMPANY NAME</Text>
+          <TextInput style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={insuranceCompany} onChangeText={setInsuranceCompany} placeholder="e.g. Markel Insurance" placeholderTextColor={C.textMuted} />
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>PHONE NUMBER</Text>
+          <TextInput style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={insurancePhone} onChangeText={setInsurancePhone} placeholder="e.g. (800) 555-0100" placeholderTextColor={C.textMuted} keyboardType="phone-pad" />
+          <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>POLICY NUMBER</Text>
+          <TextInput style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={insurancePolicyNumber} onChangeText={setInsurancePolicyNumber} placeholder="e.g. EQ-2024-00123" placeholderTextColor={C.textMuted} autoCapitalize="characters" />
         </View>
 
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

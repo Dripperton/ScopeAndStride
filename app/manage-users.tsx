@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
@@ -41,6 +41,7 @@ export default function ManageUsers() {
   const [sending, setSending] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const scrollRef = useRef<any>(null);
 
   useEffect(() => { fetchData(); }, []);
 
@@ -187,12 +188,12 @@ export default function ManageUsers() {
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Manage Users')}</Text>
-        <Pressable style={[styles.inviteBtn, { backgroundColor: C.secondaryAlpha15 }]} onPress={() => setShowInviteForm(!showInviteForm)}>
+        <Pressable style={[styles.inviteBtn, { backgroundColor: C.secondaryAlpha15 }]} onPress={() => { setShowInviteForm(v => { if (!v) scrollRef.current?.scrollTo({ y: 0, animated: true }); return !v; }); }}>
           <Text style={[styles.inviteBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Invite')}</Text>
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false}>
 
         {showInviteForm && (
           <View style={[styles.inviteForm, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

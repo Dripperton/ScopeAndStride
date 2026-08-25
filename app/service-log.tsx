@@ -54,7 +54,14 @@ export default function ServiceLog() {
         supabase.from('alert_settings').select('barn_qr_token').eq('barn_id', 'default').single(),
       ]);
       if (data) setVisits(data);
-      if (settings?.barn_qr_token) setBarnQrToken(settings.barn_qr_token);
+      if (settings?.barn_qr_token) {
+        setBarnQrToken(settings.barn_qr_token);
+      } else {
+        // Auto-generate barn QR token on first load
+        const newToken = crypto.randomUUID();
+        await supabase.from('alert_settings').update({ barn_qr_token: newToken }).eq('barn_id', 'default');
+        setBarnQrToken(newToken);
+      }
       setLoading(false);
     }
     fetchVisits();

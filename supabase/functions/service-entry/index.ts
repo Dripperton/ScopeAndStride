@@ -29,11 +29,17 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 async function getOwnerEmail(horseId: number): Promise<string | null> {
+  // Look up via horse_users join table (billing contact preferred, falls back to first linked owner)
+  const { data: links } = await supabase
+    .from('horse_users')
+    .select('user_id, billing_contact')
+    .eq('horse_id', horseId)
+    .order('billing_contact', { ascending: false });
+  if (!links?.length) return null;
   const { data: profile } = await supabase
     .from('profiles')
     .select('email')
-    .eq('horse_id', horseId)
-    .eq('role', 'horse_owner')
+    .eq('id', links[0].user_id)
     .single();
   return profile?.email ?? null;
 }

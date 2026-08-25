@@ -29,6 +29,8 @@ export default function HorseProfile() {
   const [dietaryRecords, setDietaryRecords] = useState<any[]>([]);
   const [unpaidInvoices, setUnpaidInvoices] = useState<any[]>([]);
   const [dailyCareLogs, setDailyCareLogs] = useState<any[]>([]);
+  const [horseRecords, setHorseRecords] = useState<any[]>([]);
+  const [uploadingRecord, setUploadingRecord] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [qrVisible, setQrVisible] = useState(false);
@@ -37,18 +39,20 @@ export default function HorseProfile() {
 
   useFocusEffect(useCallback(() => {
     async function fetchAll() {
-      const [{ data: horseData }, { data: visitData }, { data: dietData }, { data: invoiceData }, { data: careData }] = await Promise.all([
+      const [{ data: horseData }, { data: visitData }, { data: dietData }, { data: invoiceData }, { data: careData }, { data: recordsData }] = await Promise.all([
         supabase.from('horses').select('*').eq('id', id).single(),
         supabase.from('service_visits').select('*').eq('horse_id', id).order('date', { ascending: false }),
         supabase.from('dietary_records').select('*').eq('horse_id', id).order('date', { ascending: false }),
         supabase.from('invoices').select('*, invoice_line_items(*)').eq('horse_id', id).in('status', ['pending', 'overdue']),
         supabase.from('daily_care_logs').select('*').eq('horse_id', id).order('date', { ascending: false }).limit(7),
+        supabase.from('horse_records').select('*').eq('horse_id', id).order('created_at', { ascending: false }),
       ]);
       if (horseData) setHorse(horseData);
       if (visitData) setServiceVisits(visitData);
       if (dietData) setDietaryRecords(dietData);
       if (invoiceData) setUnpaidInvoices(invoiceData);
       if (careData) setDailyCareLogs(careData);
+      if (recordsData) setHorseRecords(recordsData);
       setLoading(false);
     }
     fetchAll();
@@ -86,6 +90,42 @@ export default function HorseProfile() {
     }
     await supabase.from('dietary_records').delete().eq('id', recordId);
     setDietaryRecords(prev => prev.filter(r => r.id !== recordId));
+  }
+
+  async function handleRecordUpload(e: any) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingRecord(true);
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    const fileName = `horse-${id}-${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('horse-records').upload(fileName, file, { upsert: true });
+    if (!uploadError) {
+      const { data: urlData } = supabase.storage.from('horse-records').getPublicUrl(fileName);
+      const fileType = ext === 'pdf' ? 'PDF' : ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic'].includes(ext) ? 'Image' : ext.toUpperCase();
+      const label = file.name.replace(/\.[^/.]+$/, '');
+      const { data: rec } = await supabase.from('horse_records').insert({
+        horse_id: id, file_name: file.name, file_url: urlData.publicUrl, file_type: fileType, label,
+      }).select('*').single();
+      if (rec) setHorseRecords(prev => [rec, ...prev]);
+    }
+    setUploadingRecord(false);
+  }
+
+  async function deleteRecord(recordId: string, filePath: string) {
+    if (Platform.OS === 'web') {
+      if (!confirm('Delete this record?')) return;
+    } else {
+      try {
+        await new Promise<void>((resolve, reject) => {
+          Alert.alert('Delete Record', 'Are you sure? This cannot be undone.', [
+            { text: 'Cancel', style: 'cancel', onPress: () => reject() },
+            { text: 'Delete', style: 'destructive', onPress: () => resolve() },
+          ]);
+        });
+      } catch { return; }
+    }
+    await supabase.from('horse_records').delete().eq('id', recordId);
+    setHorseRecords(prev => prev.filter(r => r.id !== recordId));
   }
 
   if (loading && !horse) return (
@@ -294,6 +334,30 @@ export default function HorseProfile() {
                 <Text style={[styles.detailValue, { color: C.primary, textDecorationLine: 'underline' }]}>{t('View Coggins')}</Text>
               </View>
             </Pressable>
+          ) : null}
+
+          {(horse.insurance_company || horse.insurance_phone || horse.insurance_policy_number) ? (
+            <View style={styles.emergencyDivider}>
+              <Text style={[styles.emergencyDividerLabel, { fontFamily: F.sansBold }]}>Insurance</Text>
+            </View>
+          ) : null}
+          {horse.insurance_company ? (
+            <View style={[styles.detailRow, { borderBottomColor: C.cardSeparator }]}>
+              <Text style={[styles.detailLabel, { color: C.textMuted, fontFamily: F.sans }]}>Company</Text>
+              <Text style={[styles.detailValue, { color: C.text, fontFamily: F.sansMedium }]}>{horse.insurance_company}</Text>
+            </View>
+          ) : null}
+          {horse.insurance_phone ? (
+            <View style={[styles.detailRow, { borderBottomColor: C.cardSeparator }]}>
+              <Text style={[styles.detailLabel, { color: C.textMuted, fontFamily: F.sans }]}>Phone</Text>
+              <Text style={[styles.detailValue, { color: C.text, fontFamily: F.sansMedium }]}>{horse.insurance_phone}</Text>
+            </View>
+          ) : null}
+          {horse.insurance_policy_number ? (
+            <View style={[styles.detailRow, { borderBottomColor: C.cardSeparator }]}>
+              <Text style={[styles.detailLabel, { color: C.textMuted, fontFamily: F.sans }]}>Policy #</Text>
+              <Text style={[styles.detailValue, { color: C.text, fontFamily: F.sansMedium }]}>{horse.insurance_policy_number}</Text>
+            </View>
           ) : null}
         </View>
 
@@ -530,6 +594,64 @@ export default function HorseProfile() {
           );
         })()}
 
+        {/* Records — collapsible tile */}
+        <View style={[styles.tile, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Pressable style={styles.tileHeader} onPress={() => toggle('records')}>
+            <View style={[styles.tileIconBg, { backgroundColor: '#4A3B6B' }]}>
+              <FileText size={16} color="white" />
+            </View>
+            <Text style={[styles.tileName, { color: C.text, fontFamily: F.sansBold }]}>Records</Text>
+            <Text style={[styles.tileStatus, { color: C.textMuted, fontFamily: F.sans }]} numberOfLines={1}>
+              {horseRecords.length > 0 ? `${horseRecords.length} file${horseRecords.length !== 1 ? 's' : ''}` : 'No files'}
+            </Text>
+            {expanded.records ? <ChevronDown size={15} color={C.textMuted} /> : <ChevronRight size={15} color={C.textMuted} />}
+          </Pressable>
+          {expanded.records && (
+            <View style={[styles.tileBody, { borderTopColor: C.cardSeparator }]}>
+              {canEdit && Platform.OS === 'web' && (
+                <View style={styles.uploadRow}>
+                  {uploadingRecord
+                    ? <ActivityIndicator size="small" color={C.primary} />
+                    : (
+                      // @ts-ignore
+                      <input type="file" onChange={handleRecordUpload} />
+                    )
+                  }
+                </View>
+              )}
+              {horseRecords.length === 0
+                ? <Text style={styles.emptyText}>No records uploaded yet.</Text>
+                : horseRecords.map((rec, index) => {
+                  const isLast = index === horseRecords.length - 1;
+                  return (
+                    <View key={rec.id} style={[styles.recordRow, { borderBottomColor: C.cardSeparator }, isLast && styles.recordRowLast]}>
+                      <View style={styles.recordInfo}>
+                        {rec.file_type ? (
+                          <View style={[styles.fileTypeBadge, { backgroundColor: C.activeBg }]}>
+                            <Text style={[styles.fileTypeBadgeText, { color: C.primary, fontFamily: F.sansBold }]}>{rec.file_type}</Text>
+                          </View>
+                        ) : null}
+                        <Text style={[styles.recordLabel, { color: C.text, fontFamily: F.sansMedium }]} numberOfLines={1}>{rec.label || rec.file_name}</Text>
+                      </View>
+                      <View style={styles.recordActions}>
+                        <Pressable onPress={() => Linking.openURL(rec.file_url)} style={styles.recordViewBtn}>
+                          <ExternalLink size={13} color={C.primary} />
+                          <Text style={[styles.recordViewBtnText, { color: C.primary, fontFamily: F.sansMedium }]}>View</Text>
+                        </Pressable>
+                        {canEdit && (
+                          <Pressable onPress={() => deleteRecord(rec.id, rec.file_name)} style={styles.recordDeleteBtn}>
+                            <Trash2 size={13} color={C.error} />
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })
+              }
+            </View>
+          )}
+        </View>
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
@@ -621,4 +743,15 @@ const styles = StyleSheet.create({
   iconBtnDanger: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1 },
   iconBtnDangerHovered: { borderColor: '#8B2E2E', backgroundColor: '#FFF5F5' },
   iconBtnDangerText: { fontSize: 12, color: '#8B2E2E', fontWeight: '500' },
+  uploadRow: { alignSelf: 'flex-end', marginBottom: 10 },
+  recordRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, gap: 8 },
+  recordRowLast: { borderBottomWidth: 0, paddingBottom: 0 },
+  recordInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
+  fileTypeBadge: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, flexShrink: 0 },
+  fileTypeBadgeText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+  recordLabel: { fontSize: 13, flex: 1 },
+  recordActions: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 0 },
+  recordViewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  recordViewBtnText: { fontSize: 12 },
+  recordDeleteBtn: { padding: 2 },
 });
