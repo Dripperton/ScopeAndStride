@@ -44,7 +44,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user ?? null;
     if (!user) { setLoading(false); return; }
     const [{ data: profileData }, { data: linksData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
