@@ -62,7 +62,7 @@ export default function Index() {
         <View style={styles.logoMark}>
           <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>HHF</Text>
         </View>
-        <Text style={[styles.barnName, { fontFamily: F.serif }]}>{Brand.barnName}</Text>
+        <Text style={[styles.barnName, { fontFamily: F.serif }]} adjustsFontSizeToFit numberOfLines={1}>{Brand.barnName}</Text>
         <Text style={[styles.poweredBy, { fontFamily: F.sans }]}>
           {t('Powered by')} Scope & Stride
         </Text>
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   logoInitials: { fontSize: 18, color: '#FFFFFF', letterSpacing: 1.5 },
-  barnName: { fontSize: 24, color: '#F5F5F8', letterSpacing: 0.3 },
+  barnName: { fontSize: 24, color: '#F5F5F8', letterSpacing: 0.3, textAlign: 'center', width: '100%' },
   poweredBy: { fontSize: 12, color: '#7A7A8A', letterSpacing: 0.3 },
 
   // Form

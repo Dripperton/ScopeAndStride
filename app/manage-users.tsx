@@ -9,6 +9,15 @@ import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
 import Brand from '../constants/brand';
 
+// Used for invite form — includes 'rider' (stored in invites table, aliased to horse_owner in profiles)
+const INVITE_ROLES = [
+  { label: 'Barn Owner', value: 'owner', color: '#C9A85C', descriptionKey: 'Full access to everything' },
+  { label: 'Staff', value: 'staff', color: '#7BA68A', descriptionKey: 'Can manage horses and schedule' },
+  { label: 'Horse Owner', value: 'horse_owner', color: '#9A9285', descriptionKey: 'Can view their horse, billing, and schedule' },
+  { label: 'Rider', value: 'rider', color: '#6B8CAE', descriptionKey: 'Access to schedule and horse care — no billing' },
+];
+
+// Used for existing-user role picker — must match profiles role DB constraint
 const ROLES = [
   { label: 'Barn Owner', value: 'owner', color: '#C9A85C', descriptionKey: 'Full access to everything' },
   { label: 'Staff', value: 'staff', color: '#7BA68A', descriptionKey: 'Can manage horses and schedule' },
@@ -62,14 +71,15 @@ export default function ManageUsers() {
   async function handleInvite() {
     if (!inviteEmail.trim()) return;
     setSending(true);
-    const needsHorse = inviteRole === 'horse_owner';
+    const needsHorse = inviteRole === 'horse_owner' || inviteRole === 'rider';
+    const effectiveRelationship = inviteRole === 'rider' ? 'leasee' : inviteRelationship;
     const { error } = await supabase.from('invites').insert({
       email: inviteEmail.trim().toLowerCase(),
       role: inviteRole,
       created_by: profile?.id,
       horse_id: needsHorse && inviteHorseId ? inviteHorseId : null,
-      relationship: needsHorse ? inviteRelationship : null,
-      billing_contact: needsHorse ? inviteBillingContact : false,
+      relationship: needsHorse ? effectiveRelationship : null,
+      billing_contact: needsHorse && inviteRole !== 'rider' ? inviteBillingContact : false,
     });
     if (error) {
       alert(t('Failed') + ': ' + error.message);
@@ -160,7 +170,7 @@ export default function ManageUsers() {
   }
 
   function getRoleInfo(role: string) {
-    return ROLES.find(r => r.value === role) || ROLES[1];
+    return INVITE_ROLES.find(r => r.value === role) || ROLES[1];
   }
 
   if (profileLoading) return (
@@ -180,7 +190,7 @@ export default function ManageUsers() {
   }
 
   const selectedInviteHorse = horses.find(h => String(h.id) === inviteHorseId);
-  const needsHorseForm = inviteRole === 'horse_owner';
+  const needsHorseForm = inviteRole === 'horse_owner' || inviteRole === 'rider';
   const horseOwnerUsers = users.filter(u => u.role === 'horse_owner');
 
   return (
@@ -210,11 +220,11 @@ export default function ManageUsers() {
             />
             <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('ROLE')}</Text>
             <View style={styles.roleSelector}>
-              {ROLES.map(r => (
+              {INVITE_ROLES.map(r => (
                 <Pressable
                   key={r.value}
                   style={[styles.roleOption, { borderColor: C.cardBorder }, inviteRole === r.value && { borderColor: r.color, backgroundColor: r.color + '11' }]}
-                  onPress={() => { setInviteRole(r.value); setInviteHorseId(''); }}
+                  onPress={() => { setInviteRole(r.value); setInviteHorseId(''); setInviteRelationship('owner'); }}
                 >
                   <Text style={[styles.roleOptionLabel, { color: C.text }, inviteRole === r.value && { color: r.color }]}>{t(r.label)}</Text>
                   <Text style={[styles.roleOptionDesc, { color: C.textMuted }]}>{t(r.descriptionKey)}</Text>
@@ -248,25 +258,29 @@ export default function ManageUsers() {
                   </View>
                 )}
 
-                <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('RELATIONSHIP')}</Text>
-                <View style={styles.segmentRow}>
-                  {RELATIONSHIPS.map(r => (
-                    <Pressable
-                      key={r.value}
-                      style={[styles.segmentOption, { borderColor: C.cardBorder }, inviteRelationship === r.value && { borderColor: C.primary, backgroundColor: C.activeBg }]}
-                      onPress={() => setInviteRelationship(r.value as 'owner' | 'leasee')}
-                    >
-                      <Text style={[styles.segmentText, { color: C.textMuted }, inviteRelationship === r.value && { color: C.primary, fontWeight: '700' }]}>{t(r.label)}</Text>
-                    </Pressable>
-                  ))}
-                </View>
+                {inviteRole !== 'rider' && (
+                  <>
+                    <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('RELATIONSHIP')}</Text>
+                    <View style={styles.segmentRow}>
+                      {RELATIONSHIPS.map(r => (
+                        <Pressable
+                          key={r.value}
+                          style={[styles.segmentOption, { borderColor: C.cardBorder }, inviteRelationship === r.value && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                          onPress={() => setInviteRelationship(r.value as 'owner' | 'leasee')}
+                        >
+                          <Text style={[styles.segmentText, { color: C.textMuted }, inviteRelationship === r.value && { color: C.primary, fontWeight: '700' }]}>{t(r.label)}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
 
-                <Pressable style={styles.checkRow} onPress={() => setInviteBillingContact(v => !v)}>
-                  <View style={[styles.checkbox, { borderColor: C.cardBorder }, inviteBillingContact && { backgroundColor: C.primary, borderColor: C.primary }]}>
-                    {inviteBillingContact ? <Text style={[styles.checkmark, { color: C.card }]}>✓</Text> : null}
-                  </View>
-                  <Text style={[styles.checkLabel, { color: C.text }]}>{t('Billing contact for this horse')}</Text>
-                </Pressable>
+                    <Pressable style={styles.checkRow} onPress={() => setInviteBillingContact(v => !v)}>
+                      <View style={[styles.checkbox, { borderColor: C.cardBorder }, inviteBillingContact && { backgroundColor: C.primary, borderColor: C.primary }]}>
+                        {inviteBillingContact ? <Text style={[styles.checkmark, { color: C.card }]}>✓</Text> : null}
+                      </View>
+                      <Text style={[styles.checkLabel, { color: C.text }]}>{t('Billing contact for this horse')}</Text>
+                    </Pressable>
+                  </>
+                )}
               </View>
             )}
 

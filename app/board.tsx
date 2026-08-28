@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { ChessKnight, Calendar, DollarSign, MoreHorizontal, MessageSquare, Pin, FileText } from 'lucide-react-native';
@@ -22,8 +23,10 @@ export default function Board() {
 
   useFocusEffect(useCallback(() => {
     fetchPosts();
+    const now = new Date().toISOString();
+    AsyncStorage.setItem('last_seen_board', now);
     if (profile?.id) {
-      supabase.from('profiles').update({ last_seen_board: new Date().toISOString() }).eq('id', profile.id);
+      supabase.from('profiles').update({ last_seen_board: now }).eq('id', profile.id);
     }
   }, [profile?.id]));
 

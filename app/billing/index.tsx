@@ -12,7 +12,7 @@ import HomeButton from '../../lib/HomeButton';
 
 export default function Billing() {
   const router = useRouter();
-  const { isOwner, isHorseOwner, profile } = useProfile();
+  const { isOwner, isHorseOwner, profile, horseLinks } = useProfile();
   const { t } = useLanguage();
   const theme = useTheme();
   const C = theme.colors;
@@ -60,8 +60,11 @@ export default function Billing() {
       .select('*, invoice_line_items(*)')
       .order('created_at', { ascending: false });
 
-    if (isHorseOwner && profile?.horse_id) {
-      query = query.eq('horse_id', profile.horse_id);
+    if (isHorseOwner) {
+      const linkedHorseIds = horseLinks.map(l => l.horse_id);
+      if (linkedHorseIds.length > 0) {
+        query = query.in('horse_id', linkedHorseIds);
+      }
     }
 
     const [{ data }, { data: pending }] = await Promise.all([

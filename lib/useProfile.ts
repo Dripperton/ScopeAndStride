@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { supabase } from './supabase';
 import { useLanguage, Language } from './LanguageContext';
 
-export type Role = 'owner' | 'staff' | 'horse_owner';
+export type Role = 'owner' | 'staff' | 'horse_owner' | 'rider';
 export type Relationship = 'owner' | 'leasee';
 
 export interface Profile {
@@ -27,6 +27,7 @@ interface ProfileContextValue {
   isOwner: boolean;
   isStaff: boolean;
   isHorseOwner: boolean;
+  isRider: boolean;
   canEdit: boolean;
   canDelete: boolean;
   canManageUsers: boolean;
@@ -82,13 +83,13 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const canManageUsers = isOwner;
 
   const validLinks = horseLinks.filter(l => l.horses);
-  const primaryHorse = validLinks.find(l => l.billing_contact)?.horses
-    ?? validLinks[0]?.horses
-    ?? null;
+  const primaryLink = validLinks.find(l => l.billing_contact) ?? validLinks[0] ?? null;
+  const isRider = isHorseOwner && primaryLink?.relationship === 'leasee';
+  const primaryHorse = primaryLink?.horses ?? null;
 
   const value = useMemo<ProfileContextValue>(() => ({
     profile, horseLinks, loading,
-    isOwner, isStaff, isHorseOwner, canEdit, canDelete, canManageUsers,
+    isOwner, isStaff, isHorseOwner, isRider, canEdit, canDelete, canManageUsers,
     primaryHorse, refresh: fetchProfile,
   }), [profile, horseLinks, loading, fetchProfile]);
 

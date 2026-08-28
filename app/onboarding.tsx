@@ -10,7 +10,7 @@ const STEP_KEYS = ['Your Horse', 'Vet & Emergency', 'Farrier & Care', 'All Done'
 
 export default function Onboarding() {
   const router = useRouter();
-  const { profile } = useProfile();
+  const { profile, primaryHorse } = useProfile();
   const { t } = useLanguage();
   const theme = useTheme();
   const C = theme.colors;
@@ -52,7 +52,7 @@ export default function Onboarding() {
     setError('');
 
     try {
-      const horseId = profile.horse_id;
+      const horseId = primaryHorse?.id;
 
       // Update horse record if horse_id exists
       if (horseId) {

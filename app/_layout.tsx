@@ -26,6 +26,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 import { LanguageProvider } from '../lib/LanguageContext';
 import { ThemeProvider, HHF_THEME } from '../context/ThemeContext';
 import { ProfileProvider } from '../lib/useProfile';
+import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
 
@@ -75,30 +76,21 @@ export default function Layout() {
     // Only redirect once per session — don't re-run on every navigation
     if (session && !hasRedirected.current) {
       hasRedirected.current = true;
+      registerForPushNotificationsAsync(session.user.id);
       (async () => {
         const email = session.user.email?.toLowerCase();
 
-        // Check for a pending invite and process it via a SECURITY DEFINER function
-        // that bypasses RLS to correctly set the profile role
-        const { data: hasPendingInvite } = await supabase
-          .from('invites')
-          .select('id')
-          .eq('email', email)
-          .eq('accepted', false)
-          .single();
+        // Fetch invite check and profile in parallel — saves one round trip on every login
+        const [{ data: hasPendingInvite }, { data: profile }] = await Promise.all([
+          supabase.from('invites').select('id').eq('email', email).eq('accepted', false).single(),
+          supabase.from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single(),
+        ]);
 
         if (hasPendingInvite) {
           await supabase.rpc('accept_invite');
           router.replace('/dashboard');
           return;
         }
-
-        // No pending invite — normal role-based routing
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role, onboarding_complete')
-          .eq('id', session.user.id)
-          .single();
 
         if (
           profile?.role === 'horse_owner' &&

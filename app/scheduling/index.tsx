@@ -28,6 +28,7 @@ export default function SchedulingHub() {
   const [acceptingRequests, setAcceptingRequests] = useState(true);
   const [autoCloseDay, setAutoCloseDay] = useState<number | null>(null);
   const [autoCloseTime, setAutoCloseTime] = useState('');
+  const [lockoutHours, setLockoutHours] = useState(24);
 
   // Slot select/delete state
   const [selectMode, setSelectMode] = useState(false);
@@ -38,6 +39,23 @@ export default function SchedulingHub() {
   const [openSlots, setOpenSlots] = useState<any[]>([]);
   const [myRequests, setMyRequests] = useState<any[]>([]);
   const [schedulingOpen, setSchedulingOpen] = useState(true);
+
+  // Join sheet state
+  const [joinSheet, setJoinSheet] = useState<any>(null);
+  const [joinHorses, setJoinHorses] = useState<any[]>([]);
+  const [joinHorseScheduling, setJoinHorseScheduling] = useState<Record<number, any>>({});
+  const [joinHorseId, setJoinHorseId] = useState<number | null>(null);
+  const [joinLoading, setJoinLoading] = useState(false);
+  const [joinSubmitting, setJoinSubmitting] = useState(false);
+  const [joinDone, setJoinDone] = useState(false);
+  const [joinError, setJoinError] = useState('');
+
+  // Reschedule sheet state
+  const [rescheduleSheet, setRescheduleSheet] = useState<{ requestId: string; slotId: string; wasApproved: boolean; horseId: number; horseName: string; currentDate: string; currentTime: string } | null>(null);
+  const [rescheduleTargetSlot, setRescheduleTargetSlot] = useState<any>(null);
+  const [rescheduleSubmitting, setRescheduleSubmitting] = useState(false);
+  const [rescheduleDone, setRescheduleDone] = useState(false);
+  const [rescheduleError, setRescheduleError] = useState('');
 
   useFocusEffect(useCallback(() => {
     if (canManage) loadManagerData();
@@ -80,8 +98,18 @@ export default function SchedulingHub() {
       setAcceptingRequests(settingsData.accepting_requests ?? true);
       setAutoCloseDay(settingsData.auto_close_day ?? null);
       setAutoCloseTime(settingsData.auto_close_time ?? '');
+      setLockoutHours(settingsData.lockout_hours ?? 24);
     }
     setLoading(false);
+  }
+
+  function slotStartTime(date: string, time: string): Date {
+    const match = time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return new Date(date + 'T00:00:00');
+    let h = parseInt(match[1]); const m = parseInt(match[2]); const ap = match[3].toUpperCase();
+    if (ap === 'PM' && h !== 12) h += 12;
+    if (ap === 'AM' && h === 12) h = 0;
+    return new Date(`${date}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`);
   }
 
   async function loadRiderData() {
@@ -96,16 +124,22 @@ export default function SchedulingHub() {
       myHorseIds.length > 0
         ? supabase.from('lesson_requests').select('*, lesson_slots(date, time, duration_minutes), horses(name)').in('horse_id', myHorseIds).not('status', 'in', '("cancelled","declined")').order('created_at', { ascending: false })
         : Promise.resolve({ data: [] }),
-      supabase.from('scheduling_settings').select('accepting_requests').eq('id', 1).single(),
+      supabase.from('scheduling_settings').select('accepting_requests, lockout_hours').eq('id', 1).single(),
     ]);
 
+    const lockout = settingsData?.lockout_hours ?? 24;
     setSchedulingOpen(settingsData?.accepting_requests ?? true);
     if (slotsData) {
-      const slotIds = slotsData.map((s: any) => s.id);
-      const { data: approvedData } = await supabase.from('lesson_requests').select('slot_id').eq('status', 'approved').in('slot_id', slotIds);
+      const now = new Date();
+      const cutoff = lockout * 60 * 60 * 1000;
+      const available = slotsData.filter((s: any) => slotStartTime(s.date, s.time).getTime() - now.getTime() > cutoff);
+      const slotIds = available.map((s: any) => s.id);
+      const { data: approvedData } = slotIds.length > 0
+        ? await supabase.from('lesson_requests').select('slot_id').eq('status', 'approved').in('slot_id', slotIds)
+        : { data: [] };
       const approvedCounts: Record<string, number> = {};
       approvedData?.forEach((r: any) => { approvedCounts[r.slot_id] = (approvedCounts[r.slot_id] || 0) + 1; });
-      setOpenSlots(slotsData.map((s: any) => ({ ...s, spotsLeft: s.max_riders - (approvedCounts[s.id] || 0) })));
+      setOpenSlots(available.map((s: any) => ({ ...s, spotsLeft: s.max_riders - (approvedCounts[s.id] || 0) })));
     }
     if (myReqData) setMyRequests(myReqData as any[]);
     setLoading(false);
@@ -125,12 +159,20 @@ export default function SchedulingHub() {
     }
     setRequests(prev => prev.filter(r => r.id !== requestId));
     setPendingCount(prev => prev - 1);
+    supabase.functions.invoke('send-push', {
+      body: { horse_id: horseId, title: 'Lesson Approved', body: `Your lesson request for ${horseName} on ${formatDate(date)} has been approved!` },
+    });
   }
 
-  async function declineRequest(requestId: string) {
+  async function declineRequest(requestId: string, horseId?: number, horseName?: string) {
     await supabase.from('lesson_requests').update({ status: 'declined', reviewed_by: profile?.id, reviewed_at: new Date().toISOString() }).eq('id', requestId);
     setRequests(prev => prev.filter(r => r.id !== requestId));
     setPendingCount(prev => prev - 1);
+    if (horseId && horseName) {
+      supabase.functions.invoke('send-push', {
+        body: { horse_id: horseId, title: 'Lesson Request Declined', body: `Your lesson request for ${horseName} was not approved. Check the app for other available times.` },
+      });
+    }
   }
 
   function confirmCloseSlot(slotId: string) {
@@ -166,6 +208,11 @@ export default function SchedulingHub() {
     await supabase.from('scheduling_settings').upsert({ id: 1, auto_close_day: day, auto_close_time: time || null }, { onConflict: 'id' });
   }
 
+  async function saveLockoutHours(hours: number) {
+    setLockoutHours(hours);
+    await supabase.from('scheduling_settings').upsert({ id: 1, lockout_hours: hours }, { onConflict: 'id' });
+  }
+
   function confirmCancelRequest(requestId: string, slotId: string, wasApproved: boolean) {
     cancelRequest(requestId, slotId, wasApproved);
   }
@@ -176,6 +223,129 @@ export default function SchedulingHub() {
       await supabase.from('lesson_slots').update({ is_open: true }).eq('id', slotId);
     }
     setMyRequests(prev => prev.filter(r => r.id !== requestId));
+  }
+
+  async function openJoinSheet(slot: any) {
+    setJoinSheet(slot);
+    setJoinDone(false);
+    setJoinError('');
+    setJoinHorseId(null);
+    setJoinLoading(true);
+    const myHorseIds = horseLinks.map(l => l.horse_id);
+    if (myHorseIds.length === 0) { setJoinLoading(false); return; }
+    const [{ data: horsesData }, { data: schedData }] = await Promise.all([
+      supabase.from('horses').select('id, name').in('id', myHorseIds),
+      supabase.from('horse_scheduling').select('*').in('horse_id', myHorseIds),
+    ]);
+    const schedMap: Record<number, any> = {};
+    schedData?.forEach((s: any) => { schedMap[s.horse_id] = s; });
+    setJoinHorseScheduling(schedMap);
+    const eligible = (horsesData || []).filter((h: any) => schedMap[h.id]?.scheduling_type !== 'trainer_assigned');
+    setJoinHorses(eligible);
+    if (eligible.length === 1) setJoinHorseId(eligible[0].id);
+    setJoinLoading(false);
+  }
+
+  async function handleJoinSubmit() {
+    if (!joinSheet || !joinHorseId) return;
+    setJoinSubmitting(true);
+    setJoinError('');
+
+    const { data: existing } = await supabase
+      .from('lesson_requests')
+      .select('id')
+      .eq('slot_id', joinSheet.id)
+      .eq('horse_id', joinHorseId)
+      .in('status', ['pending', 'approved'])
+      .maybeSingle();
+
+    if (existing) {
+      setJoinError('Already requested for this slot.');
+      setJoinSubmitting(false);
+      return;
+    }
+
+    const sched = joinHorseScheduling[joinHorseId];
+    if (sched && ['weekly', 'rotating'].includes(sched.scheduling_type) && sched.weekly_cap) {
+      const slotDate = new Date(joinSheet.date + 'T00:00:00');
+      const slotDay = slotDate.getDay();
+      const weekStart = new Date(slotDate);
+      weekStart.setDate(slotDate.getDate() - ((slotDay + 6) % 7));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const { data: weekSlots } = await supabase.from('lesson_slots').select('id').gte('date', weekStart.toISOString().split('T')[0]).lte('date', weekEnd.toISOString().split('T')[0]);
+      if (weekSlots && weekSlots.length > 0) {
+        const { count } = await supabase.from('lesson_requests').select('*', { count: 'exact', head: true }).eq('horse_id', joinHorseId).in('status', ['pending', 'approved']).in('slot_id', weekSlots.map((s: any) => s.id));
+        if ((count || 0) >= sched.weekly_cap) {
+          setJoinError('Weekly lesson limit reached for this horse.');
+          setJoinSubmitting(false);
+          return;
+        }
+      }
+    }
+
+    await supabase.from('lesson_requests').insert({
+      slot_id: joinSheet.id,
+      horse_id: joinHorseId,
+      requested_by: profile?.id,
+      status: 'pending',
+    });
+
+    setJoinSubmitting(false);
+    setJoinDone(true);
+    setTimeout(() => { setJoinSheet(null); loadRiderData(); }, 1200);
+  }
+
+  function openRescheduleSheet(req: any) {
+    setRescheduleSheet({
+      requestId: req.id,
+      slotId: req.slot_id,
+      wasApproved: req.status === 'approved',
+      horseId: req.horse_id,
+      horseName: req.horses?.name,
+      currentDate: req.lesson_slots?.date,
+      currentTime: req.lesson_slots?.time,
+    });
+    setRescheduleTargetSlot(null);
+    setRescheduleError('');
+    setRescheduleDone(false);
+  }
+
+  async function handleRescheduleSubmit() {
+    if (!rescheduleSheet || !rescheduleTargetSlot) return;
+    setRescheduleSubmitting(true);
+    setRescheduleError('');
+
+    const { data: existing } = await supabase
+      .from('lesson_requests')
+      .select('id')
+      .eq('slot_id', rescheduleTargetSlot.id)
+      .eq('horse_id', rescheduleSheet.horseId)
+      .in('status', ['pending', 'approved'])
+      .maybeSingle();
+
+    if (existing) {
+      setRescheduleError('Already have a request for that slot.');
+      setRescheduleSubmitting(false);
+      return;
+    }
+
+    await Promise.all([
+      supabase.from('lesson_requests').update({ status: 'cancelled' }).eq('id', rescheduleSheet.requestId),
+      rescheduleSheet.wasApproved
+        ? supabase.from('lesson_slots').update({ is_open: true }).eq('id', rescheduleSheet.slotId)
+        : Promise.resolve(),
+      supabase.from('lesson_requests').insert({
+        slot_id: rescheduleTargetSlot.id,
+        horse_id: rescheduleSheet.horseId,
+        requested_by: profile?.id,
+        status: 'pending',
+      }),
+    ]);
+
+    setRescheduleSubmitting(false);
+    setRescheduleDone(true);
+    setTimeout(() => { setRescheduleSheet(null); loadRiderData(); }, 1200);
   }
 
   function formatDate(dateStr: string) {
@@ -266,7 +436,7 @@ export default function SchedulingHub() {
                       </Pressable>
                       <Pressable
                         style={[styles.declineBtn, { borderColor: C.cardBorder }]}
-                        onPress={() => declineRequest(req.id)}
+                        onPress={() => declineRequest(req.id, req.horse_id, req.horses?.name)}
                       >
                         <XCircle size={14} color={C.error} />
                         <Text style={[styles.declineBtnText, { color: C.error, fontFamily: F.sansMedium }]}>Decline</Text>
@@ -434,6 +604,27 @@ export default function SchedulingHub() {
                 )}
               </View>
 
+              {/* Lockout window */}
+              <View style={[styles.settingsCard, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+                <Text style={[styles.autoCloseLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>BOOKING CUTOFF</Text>
+                <Text style={[styles.toggleHint, { color: C.textMuted, fontFamily: F.sans, marginBottom: 10 }]}>
+                  How far in advance riders must request a lesson. Slots closer than this window are hidden.
+                </Text>
+                <View style={styles.capChips}>
+                  {[2, 6, 12, 24, 48].map(h => (
+                    <Pressable
+                      key={h}
+                      style={[styles.capChip, { borderColor: C.cardBorder }, lockoutHours === h && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                      onPress={() => saveLockoutHours(h)}
+                    >
+                      <Text style={[styles.capChipText, { color: C.textMuted, fontFamily: F.sans }, lockoutHours === h && { color: C.primary, fontFamily: F.sansBold }]}>
+                        {h < 24 ? `${h}h` : `${h / 24}d`}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
               {/* Rider caps */}
               <View style={[styles.settingsCard, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
                 <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>RIDERS PER SLOT</Text>
@@ -500,7 +691,7 @@ export default function SchedulingHub() {
                   <Pressable
                     key={slot.id}
                     style={[styles.slotRow, { backgroundColor: C.card, borderColor: C.cardBorder }]}
-                    onPress={() => router.push({ pathname: '/scheduling/request', params: { slotId: slot.id, date: slot.date, time: slot.time, duration: slot.duration_minutes, spotsLeft: slot.spotsLeft } })}
+                    onPress={() => openJoinSheet(slot)}
                   >
                     <View style={styles.slotInfo}>
                       <Text style={[styles.slotDate, { color: C.text, fontFamily: F.sansBold }]}>{formatDate(slot.date)}</Text>
@@ -509,7 +700,7 @@ export default function SchedulingHub() {
                         {slot.max_riders > 1 ? ` · ${slot.spotsLeft} spot${slot.spotsLeft !== 1 ? 's' : ''} left` : ''}
                       </Text>
                     </View>
-                    <Text style={[styles.requestLink, { color: C.primary, fontFamily: F.sansBold }]}>Request →</Text>
+                    <ChevronRight size={16} color={C.textMuted} />
                   </Pressable>
                 ))
               )}
@@ -548,9 +739,16 @@ export default function SchedulingHub() {
                         </Text>
                       </View>
                       {(req.status === 'pending' || req.status === 'approved') && (
-                        <Pressable onPress={() => confirmCancelRequest(req.id, req.slot_id, req.status === 'approved')} style={styles.cancelBtn}>
-                          <Text style={[styles.cancelBtnText, { color: C.textMuted, fontFamily: F.sans }]}>Cancel</Text>
-                        </Pressable>
+                        <>
+                          {openSlots.filter(s => s.id !== req.slot_id).length > 0 && (
+                            <Pressable onPress={() => openRescheduleSheet(req)} style={styles.rescheduleBtn}>
+                              <Text style={[styles.rescheduleBtnText, { color: C.primary, fontFamily: F.sansBold }]}>Reschedule</Text>
+                            </Pressable>
+                          )}
+                          <Pressable onPress={() => confirmCancelRequest(req.id, req.slot_id, req.status === 'approved')} style={styles.cancelBtn}>
+                            <Text style={[styles.cancelBtnText, { color: C.textMuted, fontFamily: F.sans }]}>Cancel</Text>
+                          </Pressable>
+                        </>
                       )}
                     </View>
                   </View>
@@ -562,6 +760,159 @@ export default function SchedulingHub() {
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
+
+      {/* Join lesson sheet */}
+      <Modal visible={joinSheet !== null} transparent animationType="slide" onRequestClose={() => !joinSubmitting && setJoinSheet(null)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => !joinSubmitting && setJoinSheet(null)}>
+          <Pressable style={[styles.sheetCard, { backgroundColor: C.card }]} onPress={e => e.stopPropagation()}>
+            <View style={[styles.sheetHandle, { backgroundColor: C.cardBorder }]} />
+            <Text style={[styles.sheetTitle, { color: C.text, fontFamily: F.sansBold }]}>Join Lesson</Text>
+
+            {joinSheet && (
+              <>
+                <View style={[styles.sheetDetails, { backgroundColor: C.background, borderColor: C.cardBorder }]}>
+                  <View style={styles.sheetDetailRow}>
+                    <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>Date</Text>
+                    <Text style={[styles.sheetDetailValue, { color: C.text, fontFamily: F.sansBold }]}>{formatDate(joinSheet.date)}</Text>
+                  </View>
+                  <View style={styles.sheetDetailRow}>
+                    <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>Time</Text>
+                    <Text style={[styles.sheetDetailValue, { color: C.text, fontFamily: F.sansBold }]}>{formatTimeRange(joinSheet.time, joinSheet.duration_minutes)}</Text>
+                  </View>
+                  {joinSheet.max_riders > 1 && (
+                    <View style={styles.sheetDetailRow}>
+                      <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>Spots left</Text>
+                      <Text style={[styles.sheetDetailValue, { color: C.text, fontFamily: F.sansBold }]}>{joinSheet.spotsLeft}</Text>
+                    </View>
+                  )}
+                </View>
+
+                {joinLoading ? (
+                  <ActivityIndicator color={C.primary} style={{ marginVertical: 24 }} />
+                ) : joinHorses.length === 0 ? (
+                  <Text style={[styles.sheetNote, { color: C.textMuted, fontFamily: F.sans }]}>
+                    Your trainer assigns lessons for your horse directly — no action needed.
+                  </Text>
+                ) : (
+                  <>
+                    {joinHorses.length > 1 && (
+                      <>
+                        <Text style={[styles.sheetSectionLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>WHICH HORSE?</Text>
+                        <View style={styles.sheetHorseRow}>
+                          {joinHorses.map((h: any) => (
+                            <Pressable
+                              key={h.id}
+                              style={[styles.sheetHorseChip, { borderColor: C.cardBorder }, joinHorseId === h.id && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                              onPress={() => setJoinHorseId(h.id)}
+                            >
+                              <Text style={[styles.sheetHorseChipText, { color: C.textMuted }, joinHorseId === h.id && { color: C.primary, fontFamily: F.sansBold }]}>{h.name}</Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </>
+                    )}
+
+                    {joinError ? (
+                      <Text style={[styles.sheetError, { color: C.error }]}>{joinError}</Text>
+                    ) : null}
+
+                    {joinDone ? (
+                      <View style={styles.sheetSuccess}>
+                        <CheckCircle size={16} color="#4A7C59" />
+                        <Text style={[styles.sheetSuccessText, { color: '#4A7C59', fontFamily: F.sansBold }]}>Request sent!</Text>
+                      </View>
+                    ) : (
+                      <Pressable
+                        style={[styles.sheetJoinBtn, { backgroundColor: C.primary }, (!joinHorseId || joinSubmitting) && { opacity: 0.4 }]}
+                        onPress={handleJoinSubmit}
+                        disabled={!joinHorseId || joinSubmitting}
+                      >
+                        {joinSubmitting
+                          ? <ActivityIndicator color="white" size="small" />
+                          : <Text style={[styles.sheetJoinBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>Request Lesson</Text>
+                        }
+                      </Pressable>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Reschedule sheet */}
+      <Modal visible={rescheduleSheet !== null} transparent animationType="slide" onRequestClose={() => !rescheduleSubmitting && setRescheduleSheet(null)}>
+        <Pressable style={styles.sheetOverlay} onPress={() => !rescheduleSubmitting && setRescheduleSheet(null)}>
+          <Pressable style={[styles.sheetCard, { backgroundColor: C.card }]} onPress={e => e.stopPropagation()}>
+            <View style={[styles.sheetHandle, { backgroundColor: C.cardBorder }]} />
+            <Text style={[styles.sheetTitle, { color: C.text, fontFamily: F.sansBold }]}>Reschedule Lesson</Text>
+
+            {rescheduleSheet && (
+              <>
+                <View style={[styles.sheetDetails, { backgroundColor: C.background, borderColor: C.cardBorder }]}>
+                  <View style={styles.sheetDetailRow}>
+                    <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>Horse</Text>
+                    <Text style={[styles.sheetDetailValue, { color: C.text, fontFamily: F.sansBold }]}>{rescheduleSheet.horseName}</Text>
+                  </View>
+                  <View style={styles.sheetDetailRow}>
+                    <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>Current</Text>
+                    <Text style={[styles.sheetDetailValue, { color: C.textMuted }]}>
+                      {rescheduleSheet.currentDate ? formatDate(rescheduleSheet.currentDate) : '—'}
+                      {rescheduleSheet.currentTime ? ` · ${rescheduleSheet.currentTime}` : ''}
+                    </Text>
+                  </View>
+                </View>
+
+                <Text style={[styles.sheetSectionLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>SELECT A NEW TIME</Text>
+
+                <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
+                  {openSlots.filter(s => s.id !== rescheduleSheet.slotId).map(slot => (
+                    <Pressable
+                      key={slot.id}
+                      style={[styles.rescheduleSlotRow, { borderColor: C.cardBorder, backgroundColor: C.background },
+                        rescheduleTargetSlot?.id === slot.id && { borderColor: C.primary, backgroundColor: C.activeBg }
+                      ]}
+                      onPress={() => setRescheduleTargetSlot(slot)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.sheetDetailValue, { color: C.text, fontFamily: F.sansBold }]}>{formatDate(slot.date)}</Text>
+                        <Text style={[styles.sheetDetailLabel, { color: C.textMuted }]}>
+                          {formatTimeRange(slot.time, slot.duration_minutes)}
+                          {slot.max_riders > 1 ? ` · ${slot.spotsLeft} spot${slot.spotsLeft !== 1 ? 's' : ''} left` : ''}
+                        </Text>
+                      </View>
+                      {rescheduleTargetSlot?.id === slot.id && <CheckCircle size={18} color={C.primary} />}
+                    </Pressable>
+                  ))}
+                </ScrollView>
+
+                {rescheduleError ? (
+                  <Text style={[styles.sheetError, { color: C.error }]}>{rescheduleError}</Text>
+                ) : null}
+
+                {rescheduleDone ? (
+                  <View style={styles.sheetSuccess}>
+                    <CheckCircle size={16} color="#4A7C59" />
+                    <Text style={[styles.sheetSuccessText, { color: '#4A7C59', fontFamily: F.sansBold }]}>Rescheduled!</Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    style={[styles.sheetJoinBtn, { backgroundColor: C.primary }, (!rescheduleTargetSlot || rescheduleSubmitting) && { opacity: 0.4 }]}
+                    onPress={handleRescheduleSubmit}
+                    disabled={!rescheduleTargetSlot || rescheduleSubmitting}
+                  >
+                    {rescheduleSubmitting
+                      ? <ActivityIndicator color="white" size="small" />
+                      : <Text style={[styles.sheetJoinBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>Confirm Reschedule</Text>
+                    }
+                  </Pressable>
+                )}
+              </>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Delete confirmation modal */}
       <Modal visible={deleteConfirm !== null} transparent animationType="fade" onRequestClose={() => setDeleteConfirm(null)}>
@@ -644,6 +995,9 @@ const styles = StyleSheet.create({
   statusBadgeText: { fontSize: 11 },
   cancelBtn: { paddingVertical: 4 },
   cancelBtnText: { fontSize: 12 },
+  rescheduleBtn: { paddingVertical: 4, paddingHorizontal: 2 },
+  rescheduleBtnText: { fontSize: 12 },
+  rescheduleSlotRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderRadius: 10, padding: 12, marginBottom: 6 },
   settingsCard: { borderRadius: 14, borderWidth: 1, padding: 16, marginBottom: 12 },
   sectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 12 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
@@ -664,4 +1018,23 @@ const styles = StyleSheet.create({
   horseColorDot: { width: 12, height: 12, borderRadius: 6 },
   horseSetupName: { flex: 1, fontSize: 14 },
   requestLink: { fontSize: 13 },
+  // Join bottom sheet
+  sheetOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheetCard: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 36, gap: 16 },
+  sheetHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.15)', alignSelf: 'center', marginBottom: 4 },
+  sheetTitle: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  sheetDetails: { borderRadius: 14, borderWidth: 1, padding: 14, gap: 8 },
+  sheetDetailRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  sheetDetailLabel: { fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.8 },
+  sheetDetailValue: { fontSize: 14, fontWeight: '600' },
+  sheetNote: { fontSize: 12, textAlign: 'center', fontStyle: 'italic' },
+  sheetSectionLabel: { fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  sheetHorseRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  sheetHorseChip: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8 },
+  sheetHorseChipText: { fontSize: 14, fontWeight: '600' },
+  sheetError: { fontSize: 13, textAlign: 'center', fontStyle: 'italic' },
+  sheetSuccess: { alignItems: 'center', gap: 8, paddingVertical: 8 },
+  sheetSuccessText: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
+  sheetJoinBtn: { borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
+  sheetJoinBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
 });

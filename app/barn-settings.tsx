@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
@@ -7,6 +8,7 @@ import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
 
 export default function BarnSettings() {
+  const router = useRouter();
   const { isOwner, loading: profileLoading } = useProfile();
   const { t } = useLanguage();
   const theme = useTheme();
@@ -103,6 +105,18 @@ export default function BarnSettings() {
             )}
           </View>
         </View>
+
+        <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold, marginTop: 24 }]}>Admin</Text>
+        <Pressable
+          style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
+          onPress={() => router.push('/admin/setup')}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.settingLabel, { color: C.text, fontFamily: F.sansBold }]}>Barn Setup</Text>
+            <Text style={[styles.settingDesc, { color: C.textMuted }]}>Import horses, send owner invites, configure alert thresholds</Text>
+          </View>
+          <Text style={{ color: C.textMuted, fontSize: 18 }}>›</Text>
+        </Pressable>
 
         <View style={{ height: 40 }} />
       </ScrollView>

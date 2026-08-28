@@ -123,7 +123,7 @@ export default function Dashboard() {
   const [todayEventCount, setTodayEventCount] = useState(0);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [outstanding, setOutstanding] = useState(0);
-  const [boardBadge, setBoardBadge] = useState(false);
+  const [boardBadgeCount, setBoardBadgeCount] = useState(0);
   const [qbConnected, setQbConnected] = useState(false);
   const [qbConnecting, setQbConnecting] = useState(false);
 
@@ -240,12 +240,14 @@ export default function Dashboard() {
   }, [primaryHorse]);
 
   async function fetchBarnData() {
-    const [{ count }, { count: eventCount }, { data: settings }, { data: events }, { data: invoiceData }] = await Promise.all([
+    const [{ count }, { count: eventCount }, { data: settings }, { data: events }, { data: invoiceData }, { data: alertHorses }, { data: farrierVisits }] = await Promise.all([
       supabase.from('horses').select('*', { count: 'exact', head: true }),
       supabase.from('events').select('*', { count: 'exact', head: true }).eq('date', new Date().toISOString().split('T')[0]),
       supabase.from('alert_settings').select('*').eq('barn_id', 'default').single(),
       supabase.from('events').select('id, title, date, time').gte('date', new Date().toISOString().split('T')[0]).order('date').order('time').limit(5),
       supabase.from('invoices').select('status, invoice_line_items(amount)').neq('status', 'paid'),
+      supabase.from('horses').select('id, name, alert, coggins_expiry_date'),
+      supabase.from('service_visits').select('horse_id, next_appointment_date').eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }),
     ]);
 
     if (count !== null) setHorseCount(count);
@@ -262,16 +264,12 @@ export default function Dashboard() {
       setAlertSettings(settings);
       setEditCoggins(String(settings.coggins_days));
       setEditFarrier(String(settings.farrier_days));
-      await fetchAlerts(settings.coggins_days, settings.farrier_days);
+      computeAndSetAlerts(settings.coggins_days, settings.farrier_days, alertHorses, farrierVisits);
     }
   }
 
-  async function fetchAlerts(cogginsDays: number, farrierDays: number) {
+  function computeAndSetAlerts(cogginsDays: number, farrierDays: number, horses: any[] | null, farrierVisits: any[] | null) {
     const today = new Date();
-    const [{ data: horses }, { data: farrierVisits }] = await Promise.all([
-      supabase.from('horses').select('id, name, alert, coggins_expiry_date'),
-      supabase.from('service_visits').select('horse_id, next_appointment_date').eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }),
-    ]);
     const newAlerts: Alert[] = [];
     if (!horses) return;
     horses.forEach(horse => {
@@ -297,6 +295,14 @@ export default function Dashboard() {
     setAlerts(newAlerts);
   }
 
+  async function fetchAlerts(cogginsDays: number, farrierDays: number) {
+    const [{ data: horses }, { data: farrierVisits }] = await Promise.all([
+      supabase.from('horses').select('id, name, alert, coggins_expiry_date'),
+      supabase.from('service_visits').select('horse_id, next_appointment_date').eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }),
+    ]);
+    computeAndSetAlerts(cogginsDays, farrierDays, horses, farrierVisits);
+  }
+
   async function fetchOwnerData(horseId: number) {
     const [{ data: horse }, { data: farrierData }, { data: invoiceData }] = await Promise.all([
       supabase.from('horses').select('*').eq('id', horseId).single(),
@@ -318,14 +324,11 @@ export default function Dashboard() {
   }
 
   async function fetchBoardBadge() {
-    if (!profile?.id) return;
-    const [{ data: profileData }, { data: latestPost }] = await Promise.all([
-      supabase.from('profiles').select('last_seen_board').eq('id', profile.id).single(),
-      supabase.from('posts').select('created_at').order('created_at', { ascending: false }).limit(1).single(),
-    ]);
-    if (!latestPost) return;
-    const lastSeen = profileData?.last_seen_board;
-    setBoardBadge(!lastSeen || new Date(latestPost.created_at) > new Date(lastSeen));
+    const lastSeen = await AsyncStorage.getItem('last_seen_board');
+    let query = supabase.from('posts').select('id', { count: 'exact', head: true });
+    if (lastSeen) query = query.gt('created_at', lastSeen);
+    const { count } = await query;
+    setBoardBadgeCount(count || 0);
   }
 
   async function handleConnectQB() {
@@ -512,7 +515,7 @@ export default function Dashboard() {
 )}
                   <ActionTile icon={<CalendarDays size={28} color="white" />} label={t('Lessons')} onPress={() => router.push('/scheduling')} C={C} />
                   {isOwner && isWidget('qa_billing') && (
-                    <ActionTile icon={<DollarSign size={28} color="white" />} label={t('Billing')} badgeCount={outstanding > 0 ? undefined : undefined} onPress={() => router.push('/billing')} C={C} />
+                    <ActionTile icon={<DollarSign size={28} color="white" />} label={t('Billing')} badgeCount={outstanding > 0 ? Math.round(outstanding) : undefined} onPress={() => router.push('/billing')} C={C} />
                   )}
                   <ActionTile
                     icon={<Bell size={28} color="white" />}
@@ -526,10 +529,12 @@ export default function Dashboard() {
                     <ActionTile
                       icon={<MessageSquare size={28} color="white" />}
                       label={t('Community Board')}
-                      badge={boardBadge}
+                      badgeCount={boardBadgeCount || undefined}
+                      badgeColor="error"
                       onPress={() => {
-                        setBoardBadge(false);
-                        if (profile?.id) supabase.from('profiles').update({ last_seen_board: new Date().toISOString() }).eq('id', profile.id);
+                        setBoardBadgeCount(0);
+                        const now = new Date().toISOString();
+                        AsyncStorage.setItem('last_seen_board', now);
                         router.push('/board');
                       }}
                       C={C}
@@ -735,10 +740,12 @@ export default function Dashboard() {
                       <ActionTile
                         icon={<MessageSquare size={28} color="white" />}
                         label={t('Community Board')}
-                        badge={boardBadge}
+                        badgeCount={boardBadgeCount || undefined}
+                        badgeColor="error"
                         onPress={() => {
-                          setBoardBadge(false);
-                          if (profile?.id) supabase.from('profiles').update({ last_seen_board: new Date().toISOString() }).eq('id', profile.id);
+                          setBoardBadgeCount(0);
+                          const now = new Date().toISOString();
+                          AsyncStorage.setItem('last_seen_board', now);
                           router.push('/board');
                         }}
                         C={C}
@@ -917,7 +924,8 @@ function ConciergeBar({ C, F, t, onPress }: any) {
   );
 }
 
-function ActionTile({ icon, label, onPress, badge, badgeCount, C }: any) {
+function ActionTile({ icon, label, onPress, badge, badgeCount, badgeColor, C }: any) {
+  const bgColor = badgeColor === 'error' ? C.error : C.secondary;
   return (
     <Pressable
       style={({ hovered }: any) => [
@@ -928,8 +936,8 @@ function ActionTile({ icon, label, onPress, badge, badgeCount, C }: any) {
     >
       {badge && <View style={[styles.badgeDot, { backgroundColor: C.error, borderColor: C.primary }]} />}
       {badgeCount !== undefined && (
-        <View style={[styles.badgeCountWrap, { backgroundColor: C.secondary }]}>
-          <Text style={styles.badgeCountText}>{badgeCount}</Text>
+        <View style={[styles.badgeCountWrap, { backgroundColor: bgColor }]}>
+          <Text style={styles.badgeCountText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>
         </View>
       )}
       {icon}
@@ -1199,8 +1207,8 @@ const styles = StyleSheet.create({
   actionTile: { borderRadius: 16, paddingVertical: 20, paddingHorizontal: 10, alignItems: 'center', justifyContent: 'center', gap: 8, width: 100, minHeight: 100 },
   actionLabel: { fontSize: 11, color: 'white', fontWeight: '600', textAlign: 'center', lineHeight: 15 },
   badgeDot: { position: 'absolute', top: 10, right: 10, width: 9, height: 9, borderRadius: 5, borderWidth: 1.5 },
-  badgeCountWrap: { position: 'absolute', top: 6, right: 6, minWidth: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  badgeCountText: { color: 'white', fontSize: 10, fontWeight: '700' },
+  badgeCountWrap: { position: 'absolute', top: -6, right: -6, minWidth: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, borderWidth: 2, borderColor: 'white' },
+  badgeCountText: { color: 'white', fontSize: 12, fontWeight: '700' },
 
   // Horse owner
   horseSelectorScroll: { marginBottom: 12 },
