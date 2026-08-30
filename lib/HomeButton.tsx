@@ -14,7 +14,7 @@ export default function HomeButton() {
         { backgroundColor: 'rgba(255,255,255,0.18)' },
         hovered && { backgroundColor: 'rgba(255,255,255,0.32)' },
       ]}
-      onPress={() => router.dismissTo('/dashboard')}
+      onPress={() => router.navigate('/dashboard')}
     >
       <Home size={18} color={C.secondary} />
     </Pressable>
