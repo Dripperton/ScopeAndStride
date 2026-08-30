@@ -24,6 +24,7 @@ interface ProfileContextValue {
   profile: Profile | null;
   horseLinks: HorseLink[];
   loading: boolean;
+  profileLoadError: string | null;
   isOwner: boolean;
   isStaff: boolean;
   isHorseOwner: boolean;
@@ -42,17 +43,25 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [horseLinks, setHorseLinks] = useState<HorseLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession();
     const user = session?.user ?? null;
-    if (!user) { setLoading(false); return; }
-    const [{ data: profileData }, { data: linksData }] = await Promise.all([
+    if (!user) {
+      setProfileLoadError('No session — user is null');
+      setLoading(false);
+      return;
+    }
+    const [{ data: profileData, error: profileErr }, { data: linksData }] = await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('horse_users').select('horse_id, relationship, billing_contact, horses(id, name, color)').eq('user_id', user.id),
     ]);
+    if (profileErr) {
+      setProfileLoadError(`profiles query: ${profileErr.message} [${profileErr.code}] uid=${user.id}`);
+    }
     if (profileData) {
-      // Only update if data actually changed to avoid unnecessary re-renders
+      setProfileLoadError(null);
       setProfile(prev => prev?.id === profileData.id && prev?.role === profileData.role && prev?.full_name === profileData.full_name ? prev : profileData);
       if (profileData.language) setLanguage(profileData.language as Language);
     }
@@ -96,10 +105,10 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const primaryHorse = primaryLink?.horses ?? null;
 
   const value = useMemo<ProfileContextValue>(() => ({
-    profile, horseLinks, loading,
+    profile, horseLinks, loading, profileLoadError,
     isOwner, isStaff, isHorseOwner, isRider, canEdit, canDelete, canManageUsers,
     primaryHorse, refresh: fetchProfile,
-  }), [profile, horseLinks, loading, fetchProfile]);
+  }), [profile, horseLinks, loading, profileLoadError, fetchProfile]);
 
   return React.createElement(ProfileContext.Provider, { value }, children);
 }

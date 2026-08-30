@@ -110,7 +110,7 @@ function greeting() {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { profile, loading, isOwner, isStaff, isHorseOwner, horseLinks, primaryHorse } = useProfile();
+  const { profile, loading, profileLoadError, isOwner, isStaff, isHorseOwner, horseLinks, primaryHorse, refresh } = useProfile();
   const { language, t } = useLanguage();
   const theme = useTheme();
   const C = theme.colors;
@@ -362,6 +362,30 @@ export default function Dashboard() {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: C.primary }]}>
         <ActivityIndicator size="large" color={C.secondary} />
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: C.background, padding: 32 }]}>
+        <Text style={{ color: C.text, fontSize: 15, fontWeight: '600', marginBottom: 8, textAlign: 'center' }}>
+          Could not load your profile
+        </Text>
+        {profileLoadError && (
+          <Text style={{ color: C.textMuted, fontSize: 11, fontFamily: 'monospace', textAlign: 'center', marginBottom: 16, lineHeight: 16 }}>
+            {profileLoadError}
+          </Text>
+        )}
+        <Pressable
+          onPress={refresh}
+          style={{ backgroundColor: C.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12, marginBottom: 10 }}
+        >
+          <Text style={{ color: 'white', fontWeight: '600' }}>Retry</Text>
+        </Pressable>
+        <Pressable onPress={() => supabase.auth.signOut()}>
+          <Text style={{ color: C.textMuted, fontSize: 13 }}>Sign out</Text>
+        </Pressable>
       </View>
     );
   }
