@@ -7,6 +7,7 @@ import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
+import { useBarnData } from '../lib/BarnDataContext';
 
 const SERVICE_META: any = {
   farrier:     { Icon: Wrench,      label: 'Farrier',     color: '#B08C4A' },
@@ -36,10 +37,8 @@ export default function ServiceLog() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const [visits, setVisits] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { serviceVisits: visits, barnQrToken, serviceVisitsLoading, refreshServiceVisits } = useBarnData();
   const [filter, setFilter] = useState('all');
-  const [barnQrToken, setBarnQrToken] = useState<string | null>(null);
   const [qrVisible, setQrVisible] = useState(false);
   const [qrCopied, setQrCopied] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
@@ -47,24 +46,7 @@ export default function ServiceLog() {
   const [deleting, setDeleting] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    async function fetchVisits() {
-      if (visits.length === 0) setLoading(true);
-      const [{ data }, { data: settings }] = await Promise.all([
-        supabase.from('service_visits').select('*, horses(name, color)').order('date', { ascending: false }),
-        supabase.from('alert_settings').select('barn_qr_token').eq('barn_id', 'default').single(),
-      ]);
-      if (data) setVisits(data);
-      if (settings?.barn_qr_token) {
-        setBarnQrToken(settings.barn_qr_token);
-      } else {
-        // Auto-generate barn QR token on first load
-        const newToken = crypto.randomUUID();
-        await supabase.from('alert_settings').update({ barn_qr_token: newToken }).eq('barn_id', 'default');
-        setBarnQrToken(newToken);
-      }
-      setLoading(false);
-    }
-    fetchVisits();
+    refreshServiceVisits();
   }, []));
 
   function toggleSelect(id: number) {
@@ -81,7 +63,7 @@ export default function ServiceLog() {
     if (!confirmed) return;
     setDeleting(true);
     await supabase.from('service_visits').delete().in('id', Array.from(selectedIds));
-    setVisits(prev => prev.filter(v => !selectedIds.has(v.id)));
+    refreshServiceVisits();
     setSelectedIds(new Set());
     setSelectMode(false);
     setDeleting(false);
@@ -178,7 +160,7 @@ export default function ServiceLog() {
         ))}
       </ScrollView>
 
-      {loading && visits.length === 0 ? (
+      {serviceVisitsLoading ? (
         <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 60 }} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>

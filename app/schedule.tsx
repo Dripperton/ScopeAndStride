@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Linking, Modal, Platform, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { ChessKnight, Calendar, DollarSign, MoreHorizontal, Trophy, Stethoscope, Hammer, CalendarCheck, FileText, Repeat, CalendarDays } from 'lucide-react-native';
@@ -8,6 +8,7 @@ import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
+import { useBarnData } from '../lib/BarnDataContext';
 
 
 const TYPE_COLORS: Record<string, string> = {
@@ -56,6 +57,7 @@ export default function Schedule() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
+  const { barnSettings, cachedEvents, refreshEvents } = useBarnData();
   const today = new Date();
   const [viewMode, setViewMode] = useState<'day' | 'upcoming'>('day');
   const [selectedDate, setSelectedDate] = useState(today);
@@ -66,28 +68,24 @@ export default function Schedule() {
   const [syncModal, setSyncModal] = useState(false);
   const [feedUrl, setFeedUrl] = useState('');
   const [copied, setCopied] = useState(false);
-  const [schedulePrivacy, setSchedulePrivacy] = useState<'show_details' | 'show_busy'>('show_details');
+  const [schedulePrivacy, setSchedulePrivacy] = useState<'show_details' | 'show_busy'>(
+    barnSettings?.schedule_privacy ?? 'show_details'
+  );
+
+  useEffect(() => {
+    if (barnSettings?.schedule_privacy) setSchedulePrivacy(barnSettings.schedule_privacy);
+  }, [barnSettings?.schedule_privacy]);
 
   const weekDays = getWeekDays(weekBase);
 
   useFocusEffect(useCallback(() => {
-    async function load() {
-      let privacy: 'show_details' | 'show_busy' = schedulePrivacy;
-      if (isHorseOwner) {
-        const { data } = await supabase.from('barn_settings').select('schedule_privacy').single();
-        if (data?.schedule_privacy) {
-          privacy = data.schedule_privacy as 'show_details' | 'show_busy';
-          setSchedulePrivacy(privacy);
-        }
-      }
-      if (viewMode === 'day') {
-        fetchEvents(toDateStr(selectedDate), privacy);
-      } else {
-        fetchUpcoming(privacy);
-      }
+    refreshEvents();
+    if (viewMode === 'day') {
+      fetchEvents(toDateStr(selectedDate), schedulePrivacy);
+    } else {
+      fetchUpcoming(schedulePrivacy);
     }
-    load();
-  }, [selectedDate, viewMode, isHorseOwner]));
+  }, [selectedDate, viewMode, schedulePrivacy]));
 
   const myHorseIds = new Set(horseLinks.map(l => l.horse_id));
 

@@ -8,6 +8,7 @@ import { useProfile } from '../../lib/useProfile';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import HomeButton from '../../lib/HomeButton';
+import { useBarnData } from '../../lib/BarnDataContext';
 
 
 export default function Billing() {
@@ -17,14 +18,12 @@ export default function Billing() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const [invoices, setInvoices] = useState<any[]>([]);
-  const [pendingCharges, setPendingCharges] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { invoices, pendingCharges, billingLoading, refreshBilling } = useBarnData();
   const [syncing, setSyncing] = useState(false);
   const [qbConnected, setQbConnected] = useState(false);
 
   useFocusEffect(useCallback(() => {
-    fetchInvoices();
+    refreshBilling();
     if (isOwner && profile?.id) checkQbConnected();
   }, [isOwner, profile?.id]));
 
@@ -50,39 +49,7 @@ export default function Billing() {
       return;
     }
     alert(t('Synced {count} invoices from QuickBooks.', { count: data.synced }))
-    fetchInvoices();
-  }
-
-  async function fetchInvoices() {
-    if (invoices.length === 0) setLoading(true);
-    let query = supabase
-      .from('invoices')
-      .select('*, invoice_line_items(*)')
-      .order('created_at', { ascending: false });
-
-    if (isHorseOwner) {
-      const linkedHorseIds = horseLinks.map(l => l.horse_id);
-      if (linkedHorseIds.length > 0) {
-        query = query.in('horse_id', linkedHorseIds);
-      }
-    }
-
-    const [{ data }, { data: pending }] = await Promise.all([
-      query,
-      isOwner
-        ? supabase
-            .from('service_visits')
-            .select('*, horses(id, name, owner)')
-            .eq('barn_invoiced', true)
-            .is('invoice_id', null)
-            .not('amount', 'is', null)
-            .order('date', { ascending: false })
-        : Promise.resolve({ data: [] }),
-    ]);
-
-    setInvoices(data || []);
-    setPendingCharges(pending || []);
-    setLoading(false);
+    refreshBilling();
   }
 
   async function handleAddToInvoice(visit: any) {
@@ -103,7 +70,7 @@ export default function Billing() {
       supabase.from('service_visits').update({ invoice_id: invoice.id }).eq('id', visit.id),
     ]);
 
-    fetchInvoices();
+    refreshBilling();
   }
 
   function getTotal(invoice: any) {
@@ -212,7 +179,7 @@ export default function Billing() {
 
         <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Invoices')}</Text>
 
-        {loading && invoices.length === 0 ? (
+        {billingLoading ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : invoices.length === 0 ? (
           <View style={styles.emptyState}>
