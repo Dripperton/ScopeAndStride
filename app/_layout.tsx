@@ -26,6 +26,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 import { LanguageProvider } from '../lib/LanguageContext';
 import { ThemeProvider, HHF_THEME } from '../context/ThemeContext';
 import { ProfileProvider } from '../lib/useProfile';
+import { BarnDataProvider } from '../lib/BarnDataContext';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
@@ -120,7 +121,9 @@ export default function Layout() {
         <ThemeProvider primary={HHF_THEME.primary} secondary={HHF_THEME.secondary} surface={HHF_THEME.surface}>
           <LanguageProvider>
             <ProfileProvider>
-                <Stack screenOptions={{ headerShown: false }} />
+                <BarnDataProvider>
+                  <Stack screenOptions={{ headerShown: false }} />
+                </BarnDataProvider>
             </ProfileProvider>
           </LanguageProvider>
         </ThemeProvider>

@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ChessKnight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
@@ -8,6 +7,7 @@ import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
 import Brand from '../constants/brand';
+import { useBarnData } from '../lib/BarnDataContext';
 
 export default function Horses() {
   const router = useRouter();
@@ -15,31 +15,13 @@ export default function Horses() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const { isHorseOwner, horseLinks } = useProfile();
-  const [horses, setHorses] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchHorses();
-  }, [isHorseOwner, horseLinks]);
-
-  async function fetchHorses() {
-    if (isHorseOwner) {
-      const ids = horseLinks.map(l => l.horse_id);
-      if (ids.length === 0) { setHorses([]); setLoading(false); return; }
-      const { data } = await supabase.from('horses').select('*').in('id', ids);
-      if (data) setHorses(data);
-    } else {
-      const { data } = await supabase.from('horses').select('*');
-      if (data) setHorses(data);
-    }
-    setLoading(false);
-  }
+  const { isHorseOwner } = useProfile();
+  const { horses, horsesLoading, refreshHorses } = useBarnData();
 
   async function handleDelete(id: number, name: string) {
     if (!confirm(t('Remove {name} from {barn}?', { name, barn: Brand.barnName }))) return;
     await supabase.from('horses').delete().eq('id', id);
-    setHorses((prev: any) => prev.filter((h: any) => h.id !== id));
+    await refreshHorses();
   }
 
   return (
@@ -75,7 +57,7 @@ export default function Horses() {
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {loading ? (
+        {horsesLoading ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : horses.length === 0 ? (
           <View style={styles.emptyState}>

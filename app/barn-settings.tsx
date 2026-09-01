@@ -6,6 +6,7 @@ import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
+import { useBarnData } from '../lib/BarnDataContext';
 
 export default function BarnSettings() {
   const router = useRouter();
@@ -14,26 +15,22 @@ export default function BarnSettings() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
+  const { barnSettings, refreshBarnSettings } = useBarnData();
 
   const [schedulePrivacy, setSchedulePrivacy] = useState<'show_details' | 'show_busy'>('show_details');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!profileLoading) fetchSettings();
-  }, [profileLoading]);
-
-  async function fetchSettings() {
-    const { data } = await supabase.from('barn_settings').select('schedule_privacy').single();
-    if (data?.schedule_privacy) setSchedulePrivacy(data.schedule_privacy);
-    setLoading(false);
-  }
+    if (barnSettings) { setSchedulePrivacy(barnSettings.schedule_privacy); setLoading(false); }
+  }, [barnSettings]);
 
   async function handlePrivacyToggle(value: boolean) {
     const newPrivacy = value ? 'show_busy' : 'show_details';
     setSchedulePrivacy(newPrivacy);
     setSaving(true);
     await supabase.from('barn_settings').update({ schedule_privacy: newPrivacy });
+    await refreshBarnSettings();
     setSaving(false);
   }
 

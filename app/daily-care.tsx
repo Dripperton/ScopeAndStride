@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import HomeButton from '../lib/HomeButton';
+import { useBarnData } from '../lib/BarnDataContext';
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -17,24 +18,17 @@ export default function DailyCareOverview() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const [horses, setHorses] = useState<any[]>([]);
+  const { horses, horsesLoading } = useBarnData();
   const [loggedToday, setLoggedToday] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(true);
 
   useFocusEffect(useCallback(() => {
     fetchData();
   }, []));
 
   async function fetchData() {
-    if (horses.length === 0) setLoading(true);
     const todayStr = today();
-    const [{ data: horseData }, { data: logData }] = await Promise.all([
-      supabase.from('horses').select('id, name, color, photo_url, owner').order('name'),
-      supabase.from('daily_care_logs').select('horse_id').eq('date', todayStr),
-    ]);
-    setHorses(horseData || []);
+    const { data: logData } = await supabase.from('daily_care_logs').select('horse_id').eq('date', todayStr);
     setLoggedToday(new Set((logData || []).map((l: any) => l.horse_id)));
-    setLoading(false);
   }
 
   const logged = horses.filter(h => loggedToday.has(h.id));
@@ -52,7 +46,7 @@ export default function DailyCareOverview() {
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-        {loading && horses.length === 0 ? (
+        {horsesLoading && horses.length === 0 ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : horses.length === 0 ? (
           <View style={styles.emptyState}>
