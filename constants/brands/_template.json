@@ -1,0 +1,12 @@
+{
+  "slug": "barn-slug",
+  "barnName": "Barn Name",
+  "appName": "Short Name",
+  "tagline": "",
+  "bundleId": "com.scopeandstride.barnslug",
+  "theme": {
+    "primary": "#1A1A1A",
+    "secondary": "#2B5FD9",
+    "surface": "#E8E8EC"
+  }
+}

@@ -17,6 +17,7 @@
 //   4. Build: eas build --profile their-slug
 // ─────────────────────────────────────────────────────────────────────────────
 
+import Constants from 'expo-constants';
 import config from './brand-config';
 
 // ── Color math helpers ────────────────────────────────────────────────────────
@@ -132,11 +133,13 @@ const ui = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+const _extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
+
 const Brand = {
-  slug:      config.slug,
-  barnName:  config.barnName,
-  appName:   config.appName,
-  tagline:   config.tagline,
+  slug:      _extra.barnSlug  ?? config.slug,
+  barnName:  _extra.barnName  ?? config.barnName,
+  appName:   _extra.appName   ?? config.appName,
+  tagline:   _extra.tagline   ?? config.tagline,
   chipStyle: config.chipStyle,
   colors,
   ui,

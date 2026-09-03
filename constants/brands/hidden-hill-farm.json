@@ -1,0 +1,12 @@
+{
+  "slug": "hidden-hill-farm",
+  "barnName": "Hidden Hill Farm",
+  "appName": "HHF",
+  "tagline": "",
+  "bundleId": "com.scopeandstride.hiddenhillfarm",
+  "theme": {
+    "primary": "#1A1A1A",
+    "secondary": "#2B5FD9",
+    "surface": "#E8E8EC"
+  }
+}

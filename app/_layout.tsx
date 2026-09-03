@@ -23,13 +23,21 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
   }
 }
 
+import Constants from 'expo-constants';
 import { LanguageProvider } from '../lib/LanguageContext';
-import { ThemeProvider, HHF_THEME } from '../context/ThemeContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import { ProfileProvider } from '../lib/useProfile';
 import { BarnDataProvider } from '../lib/BarnDataContext';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
 const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
+
+const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
+const BRAND_THEME = {
+  primary:   extra.themePrimary   ?? '#1A1A1A',
+  secondary: extra.themeSecondary ?? '#2B5FD9',
+  surface:   extra.themeSurface   ?? '#E8E8EC',
+};
 
 export default function Layout() {
   const router = useRouter();
@@ -118,7 +126,7 @@ export default function Layout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider primary={HHF_THEME.primary} secondary={HHF_THEME.secondary} surface={HHF_THEME.surface}>
+        <ThemeProvider primary={BRAND_THEME.primary} secondary={BRAND_THEME.secondary} surface={BRAND_THEME.surface}>
           <LanguageProvider>
             <ProfileProvider>
                 <BarnDataProvider>
