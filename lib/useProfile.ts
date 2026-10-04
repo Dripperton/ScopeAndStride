@@ -67,7 +67,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     }
     if (linksData) {
       setHorseLinks(prev => {
-        const next = linksData as HorseLink[];
+        const next = linksData as unknown as HorseLink[];
         if (prev.length === next.length && prev.every((l, i) => l.horse_id === next[i].horse_id)) return prev;
         return next;
       });
