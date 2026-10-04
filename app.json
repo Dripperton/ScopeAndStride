@@ -62,7 +62,17 @@
         }
       ],
       "expo-font",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "xcodeProjectBuildSettings": {
+              "SWIFT_VERSION": "5"
+            }
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
