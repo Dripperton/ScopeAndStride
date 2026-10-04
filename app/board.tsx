@@ -125,7 +125,6 @@ export default function Board() {
                   onPin={() => handlePin(post)}
                   onPress={() => router.push({ pathname: '/board/[postId]', params: { postId: post.id } })}
                   onLike={() => handleLike(post)}
-                  currentUserId={profile?.id}
                   formatDate={formatDate}
                   getRoleLabel={getRoleLabel}
                 />
@@ -146,7 +145,6 @@ export default function Board() {
                   onPin={() => handlePin(post)}
                   onPress={() => router.push({ pathname: '/board/[postId]', params: { postId: post.id } })}
                   onLike={() => handleLike(post)}
-                  currentUserId={profile?.id}
                   formatDate={formatDate}
                   getRoleLabel={getRoleLabel}
                 />

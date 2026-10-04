@@ -14,7 +14,8 @@
         "NSCameraUsageDescription": "Scope & Stride needs camera access to add photos to posts.",
         "NSPhotoLibraryUsageDescription": "Scope & Stride needs photo library access to add images to posts.",
         "NSPhotoLibraryAddUsageDescription": "Scope & Stride needs permission to save photos.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "LSApplicationQueriesSchemes": ["webcal"]
       },
       "bundleIdentifier": "com.scopeandstride.app"
     },
@@ -60,13 +61,8 @@
           "cameraPermission": "Scope & Stride needs camera access to add photos to posts."
         }
       ],
-      [
-        "@stripe/stripe-react-native",
-        {
-          "merchantIdentifier": "merchant.com.scopeandstride"
-        }
-      ],
-      "expo-font"
+      "expo-font",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true,

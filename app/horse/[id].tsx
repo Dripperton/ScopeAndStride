@@ -683,7 +683,7 @@ const styles = StyleSheet.create({
   billingBannerOverdue: { backgroundColor: '#FDECEA', borderColor: '#C0392B' },
   billingBannerPending: { backgroundColor: '#FEF6E4', borderColor: '#E67E22' },
   billingBannerHovered: { opacity: 0.85 },
-  billingBannerIcon: { fontSize: 18 },
+  billingBannerIcon: { width: 18, height: 18, alignItems: 'center', justifyContent: 'center' },
   billingBannerInfo: { flex: 1 },
   billingBannerTitle: { fontSize: 12, fontWeight: '700' },
   billingBannerSub: { fontSize: 11, marginTop: 1 },

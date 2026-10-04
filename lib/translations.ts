@@ -76,7 +76,6 @@ export const es: Record<string, string> = {
   'Notes': 'Notas',
   'Alert': 'Alerta',
   'Horse': 'Caballo',
-  'Horses': 'Caballos',
   'Add Horse': 'Agregar caballo',
   'Edit Horse': 'Editar caballo',
   'No horses yet.': 'Sin caballos aún.',
@@ -84,8 +83,6 @@ export const es: Record<string, string> = {
   'Add your first horse or import a CSV to get started.': 'Agregue su primer caballo o importe un CSV para comenzar.',
 
   // ── Horse edit form ───────────────────────────────────────────────────────
-  'Edit Horse': 'Editar caballo',
-  'Photo': 'Foto',
   'Basic Info': 'Información básica',
   'Ownership': 'Propiedad',
   'Custom Field': 'Campo personalizado',
@@ -153,11 +150,8 @@ export const es: Record<string, string> = {
   'Outstanding': 'Pendiente',
   'No alerts': 'Sin alertas',
   'View all alerts': 'Ver todas las alertas',
-  'Service Log': 'Registro de servicios',
   'Quick Actions': 'Acciones rápidas',
   'Add Service': 'Agregar servicio',
-  'Add Event': 'Agregar evento',
-  'Add Invoice': 'Agregar factura',
   'Good morning': 'Buenos días',
   'My Horse': 'Mi caballo',
   'Community Board': 'Tablón comunitario',
@@ -197,6 +191,7 @@ export const es: Record<string, string> = {
   'Title': 'Título',
   'Description': 'Descripción',
   'Recurring': 'Recurrente',
+  'Add Invoice': 'Agregar factura',
   'Weekly': 'Semanal',
   'Biweekly': 'Quincenal',
   'Monthly': 'Mensual',
@@ -211,7 +206,6 @@ export const es: Record<string, string> = {
   'Delete this and future events': 'Eliminar este y futuros eventos',
 
   // ── Service Log ───────────────────────────────────────────────────────────
-  'No service records yet.': 'Sin registros de servicio aún.',
   'Provider': 'Proveedor',
   'Amount': 'Monto',
   'Adding to invoice': 'Agregando a factura',
@@ -252,7 +246,6 @@ export const es: Record<string, string> = {
   'invoice': 'factura',
   'invoices': 'facturas',
   'from QuickBooks.': 'de QuickBooks.',
-  'Recurring': 'Recurrente',
   'Error': 'Error',
   'Could not initialize payment. Please try again.': 'No se pudo inicializar el pago. Por favor intenta de nuevo.',
   'Payment failed': 'Pago fallido',
@@ -261,7 +254,6 @@ export const es: Record<string, string> = {
   'Invoice not found.': 'Factura no encontrada.',
   'Invoice': 'Factura',
   'Invoices': 'Facturas',
-  'Add Invoice': 'Agregar factura',
   'Edit Invoice': 'Editar factura',
   'Due Date': 'Fecha de vencimiento',
   'Due': 'Vence',
@@ -313,7 +305,6 @@ export const es: Record<string, string> = {
   // ── Board ─────────────────────────────────────────────────────────────────
   'Just now': 'Ahora mismo',
   'Barn community': 'Comunidad de la cuadra',
-  'New Post': 'Nueva publicación',
   'Post': 'Publicar',
   'Comment': 'Comentario',
   'Comments': 'Comentarios',
@@ -368,9 +359,6 @@ export const es: Record<string, string> = {
   'Barn Owner': 'Dueño de cuadra',
   'Staff': 'Personal',
   'Horse Owner / Leasee': 'Propietario / Arrendatario',
-  'Full access to everything': 'Acceso completo a todo',
-  'Can manage horses and schedule': 'Puede gestionar caballos y horario',
-  'Can view their horse and billing': 'Puede ver su caballo y facturación',
   'you': 'tú',
 
   // ── Onboarding ────────────────────────────────────────────────────────────
@@ -407,7 +395,6 @@ export const es: Record<string, string> = {
   'Feed': 'Alimento',
   'Hay': 'Heno',
   'Supplements': 'Suplementos',
-  'Amount': 'Cantidad',
   'Frequency': 'Frecuencia',
   'Add Dietary Record': 'Agregar registro de dieta',
   'Edit Dietary Record': 'Editar registro de dieta',
@@ -427,14 +414,12 @@ export const es: Record<string, string> = {
   'Add Medical Entry': 'Agregar entrada médica',
   'Edit Entry': 'Editar entrada',
   'Entry Type': 'Tipo de entrada',
-  'Title': 'Título',
   'Vet Visit': 'Visita veterinaria',
   'Custom': 'Personalizado',
   'Event Type': 'Tipo de evento',
   'Lesson': 'Lección',
   'Daily': 'Diario',
   'Assigned To': 'Asignado a',
-  'Horse': 'Caballo',
   'None': 'Ninguno',
   'Repeat Until': 'Repetir hasta',
   'Delete Event': 'Eliminar evento',
@@ -443,8 +428,6 @@ export const es: Record<string, string> = {
   'Delete Entry': 'Eliminar entrada',
   'Details': 'Detalles',
   'Change Type': 'Tipo de cambio',
-  'Date': 'Fecha',
-  'Notes': 'Notas',
   'Care Log': 'Registro de cuidado',
   'Turned Out': 'Salida al prado',
 
@@ -506,7 +489,6 @@ export const es: Record<string, string> = {
   'Please fill in all fields.': 'Por favor complete todos los campos.',
   'No valid horses found. Check your CSV format.': 'No se encontraron caballos válidos. Verifique el formato CSV.',
   'Could not parse CSV. Please check the format.': 'No se pudo leer el CSV. Por favor verifique el formato.',
-  'Name': 'Nombre',
 
   // ── Permissions / errors ──────────────────────────────────────────────────
   "You don't have permission to view the service log.":
