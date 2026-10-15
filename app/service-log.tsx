@@ -343,5 +343,5 @@ const styles = StyleSheet.create({
   deleteBarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
   deleteBarBtnDisabled: { opacity: 0.4 },
   deleteBarBtnText: { fontSize: 14, color: 'white', fontWeight: '600' },
-  timeBucketLabel: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginTop: 16, marginBottom: 6, marginHorizontal: 16 },
+  timeBucketLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 20, marginBottom: 8, marginHorizontal: 16 },
 });
