@@ -107,31 +107,25 @@ export default function ServiceLog() {
     const now = new Date();
     const startOf = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
     const today = startOf(new Date(now));
-    const yesterday = startOf(new Date(now)); yesterday.setDate(yesterday.getDate() - 1);
-    const ago7 = startOf(new Date(now)); ago7.setDate(ago7.getDate() - 7);
-    const ago14 = startOf(new Date(now)); ago14.setDate(ago14.getDate() - 14);
-    const ago30 = startOf(new Date(now)); ago30.setMonth(ago30.getMonth() - 1);
-    const ago365 = startOf(new Date(now)); ago365.setFullYear(ago365.getFullYear() - 1);
+    const weekStart = startOf(new Date(now)); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const monthStart = startOf(new Date(now)); monthStart.setDate(1);
+    const yearStart = startOf(new Date(now)); yearStart.setMonth(0); yearStart.setDate(1);
 
     const buckets: { key: string; label: string; items: any[] }[] = [
       { key: 'today', label: 'Today', items: [] },
-      { key: 'yesterday', label: 'Yesterday', items: [] },
-      { key: 'last7', label: 'Last 7 Days', items: [] },
-      { key: 'last14', label: 'Last 14 Days', items: [] },
-      { key: 'lastMonth', label: 'Last Month', items: [] },
-      { key: 'lastYear', label: 'Last Year', items: [] },
+      { key: 'week', label: 'This Week', items: [] },
+      { key: 'month', label: 'This Month', items: [] },
+      { key: 'year', label: 'This Year', items: [] },
       { key: 'older', label: 'Older', items: [] },
     ];
 
     for (const v of items) {
       const d = new Date(v.date + 'T12:00:00');
       if (d >= today) buckets[0].items.push(v);
-      else if (d >= yesterday) buckets[1].items.push(v);
-      else if (d >= ago7) buckets[2].items.push(v);
-      else if (d >= ago14) buckets[3].items.push(v);
-      else if (d >= ago30) buckets[4].items.push(v);
-      else if (d >= ago365) buckets[5].items.push(v);
-      else buckets[6].items.push(v);
+      else if (d >= weekStart) buckets[1].items.push(v);
+      else if (d >= monthStart) buckets[2].items.push(v);
+      else if (d >= yearStart) buckets[3].items.push(v);
+      else buckets[4].items.push(v);
     }
 
     return buckets.filter(b => b.items.length > 0);
