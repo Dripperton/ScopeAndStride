@@ -632,11 +632,11 @@ export default function SchedulingHub() {
                   Max riders allowed per slot, by lesson length.
                 </Text>
                 {([30, 60] as const).map(dur => (
-                  <View key={dur} style={styles.capRow}>
-                    <Text style={[styles.capLabel, { color: C.text, fontFamily: F.sansBold }]}>
+                  <View key={dur} style={[styles.capRow, { marginBottom: 16 }]}>
+                    <Text style={[styles.capLabel, { color: C.text, fontFamily: F.sansBold, marginBottom: 8 }]}>
                       {dur === 30 ? 'Half Hour' : 'Hour'}
                     </Text>
-                    <View style={styles.capChips}>
+                    <View style={styles.capGrid}>
                       {[1, 2, 3, 4, 5, 6, 7, 8].map(n => (
                         <Pressable
                           key={n}
@@ -1009,10 +1009,11 @@ const styles = StyleSheet.create({
   dayChip: { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
   dayChipText: { fontSize: 12 },
   timeInput: { borderWidth: 1, borderRadius: 10, padding: 10, fontSize: 13 },
-  capRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  capLabel: { fontSize: 13, width: 72, flexShrink: 0 },
+  capRow: { marginBottom: 10 },
+  capLabel: { fontSize: 13 },
   capChips: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  capChip: { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
+  capGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  capChip: { width: '25%', borderWidth: 1.5, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
   capChipText: { fontSize: 13 },
   horseSetupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 8 },
   horseColorDot: { width: 12, height: 12, borderRadius: 6 },
