@@ -47,7 +47,7 @@ export default function ServiceLog() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<'time' | 'horse'>('time');
-  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   useFocusEffect(useCallback(() => {
     refreshServiceVisits();
@@ -62,7 +62,7 @@ export default function ServiceLog() {
   }
 
   function toggleSection(key: string) {
-    setCollapsedSections(prev => {
+    setExpandedSections(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
@@ -71,7 +71,12 @@ export default function ServiceLog() {
 
   function switchViewMode(mode: 'time' | 'horse') {
     setViewMode(mode);
-    setCollapsedSections(new Set());
+    setExpandedSections(new Set());
+  }
+
+  function switchFilter(value: string) {
+    setFilter(value);
+    setExpandedSections(new Set());
   }
 
   async function deleteSelected() {
@@ -271,7 +276,7 @@ export default function ServiceLog() {
           <Pressable
             key={f.value}
             style={[styles.filterChip, { borderColor: C.cardBorder, backgroundColor: C.card }, filter === f.value && { backgroundColor: C.primary, borderColor: C.primary }]}
-            onPress={() => setFilter(f.value)}
+            onPress={() => switchFilter(f.value)}
           >
             <Text style={[styles.filterChipText, { color: C.textMuted, fontFamily: F.sansMedium }, filter === f.value && { color: 'white', fontFamily: F.sansBold }]}>{t(f.label)}</Text>
           </Pressable>
@@ -303,7 +308,7 @@ export default function ServiceLog() {
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
           {viewMode === 'time'
             ? groupByTime(filtered).map(bucket => {
-                const isOpen = !collapsedSections.has(bucket.key);
+                const isOpen = expandedSections.has(bucket.key);
                 return (
                   <View key={bucket.key}>
                     <Pressable style={styles.sectionHeader} onPress={() => toggleSection(bucket.key)}>
@@ -326,7 +331,7 @@ export default function ServiceLog() {
                 );
               })
             : groupByHorse(filtered).map(group => {
-                const isOpen = !collapsedSections.has(group.key);
+                const isOpen = expandedSections.has(group.key);
                 const horseColor = group.color || C.primary;
                 return (
                   <View key={group.key}>
