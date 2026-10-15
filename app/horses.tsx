@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   headerName: { fontSize: 15, fontWeight: '600' },
   headerBarn: { fontSize: 10, color: 'rgba(255,255,255,0.4)' },
-  headerButtons: { flexDirection: 'row', gap: 8 },
+  headerButtons: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 1 },
   addBtn: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 6 },
   addBtnText: { fontSize: 13, fontWeight: '600' },
   searchBar: { margin: 12, borderRadius: 10, padding: 12, borderWidth: 1 },
