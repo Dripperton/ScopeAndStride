@@ -47,7 +47,7 @@ export default function ServiceLog() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [viewMode, setViewMode] = useState<'time' | 'horse'>('time');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(ALL_TIME_BUCKET_KEYS));
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
 
   useFocusEffect(useCallback(() => {
     refreshServiceVisits();
@@ -62,11 +62,16 @@ export default function ServiceLog() {
   }
 
   function toggleSection(key: string) {
-    setExpandedSections(prev => {
+    setCollapsedSections(prev => {
       const next = new Set(prev);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
+  }
+
+  function switchViewMode(mode: 'time' | 'horse') {
+    setViewMode(mode);
+    setCollapsedSections(new Set());
   }
 
   async function deleteSelected() {
@@ -211,20 +216,6 @@ export default function ServiceLog() {
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Service Log')}</Text>
         <View style={styles.headerRight}>
-          <View style={styles.viewToggle}>
-            <Pressable
-              style={[styles.viewToggleBtn, { backgroundColor: viewMode === 'time' ? C.secondary : C.secondaryAlpha15 }]}
-              onPress={() => setViewMode('time')}
-            >
-              <Text style={[styles.viewToggleBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('By Date')}</Text>
-            </Pressable>
-            <Pressable
-              style={[styles.viewToggleBtn, { backgroundColor: viewMode === 'horse' ? C.secondary : C.secondaryAlpha15 }]}
-              onPress={() => setViewMode('horse')}
-            >
-              <Text style={[styles.viewToggleBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('By Horse')}</Text>
-            </Pressable>
-          </View>
           {canEdit && (
             <Pressable
               style={({ hovered }: any) => [styles.selectBtn, { borderColor: C.secondaryAlpha30 }, selectMode && { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
@@ -293,6 +284,21 @@ export default function ServiceLog() {
         ))}
       </ScrollView>
 
+      <View style={[styles.viewToggleRow, { backgroundColor: C.card, borderBottomColor: C.cardBorder }]}>
+        <Pressable
+          style={[styles.viewToggleTab, viewMode === 'time' && { borderBottomColor: C.primary, borderBottomWidth: 2 }]}
+          onPress={() => switchViewMode('time')}
+        >
+          <Text style={[styles.viewToggleTabText, { color: viewMode === 'time' ? C.primary : C.textMuted, fontFamily: viewMode === 'time' ? F.sansBold : F.sans }]}>{t('By Date')}</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.viewToggleTab, viewMode === 'horse' && { borderBottomColor: C.primary, borderBottomWidth: 2 }]}
+          onPress={() => switchViewMode('horse')}
+        >
+          <Text style={[styles.viewToggleTabText, { color: viewMode === 'horse' ? C.primary : C.textMuted, fontFamily: viewMode === 'horse' ? F.sansBold : F.sans }]}>{t('By Horse')}</Text>
+        </Pressable>
+      </View>
+
       {serviceVisitsLoading ? (
         <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 60 }} />
       ) : filtered.length === 0 ? (
@@ -303,7 +309,7 @@ export default function ServiceLog() {
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
           {viewMode === 'time'
             ? groupByTime(filtered).map(bucket => {
-                const isOpen = expandedSections.has(bucket.key);
+                const isOpen = !collapsedSections.has(bucket.key);
                 return (
                   <View key={bucket.key}>
                     <Pressable style={styles.sectionHeader} onPress={() => toggleSection(bucket.key)}>
@@ -326,14 +332,15 @@ export default function ServiceLog() {
                 );
               })
             : groupByHorse(filtered).map(group => {
-                const isOpen = expandedSections.has(group.key);
+                const isOpen = !collapsedSections.has(group.key);
                 const horseColor = group.color || C.primary;
                 return (
                   <View key={group.key}>
                     <Pressable style={styles.sectionHeader} onPress={() => toggleSection(group.key)}>
                       <View style={styles.sectionHeaderLeft}>
-                        <View style={[styles.horsePill, { backgroundColor: horseColor + '22', alignSelf: 'flex-start' }]}>
-                          <Text style={[styles.horsePillText, { color: horseColor, fontFamily: F.sansBold }]}>{group.label}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: horseColor }} />
+                          <Text style={[styles.timeBucketLabel, { color: C.text, fontFamily: F.sansBold }]}>{group.label}</Text>
                         </View>
                       </View>
                       <View style={styles.sectionHeaderRight}>
@@ -435,4 +442,7 @@ const styles = StyleSheet.create({
   viewToggle: { flexDirection: 'row', gap: 6 },
   viewToggleBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
   viewToggleBtnText: { fontSize: 12, fontWeight: '600' },
+  viewToggleRow: { flexDirection: 'row', borderBottomWidth: 1 },
+  viewToggleTab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  viewToggleTabText: { fontSize: 13 },
 });
