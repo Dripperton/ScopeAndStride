@@ -12,10 +12,7 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true,
-      "ios": {
-        "image": "macos-sequoia-15.6-xcode-16.4"
-      }
+      "autoIncrement": true
     },
     "production:scope-and-stride": {
       "extends": "production",
@@ -31,6 +28,7 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {},
+    "production:hidden-hill-farm": {}
   }
 }
