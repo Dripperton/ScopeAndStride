@@ -7,6 +7,7 @@ import { useProfile } from '../../../lib/useProfile';
 import DateInput from '../../../lib/DateInput';
 import { useLanguage } from '../../../lib/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
+import { useBarnData } from '../../../lib/BarnDataContext';
 
 const SERVICE_TYPES = [
   { value: 'farrier',     label: 'Farrier',     Icon: Wrench,      color: '#B08C4A' },
@@ -28,7 +29,9 @@ export default function AddServiceVisit() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const { horseId } = useLocalSearchParams();
+  const { horseId: horseIdParam } = useLocalSearchParams();
+  const { horses } = useBarnData();
+  const [selectedHorseId, setSelectedHorseId] = useState<string | number | null>(horseIdParam ?? null);
 
   const [serviceType, setServiceType] = useState('farrier');
   const [date, setDate] = useState('');
@@ -52,11 +55,12 @@ export default function AddServiceVisit() {
   }
 
   async function handleSave() {
+    if (!selectedHorseId) { setError('Please select a horse.'); return; }
     if (!date.trim()) { setError('Date is required.'); return; }
     setSaving(true);
     setError('');
     const { error: err } = await supabase.from('service_visits').insert({
-      horse_id: horseId,
+      horse_id: selectedHorseId,
       date,
       service_type: serviceType,
       provider_name: providerName.trim() || null,
@@ -93,6 +97,27 @@ export default function AddServiceVisit() {
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        {!horseIdParam && (
+          <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('HORSE')}</Text>
+            <View style={styles.typeGrid}>
+              {[...horses].sort((a, b) => (a.name || '').localeCompare(b.name || '')).map((horse: any) => {
+                const isSelected = String(selectedHorseId) === String(horse.id);
+                return (
+                  <Pressable
+                    key={horse.id}
+                    style={[styles.typeOption, { borderColor: C.cardBorder }, isSelected && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                    onPress={() => setSelectedHorseId(horse.id)}
+                  >
+                    <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: horse.color || C.primary }} />
+                    <Text style={[styles.typeLabel, { color: C.textMuted, fontFamily: F.sansMedium }, isSelected && { color: C.primary, fontFamily: F.sansBold }]} numberOfLines={1}>{horse.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Service Type')}</Text>
           <View style={styles.typeGrid}>

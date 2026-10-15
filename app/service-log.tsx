@@ -1,7 +1,7 @@
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText, ExternalLink, QrCode, CheckCircle, Circle, Trash2, ChevronDown, ChevronRight } from 'lucide-react-native';
+import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText, ExternalLink, QrCode, CheckCircle, Circle, Trash2, ChevronDown, ChevronRight, Plus } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
@@ -30,7 +30,6 @@ const FILTERS = [
   { value: 'other', label: 'Other' },
 ];
 
-const ALL_TIME_BUCKET_KEYS = new Set(['today', 'yesterday', 'last7', 'last14', 'lastMonth', 'lastYear', 'older']);
 
 export default function ServiceLog() {
   const router = useRouter();
@@ -112,28 +111,56 @@ export default function ServiceLog() {
     const now = new Date();
     const startOf = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
     const today = startOf(new Date(now));
-    const weekStart = startOf(new Date(now)); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    const weekStart = startOf(new Date(now));
+    // Monday-based week start
+    const dayOfWeek = weekStart.getDay(); // 0=Sun
+    const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    weekStart.setDate(weekStart.getDate() + diffToMon);
     const monthStart = startOf(new Date(now)); monthStart.setDate(1);
-    const yearStart = startOf(new Date(now)); yearStart.setMonth(0); yearStart.setDate(1);
+    const currentYear = now.getFullYear();
+    const yearStart = new Date(currentYear, 0, 1);
 
-    const buckets: { key: string; label: string; items: any[] }[] = [
-      { key: 'today', label: 'Today', items: [] },
-      { key: 'week', label: 'This Week', items: [] },
-      { key: 'month', label: 'This Month', items: [] },
-      { key: 'year', label: 'This Year', items: [] },
-      { key: 'older', label: 'Older', items: [] },
-    ];
+    // Fixed buckets
+    const todayBucket:     { key: string; label: string; items: any[] } = { key: 'today', label: 'Today', items: [] };
+    const weekBucket:      { key: string; label: string; items: any[] } = { key: 'week', label: 'This Week', items: [] };
+    const monthBucket:     { key: string; label: string; items: any[] } = { key: 'month', label: 'This Month', items: [] };
+    const olderBucket:     { key: string; label: string; items: any[] } = { key: 'older', label: 'Older', items: [] };
+    // Monthly buckets for earlier months this year, keyed as 'month-YYYY-M'
+    const monthlyMap = new Map<string, { key: string; label: string; items: any[] }>();
 
     for (const v of items) {
       const d = new Date(v.date + 'T12:00:00');
-      if (d >= today) buckets[0].items.push(v);
-      else if (d >= weekStart) buckets[1].items.push(v);
-      else if (d >= monthStart) buckets[2].items.push(v);
-      else if (d >= yearStart) buckets[3].items.push(v);
-      else buckets[4].items.push(v);
+      if (d >= today) {
+        todayBucket.items.push(v);
+      } else if (d >= weekStart) {
+        weekBucket.items.push(v);
+      } else if (d >= monthStart) {
+        monthBucket.items.push(v);
+      } else if (d >= yearStart) {
+        // Earlier month this year — build a per-month bucket
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const key = `month-${y}-${m}`;
+        if (!monthlyMap.has(key)) {
+          const label = new Date(y, m).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+          monthlyMap.set(key, { key, label, items: [] });
+        }
+        monthlyMap.get(key)!.items.push(v);
+      } else {
+        olderBucket.items.push(v);
+      }
     }
 
-    return buckets.filter(b => b.items.length > 0);
+    // Sort monthly buckets most-recent-first
+    const monthlySorted = Array.from(monthlyMap.values()).sort((a, b) => {
+      // key format: 'month-YYYY-M'
+      const [, ay, am] = a.key.split('-').map(Number);
+      const [, by, bm] = b.key.split('-').map(Number);
+      return (by * 12 + bm) - (ay * 12 + am);
+    });
+
+    const all = [todayBucket, weekBucket, monthBucket, ...monthlySorted, olderBucket];
+    return all.filter(b => b.items.length > 0);
   }
 
   function groupByHorse(items: any[]): { key: string; label: string; color: string | null; items: any[] }[] {
@@ -215,6 +242,14 @@ export default function ServiceLog() {
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Service Log')}</Text>
         <View style={styles.headerRight}>
+          {canEdit && !selectMode && (
+            <Pressable
+              style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              onPress={() => router.push('/horse/service/add')}
+            >
+              <Plus size={18} color={C.secondary} />
+            </Pressable>
+          )}
           {canEdit && (
             <Pressable
               style={({ hovered }: any) => [styles.selectBtn, { borderColor: C.secondaryAlpha30 }, selectMode && { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
