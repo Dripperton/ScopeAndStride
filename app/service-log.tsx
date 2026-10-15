@@ -1,7 +1,7 @@
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Image, Linking, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
-import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText, ExternalLink, QrCode, CheckCircle, Circle, Trash2 } from 'lucide-react-native';
+import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText, ExternalLink, QrCode, CheckCircle, Circle, Trash2, ChevronDown, ChevronRight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
@@ -30,6 +30,8 @@ const FILTERS = [
   { value: 'other', label: 'Other' },
 ];
 
+const ALL_TIME_BUCKET_KEYS = new Set(['today', 'yesterday', 'last7', 'last14', 'lastMonth', 'lastYear', 'older']);
+
 export default function ServiceLog() {
   const router = useRouter();
   const { canEdit, isOwner, isStaff } = useProfile();
@@ -44,6 +46,8 @@ export default function ServiceLog() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [viewMode, setViewMode] = useState<'time' | 'horse'>('time');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(ALL_TIME_BUCKET_KEYS));
 
   useFocusEffect(useCallback(() => {
     refreshServiceVisits();
@@ -53,6 +57,14 @@ export default function ServiceLog() {
     setSelectedIds(prev => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSection(key: string) {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   }
@@ -120,12 +132,99 @@ export default function ServiceLog() {
     return buckets.filter(b => b.items.length > 0);
   }
 
+  function groupByHorse(items: any[]): { key: string; label: string; color: string | null; items: any[] }[] {
+    const map = new Map<string, { label: string; color: string | null; items: any[] }>();
+    for (const v of items) {
+      const name = v.horses?.name || 'Unknown';
+      if (!map.has(name)) {
+        map.set(name, { label: name, color: v.horses?.color || null, items: [] });
+      }
+      map.get(name)!.items.push(v);
+    }
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, val]) => ({ key, ...val }));
+  }
+
+  function renderVisitRow(visit: any, isLast: boolean) {
+    const meta = SERVICE_META[visit.service_type] || SERVICE_META.other;
+    return (
+      <Pressable key={visit.id} style={[styles.row, { borderBottomColor: C.cardSeparator }, isLast && styles.rowLast]} onPress={() => selectMode && toggleSelect(visit.id)}>
+        {selectMode && (
+          <View style={styles.checkbox}>
+            {selectedIds.has(visit.id)
+              ? <CheckCircle size={22} color={C.primary} />
+              : <Circle size={22} color={C.cardBorder} />}
+          </View>
+        )}
+        <View style={[styles.iconBg, { backgroundColor: meta.color }]}>
+          <meta.Icon size={16} color="white" />
+        </View>
+        <View style={styles.rowContent}>
+          <View style={styles.rowTop}>
+            <Text style={[styles.rowTitle, { color: C.text, fontFamily: F.sansBold }]} numberOfLines={1}>{visit.title || t(meta.label)}</Text>
+            <Text style={[styles.rowDate, { color: C.textMuted, fontFamily: F.sans }]}>{visit.date}</Text>
+          </View>
+          <View style={styles.rowMeta}>
+            <View style={[styles.horsePill, { backgroundColor: (visit.horses?.color || C.primary) + '22' }]}>
+              <Text style={[styles.horsePillText, { color: visit.horses?.color || C.primary, fontFamily: F.sansBold }]} numberOfLines={1}>
+                {visit.horses?.name || 'Unknown'}
+              </Text>
+            </View>
+            {visit.provider_name ? <Text style={[styles.providerText, { color: C.textMuted, fontFamily: F.sans }]}>{visit.provider_name}</Text> : null}
+          </View>
+          {visit.next_appointment_date ? (
+            <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Next appt')}: {visit.next_appointment_date}</Text>
+          ) : null}
+          {visit.expiry_date ? (
+            <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Expires')}: {visit.expiry_date}</Text>
+          ) : null}
+          {visit.notes ? <Text style={[styles.notesText, { color: C.text, fontFamily: F.sans }]} numberOfLines={2}>{visit.notes}</Text> : null}
+          {visit.external_invoice_url ? (
+            <Pressable onPress={() => Linking.openURL(visit.external_invoice_url)} style={styles.invoiceLink}>
+              <ExternalLink size={11} color={C.primary} />
+              <Text style={[styles.invoiceLinkText, { color: C.primary, fontFamily: F.sans }]}>{t('View Invoice')}</Text>
+            </Pressable>
+          ) : null}
+          {visit.amount ? (
+            <Text style={[styles.amountText, { color: C.textMuted, fontFamily: F.sans }]}>
+              ${Number(visit.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {visit.barn_invoiced ? ` · ${t('Adding to invoice')}` : ''}
+            </Text>
+          ) : null}
+        </View>
+        {canEdit && !selectMode ? (
+          <Pressable
+            style={({ hovered }: any) => [styles.editBtn, { borderColor: C.cardBorder }, hovered && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+            onPress={() => router.push({ pathname: '/horse/service/edit', params: { visitId: visit.id } })}
+          >
+            <Text style={[styles.editBtnText, { color: C.primary, fontFamily: F.sansMedium }]}>{t('Edit')}</Text>
+          </Pressable>
+        ) : null}
+      </Pressable>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Service Log')}</Text>
         <View style={styles.headerRight}>
+          <View style={styles.viewToggle}>
+            <Pressable
+              style={[styles.viewToggleBtn, { backgroundColor: viewMode === 'time' ? C.secondary : C.secondaryAlpha15 }]}
+              onPress={() => setViewMode('time')}
+            >
+              <Text style={[styles.viewToggleBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('By Date')}</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.viewToggleBtn, { backgroundColor: viewMode === 'horse' ? C.secondary : C.secondaryAlpha15 }]}
+              onPress={() => setViewMode('horse')}
+            >
+              <Text style={[styles.viewToggleBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('By Horse')}</Text>
+            </Pressable>
+          </View>
           {canEdit && (
             <Pressable
               style={({ hovered }: any) => [styles.selectBtn, { borderColor: C.secondaryAlpha30 }, selectMode && { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
@@ -202,72 +301,56 @@ export default function ServiceLog() {
         </View>
       ) : (
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-          {groupByTime(filtered).map(bucket => (
-            <View key={bucket.key}>
-              <Text style={[styles.timeBucketLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{bucket.label}</Text>
-              <View style={[styles.list, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-                {bucket.items.map((visit, index) => {
-                  const meta = SERVICE_META[visit.service_type] || SERVICE_META.other;
-                  const isLast = index === bucket.items.length - 1;
-                  return (
-                    <Pressable key={visit.id} style={[styles.row, { borderBottomColor: C.cardSeparator }, isLast && styles.rowLast]} onPress={() => selectMode && toggleSelect(visit.id)}>
-                      {selectMode && (
-                        <View style={styles.checkbox}>
-                          {selectedIds.has(visit.id)
-                            ? <CheckCircle size={22} color={C.primary} />
-                            : <Circle size={22} color={C.cardBorder} />}
-                        </View>
-                      )}
-                      <View style={[styles.iconBg, { backgroundColor: meta.color }]}>
-                        <meta.Icon size={16} color="white" />
+          {viewMode === 'time'
+            ? groupByTime(filtered).map(bucket => {
+                const isOpen = expandedSections.has(bucket.key);
+                return (
+                  <View key={bucket.key}>
+                    <Pressable style={styles.sectionHeader} onPress={() => toggleSection(bucket.key)}>
+                      <View style={styles.sectionHeaderLeft}>
+                        <Text style={[styles.timeBucketLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{bucket.label}</Text>
                       </View>
-                      <View style={styles.rowContent}>
-                        <View style={styles.rowTop}>
-                          <Text style={[styles.rowTitle, { color: C.text, fontFamily: F.sansBold }]} numberOfLines={1}>{visit.title || t(meta.label)}</Text>
-                          <Text style={[styles.rowDate, { color: C.textMuted, fontFamily: F.sans }]}>{visit.date}</Text>
-                        </View>
-                        <View style={styles.rowMeta}>
-                          <View style={[styles.horsePill, { backgroundColor: (visit.horses?.color || C.primary) + '22' }]}>
-                            <Text style={[styles.horsePillText, { color: visit.horses?.color || C.primary, fontFamily: F.sansBold }]} numberOfLines={1}>
-                              {visit.horses?.name || 'Unknown'}
-                            </Text>
-                          </View>
-                          {visit.provider_name ? <Text style={[styles.providerText, { color: C.textMuted, fontFamily: F.sans }]}>{visit.provider_name}</Text> : null}
-                        </View>
-                        {visit.next_appointment_date ? (
-                          <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Next appt')}: {visit.next_appointment_date}</Text>
-                        ) : null}
-                        {visit.expiry_date ? (
-                          <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Expires')}: {visit.expiry_date}</Text>
-                        ) : null}
-                        {visit.notes ? <Text style={[styles.notesText, { color: C.text, fontFamily: F.sans }]} numberOfLines={2}>{visit.notes}</Text> : null}
-                        {visit.external_invoice_url ? (
-                          <Pressable onPress={() => Linking.openURL(visit.external_invoice_url)} style={styles.invoiceLink}>
-                            <ExternalLink size={11} color={C.primary} />
-                            <Text style={[styles.invoiceLinkText, { color: C.primary, fontFamily: F.sans }]}>{t('View Invoice')}</Text>
-                          </Pressable>
-                        ) : null}
-                        {visit.amount ? (
-                          <Text style={[styles.amountText, { color: C.textMuted, fontFamily: F.sans }]}>
-                            ${Number(visit.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                            {visit.barn_invoiced ? ` · ${t('Adding to invoice')}` : ''}
-                          </Text>
-                        ) : null}
+                      <View style={styles.sectionHeaderRight}>
+                        <Text style={[styles.sectionCount, { color: C.textMuted }]}>{bucket.items.length}</Text>
+                        {isOpen
+                          ? <ChevronDown size={16} color={C.textMuted} />
+                          : <ChevronRight size={16} color={C.textMuted} />}
                       </View>
-                      {canEdit && !selectMode ? (
-                        <Pressable
-                          style={({ hovered }: any) => [styles.editBtn, { borderColor: C.cardBorder }, hovered && { borderColor: C.primary, backgroundColor: C.activeBg }]}
-                          onPress={() => router.push({ pathname: '/horse/service/edit', params: { visitId: visit.id } })}
-                        >
-                          <Text style={[styles.editBtnText, { color: C.primary, fontFamily: F.sansMedium }]}>{t('Edit')}</Text>
-                        </Pressable>
-                      ) : null}
                     </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          ))}
+                    {isOpen && (
+                      <View style={[styles.list, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+                        {bucket.items.map((visit, index) => renderVisitRow(visit, index === bucket.items.length - 1))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            : groupByHorse(filtered).map(group => {
+                const isOpen = expandedSections.has(group.key);
+                const horseColor = group.color || C.primary;
+                return (
+                  <View key={group.key}>
+                    <Pressable style={styles.sectionHeader} onPress={() => toggleSection(group.key)}>
+                      <View style={styles.sectionHeaderLeft}>
+                        <View style={[styles.horsePill, { backgroundColor: horseColor + '22', alignSelf: 'flex-start' }]}>
+                          <Text style={[styles.horsePillText, { color: horseColor, fontFamily: F.sansBold }]}>{group.label}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.sectionHeaderRight}>
+                        <Text style={[styles.sectionCount, { color: C.textMuted }]}>{group.items.length}</Text>
+                        {isOpen
+                          ? <ChevronDown size={16} color={C.textMuted} />
+                          : <ChevronRight size={16} color={C.textMuted} />}
+                      </View>
+                    </Pressable>
+                    {isOpen && (
+                      <View style={[styles.list, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+                        {group.items.map((visit, index) => renderVisitRow(visit, index === group.items.length - 1))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
@@ -343,5 +426,13 @@ const styles = StyleSheet.create({
   deleteBarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
   deleteBarBtnDisabled: { opacity: 0.4 },
   deleteBarBtnText: { fontSize: 14, color: 'white', fontWeight: '600' },
-  timeBucketLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 20, marginBottom: 8, marginHorizontal: 16 },
+  timeBucketLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.2 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  sectionHeaderLeft: { flex: 1 },
+  sectionHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  sectionCount: { fontSize: 11 },
+  chevron: { fontSize: 16 },
+  viewToggle: { flexDirection: 'row', gap: 6 },
+  viewToggleBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
+  viewToggleBtnText: { fontSize: 12, fontWeight: '600' },
 });
