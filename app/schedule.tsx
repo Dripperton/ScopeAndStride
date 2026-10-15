@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Linking, Modal, Platform, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Platform, ActivityIndicator, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Pressable as GHPressable } from 'react-native-gesture-handler';
 import { useFocusEffect } from 'expo-router';
 import { ChessKnight, Calendar, DollarSign, MoreHorizontal, Trophy, Stethoscope, Hammer, CalendarCheck, FileText, Repeat, CalendarDays } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
@@ -190,11 +191,14 @@ export default function Schedule() {
       await navigator.clipboard.writeText(feedUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
+    } else {
+      await Share.share({ message: feedUrl });
     }
   }
 
-  function handleOpenApple() {
-    Linking.openURL(feedUrl.replace('https://', 'webcal://'));
+  async function handleOpenApple() {
+    const webcalUrl = feedUrl.replace('https://', 'webcal://');
+    await Linking.openURL(webcalUrl);
   }
 
   return (
@@ -216,13 +220,6 @@ export default function Schedule() {
               <Text style={styles.todayBtnText}>{t('Today')}</Text>
             </Pressable>
           )}
-          <Pressable
-            style={({ hovered }: any) => [styles.syncBtn, hovered && styles.syncBtnHovered]}
-            onPress={handleSubscribe}
-          >
-            <CalendarDays size={14} color={C.secondary} />
-            <Text style={[styles.syncBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Sync Calendar')}</Text>
-          </Pressable>
           {(isOwner || isStaff) && !isHorseOwner && (
             <Pressable
               style={styles.addBtn}
@@ -241,6 +238,13 @@ export default function Schedule() {
         </Pressable>
         <Pressable style={[styles.viewToggleBtn, viewMode === 'upcoming' && styles.viewToggleBtnActive]} onPress={() => switchView('upcoming')}>
           <Text style={[styles.viewToggleText, viewMode === 'upcoming' && { color: C.headerText }]}>{t('Upcoming')}</Text>
+        </Pressable>
+        <Pressable
+          style={({ hovered }: any) => [styles.syncBtn, hovered && styles.syncBtnHovered, { marginLeft: 'auto' }]}
+          onPress={handleSubscribe}
+        >
+          <CalendarDays size={14} color={C.secondary} />
+          <Text style={[styles.syncBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Sync Calendar')}</Text>
         </Pressable>
       </View>
 
@@ -377,9 +381,9 @@ export default function Schedule() {
             </Text>
 
             {Platform.OS !== 'web' ? (
-              <Pressable style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleOpenApple}>
+              <GHPressable style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleOpenApple}>
                 <Text style={[styles.primaryBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Open in Apple Calendar')}</Text>
-              </Pressable>
+              </GHPressable>
             ) : null}
 
             <View style={styles.divider}>
@@ -395,13 +399,11 @@ export default function Schedule() {
             <Text style={[styles.stepText, { color: C.text }]}>5. {t('Rename it')} <Text style={[styles.bold, { color: C.text }]}>Scope & Stride</Text> {t('if needed')}</Text>
 
             <View style={[styles.urlRow, { backgroundColor: C.background, borderColor: C.cardBorder }]}>
-              <Text style={[styles.urlText, { color: C.textMuted }]} numberOfLines={1}>{feedUrl}</Text>
+              <Text style={[styles.urlText, { color: C.textMuted }]} numberOfLines={1} selectable>{feedUrl}</Text>
             </View>
-            {Platform.OS === 'web' ? (
-              <Pressable style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleCopy}>
-                <Text style={[styles.primaryBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{copied ? t('Copied!') : t('Copy Link')}</Text>
-              </Pressable>
-            ) : null}
+            <Pressable style={[styles.primaryBtn, { backgroundColor: C.primary }]} onPress={handleCopy}>
+              <Text style={[styles.primaryBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{copied ? t('Copied!') : t('Copy Link')}</Text>
+            </Pressable>
 
             <Pressable style={[styles.closeBtn, { borderColor: C.cardBorder }]} onPress={() => setSyncModal(false)}>
               <Text style={[styles.closeBtnText, { color: C.textMuted, fontFamily: F.sansMedium }]}>{t('Done')}</Text>

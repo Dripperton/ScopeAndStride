@@ -86,6 +86,40 @@ export default function ServiceLog() {
 
   const filtered = filter === 'all' ? visits : visits.filter(v => v.service_type === filter);
 
+  function groupByTime(items: any[]) {
+    const now = new Date();
+    const startOf = (d: Date) => { d.setHours(0, 0, 0, 0); return d; };
+    const today = startOf(new Date(now));
+    const yesterday = startOf(new Date(now)); yesterday.setDate(yesterday.getDate() - 1);
+    const ago7 = startOf(new Date(now)); ago7.setDate(ago7.getDate() - 7);
+    const ago14 = startOf(new Date(now)); ago14.setDate(ago14.getDate() - 14);
+    const ago30 = startOf(new Date(now)); ago30.setMonth(ago30.getMonth() - 1);
+    const ago365 = startOf(new Date(now)); ago365.setFullYear(ago365.getFullYear() - 1);
+
+    const buckets: { key: string; label: string; items: any[] }[] = [
+      { key: 'today', label: 'Today', items: [] },
+      { key: 'yesterday', label: 'Yesterday', items: [] },
+      { key: 'last7', label: 'Last 7 Days', items: [] },
+      { key: 'last14', label: 'Last 14 Days', items: [] },
+      { key: 'lastMonth', label: 'Last Month', items: [] },
+      { key: 'lastYear', label: 'Last Year', items: [] },
+      { key: 'older', label: 'Older', items: [] },
+    ];
+
+    for (const v of items) {
+      const d = new Date(v.date + 'T12:00:00');
+      if (d >= today) buckets[0].items.push(v);
+      else if (d >= yesterday) buckets[1].items.push(v);
+      else if (d >= ago7) buckets[2].items.push(v);
+      else if (d >= ago14) buckets[3].items.push(v);
+      else if (d >= ago30) buckets[4].items.push(v);
+      else if (d >= ago365) buckets[5].items.push(v);
+      else buckets[6].items.push(v);
+    }
+
+    return buckets.filter(b => b.items.length > 0);
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
@@ -168,67 +202,72 @@ export default function ServiceLog() {
         </View>
       ) : (
         <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
-          <View style={[styles.list, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-            {filtered.map((visit, index) => {
-              const meta = SERVICE_META[visit.service_type] || SERVICE_META.other;
-              const isLast = index === filtered.length - 1;
-              return (
-                <Pressable key={visit.id} style={[styles.row, { borderBottomColor: C.cardSeparator }, isLast && styles.rowLast]} onPress={() => selectMode && toggleSelect(visit.id)}>
-                  {selectMode && (
-                    <View style={styles.checkbox}>
-                      {selectedIds.has(visit.id)
-                        ? <CheckCircle size={22} color={C.primary} />
-                        : <Circle size={22} color={C.cardBorder} />}
-                    </View>
-                  )}
-                  <View style={[styles.iconBg, { backgroundColor: meta.color }]}>
-                    <meta.Icon size={16} color="white" />
-                  </View>
-                  <View style={styles.rowContent}>
-                    <View style={styles.rowTop}>
-                      <Text style={[styles.rowTitle, { color: C.text, fontFamily: F.sansBold }]} numberOfLines={1}>{visit.title || t(meta.label)}</Text>
-                      <Text style={[styles.rowDate, { color: C.textMuted, fontFamily: F.sans }]}>{visit.date}</Text>
-                    </View>
-                    <View style={styles.rowMeta}>
-                      <View style={[styles.horsePill, { backgroundColor: (visit.horses?.color || C.primary) + '22' }]}>
-                        <Text style={[styles.horsePillText, { color: visit.horses?.color || C.primary, fontFamily: F.sansBold }]} numberOfLines={1}>
-                          {visit.horses?.name || 'Unknown'}
-                        </Text>
+          {groupByTime(filtered).map(bucket => (
+            <View key={bucket.key}>
+              <Text style={[styles.timeBucketLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{bucket.label}</Text>
+              <View style={[styles.list, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+                {bucket.items.map((visit, index) => {
+                  const meta = SERVICE_META[visit.service_type] || SERVICE_META.other;
+                  const isLast = index === bucket.items.length - 1;
+                  return (
+                    <Pressable key={visit.id} style={[styles.row, { borderBottomColor: C.cardSeparator }, isLast && styles.rowLast]} onPress={() => selectMode && toggleSelect(visit.id)}>
+                      {selectMode && (
+                        <View style={styles.checkbox}>
+                          {selectedIds.has(visit.id)
+                            ? <CheckCircle size={22} color={C.primary} />
+                            : <Circle size={22} color={C.cardBorder} />}
+                        </View>
+                      )}
+                      <View style={[styles.iconBg, { backgroundColor: meta.color }]}>
+                        <meta.Icon size={16} color="white" />
                       </View>
-                      {visit.provider_name ? <Text style={[styles.providerText, { color: C.textMuted, fontFamily: F.sans }]}>{visit.provider_name}</Text> : null}
-                    </View>
-                    {visit.next_appointment_date ? (
-                      <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Next appt')}: {visit.next_appointment_date}</Text>
-                    ) : null}
-                    {visit.expiry_date ? (
-                      <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Expires')}: {visit.expiry_date}</Text>
-                    ) : null}
-                    {visit.notes ? <Text style={[styles.notesText, { color: C.text, fontFamily: F.sans }]} numberOfLines={2}>{visit.notes}</Text> : null}
-                    {visit.external_invoice_url ? (
-                      <Pressable onPress={() => Linking.openURL(visit.external_invoice_url)} style={styles.invoiceLink}>
-                        <ExternalLink size={11} color={C.primary} />
-                        <Text style={[styles.invoiceLinkText, { color: C.primary, fontFamily: F.sans }]}>{t('View Invoice')}</Text>
-                      </Pressable>
-                    ) : null}
-                    {visit.amount ? (
-                      <Text style={[styles.amountText, { color: C.textMuted, fontFamily: F.sans }]}>
-                        ${Number(visit.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        {visit.barn_invoiced ? ` · ${t('Adding to invoice')}` : ''}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {canEdit && !selectMode ? (
-                    <Pressable
-                      style={({ hovered }: any) => [styles.editBtn, { borderColor: C.cardBorder }, hovered && { borderColor: C.primary, backgroundColor: C.activeBg }]}
-                      onPress={() => router.push({ pathname: '/horse/service/edit', params: { visitId: visit.id } })}
-                    >
-                      <Text style={[styles.editBtnText, { color: C.primary, fontFamily: F.sansMedium }]}>{t('Edit')}</Text>
+                      <View style={styles.rowContent}>
+                        <View style={styles.rowTop}>
+                          <Text style={[styles.rowTitle, { color: C.text, fontFamily: F.sansBold }]} numberOfLines={1}>{visit.title || t(meta.label)}</Text>
+                          <Text style={[styles.rowDate, { color: C.textMuted, fontFamily: F.sans }]}>{visit.date}</Text>
+                        </View>
+                        <View style={styles.rowMeta}>
+                          <View style={[styles.horsePill, { backgroundColor: (visit.horses?.color || C.primary) + '22' }]}>
+                            <Text style={[styles.horsePillText, { color: visit.horses?.color || C.primary, fontFamily: F.sansBold }]} numberOfLines={1}>
+                              {visit.horses?.name || 'Unknown'}
+                            </Text>
+                          </View>
+                          {visit.provider_name ? <Text style={[styles.providerText, { color: C.textMuted, fontFamily: F.sans }]}>{visit.provider_name}</Text> : null}
+                        </View>
+                        {visit.next_appointment_date ? (
+                          <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Next appt')}: {visit.next_appointment_date}</Text>
+                        ) : null}
+                        {visit.expiry_date ? (
+                          <Text style={[styles.subText, { color: C.textWarm, fontFamily: F.sans }]}>{t('Expires')}: {visit.expiry_date}</Text>
+                        ) : null}
+                        {visit.notes ? <Text style={[styles.notesText, { color: C.text, fontFamily: F.sans }]} numberOfLines={2}>{visit.notes}</Text> : null}
+                        {visit.external_invoice_url ? (
+                          <Pressable onPress={() => Linking.openURL(visit.external_invoice_url)} style={styles.invoiceLink}>
+                            <ExternalLink size={11} color={C.primary} />
+                            <Text style={[styles.invoiceLinkText, { color: C.primary, fontFamily: F.sans }]}>{t('View Invoice')}</Text>
+                          </Pressable>
+                        ) : null}
+                        {visit.amount ? (
+                          <Text style={[styles.amountText, { color: C.textMuted, fontFamily: F.sans }]}>
+                            ${Number(visit.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                            {visit.barn_invoiced ? ` · ${t('Adding to invoice')}` : ''}
+                          </Text>
+                        ) : null}
+                      </View>
+                      {canEdit && !selectMode ? (
+                        <Pressable
+                          style={({ hovered }: any) => [styles.editBtn, { borderColor: C.cardBorder }, hovered && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                          onPress={() => router.push({ pathname: '/horse/service/edit', params: { visitId: visit.id } })}
+                        >
+                          <Text style={[styles.editBtnText, { color: C.primary, fontFamily: F.sansMedium }]}>{t('Edit')}</Text>
+                        </Pressable>
+                      ) : null}
                     </Pressable>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </View>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
@@ -304,4 +343,5 @@ const styles = StyleSheet.create({
   deleteBarBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
   deleteBarBtnDisabled: { opacity: 0.4 },
   deleteBarBtnText: { fontSize: 14, color: 'white', fontWeight: '600' },
+  timeBucketLabel: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginTop: 16, marginBottom: 6, marginHorizontal: 16 },
 });

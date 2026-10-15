@@ -5,6 +5,7 @@ import { useProfile } from './useProfile';
 interface BarnSettings {
   id: string;
   schedule_privacy: 'show_details' | 'show_busy';
+  trainers: string[];
 }
 
 interface BarnDataContextValue {

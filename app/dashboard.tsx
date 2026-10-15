@@ -958,7 +958,6 @@ function ActionTile({ icon, label, onPress, badge, badgeCount, badgeColor, C }: 
       ]}
       onPress={onPress}
     >
-      {badge && <View style={[styles.badgeDot, { backgroundColor: C.error, borderColor: C.primary }]} />}
       {badgeCount !== undefined && (
         <View style={[styles.badgeCountWrap, { backgroundColor: bgColor }]}>
           <Text style={styles.badgeCountText}>{badgeCount > 99 ? '99+' : badgeCount}</Text>

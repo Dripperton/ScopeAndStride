@@ -50,7 +50,17 @@ export default function ManageUsers() {
   const [sending, setSending] = useState(false);
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [expandedHorses, setExpandedHorses] = useState<Set<string>>(new Set());
+  const [usersExpanded, setUsersExpanded] = useState(false);
   const scrollRef = useRef<any>(null);
+
+  function toggleHorse(id: string) {
+    setExpandedHorses(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
 
   useEffect(() => { fetchData(); }, []);
 
@@ -313,10 +323,15 @@ export default function ManageUsers() {
             <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Horses & Linked Users')}</Text>
             {horses.map(horse => {
               const links = horseLinks.filter(l => l.horse_id === horse.id);
+              const isOpen = expandedHorses.has(horse.id);
               return (
                 <View key={horse.id} style={[styles.horseCard, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-                  <Text style={[styles.horseCardName, { color: C.text, fontFamily: F.sansBold }]}>{horse.name}</Text>
-                  {links.length === 0 ? (
+                  <Pressable style={styles.horseCardHeader} onPress={() => toggleHorse(horse.id)}>
+                    <Text style={[styles.horseCardName, { color: C.text, fontFamily: F.sansBold }]}>{horse.name}</Text>
+                    <Text style={[styles.horseCardCount, { color: C.textMuted }]}>{links.length} {t('linked')}</Text>
+                    {isOpen ? <ChevronUp size={16} color={C.textMuted} /> : <ChevronDown size={16} color={C.textMuted} />}
+                  </Pressable>
+                  {isOpen && (links.length === 0 ? (
                     <Text style={[styles.noLinksText, { color: C.cardBorder }]}>{t('No users linked')}</Text>
                   ) : (
                     links.map(link => (
@@ -350,9 +365,9 @@ export default function ManageUsers() {
                         </Pressable>
                       </View>
                     ))
-                  )}
+                  ))}
                   {/* Add any horse_owner not already linked to this horse */}
-                  {(() => {
+                  {isOpen && (() => {
                     const addable = horseOwnerUsers.filter(u => !horseLinks.some(l => l.user_id === u.id && l.horse_id === horse.id));
                     if (addable.length === 0) return null;
                     return (
@@ -371,8 +386,11 @@ export default function ManageUsers() {
             })}
 
             {/* All users section */}
-            <Text style={[styles.sectionTitle, { marginTop: 24, color: C.textMuted, fontFamily: F.sansBold }]}>{t('All Users')}</Text>
-            {users.map(user => {
+            <Pressable style={[styles.sectionTitleRow, { marginTop: 24 }]} onPress={() => setUsersExpanded(e => !e)}>
+              <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold, marginTop: 0 }]}>{t('All Users')} ({users.length})</Text>
+              {usersExpanded ? <ChevronUp size={14} color={C.textMuted} /> : <ChevronDown size={14} color={C.textMuted} />}
+            </Pressable>
+            {usersExpanded && users.map(user => {
               const roleInfo = getRoleInfo(user.role);
               const isSelf = user.id === profile?.id;
               const userLinks = horseLinks.filter(l => l.user_id === user.id);
@@ -499,8 +517,11 @@ const styles = StyleSheet.create({
   successBanner: { borderRadius: 10, padding: 14, marginBottom: 16, borderWidth: 1 },
   successBannerText: { fontSize: 13, fontWeight: '500', textAlign: 'center' },
   sectionTitle: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
   horseCard: { borderRadius: 12, borderWidth: 1, padding: 14, marginBottom: 10 },
-  horseCardName: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  horseCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  horseCardName: { fontSize: 14, fontWeight: '700', flex: 1 },
+  horseCardCount: { fontSize: 12 },
   noLinksText: { fontSize: 12, fontStyle: 'italic', marginBottom: 8 },
   linkRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 8, borderTopWidth: 1 },
   linkInfo: { flex: 1 },

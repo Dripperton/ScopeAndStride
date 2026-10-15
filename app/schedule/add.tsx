@@ -8,6 +8,10 @@ import DateInput from '../../lib/DateInput';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import HomeButton from '../../lib/HomeButton';
+import { useBarnData } from '../../lib/BarnDataContext';
+
+const HOURS = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
+const MINUTES = ['00', '15', '30', '45'];
 
 const TYPES = [
   { value: 'lesson',  label: 'Lesson',  Icon: Trophy },
@@ -54,19 +58,30 @@ export default function AddEvent() {
   const { t } = useLanguage();
   const theme = useTheme(); const C = theme.colors; const F = theme.fonts;
   const { date: initialDate } = useLocalSearchParams();
+  const { barnSettings } = useBarnData();
 
   const [horses, setHorses] = useState<{ id: string; name: string }[]>([]);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState((initialDate as string) || '');
-  const [time, setTime] = useState('');
+  const [timeHour, setTimeHour] = useState<number | null>(null);
+  const [timeMinute, setTimeMinute] = useState<string | null>(null);
+  const [timeAmPm, setTimeAmPm] = useState<'AM' | 'PM'>('AM');
   const [type, setType] = useState('other');
   const [assignee, setAssignee] = useState('');
+  const [assigneeOther, setAssigneeOther] = useState('');
   const [notes, setNotes] = useState('');
   const [horseId, setHorseId] = useState('');
   const [recurring, setRecurring] = useState('');
   const [recurringEndDate, setRecurringEndDate] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  const trainers = barnSettings?.trainers || [];
+
+  function buildTimeString() {
+    if (timeHour === null || timeMinute === null) return null;
+    return `${timeHour}:${timeMinute} ${timeAmPm}`;
+  }
 
   useEffect(() => {
     supabase.from('horses').select('id, name').order('name').then(({ data }) => {
@@ -95,9 +110,9 @@ export default function AddEvent() {
     const records = dates.map(d => ({
       title: title.trim(),
       date: d,
-      time: time.trim() || null,
+      time: buildTimeString(),
       type,
-      assignee: assignee.trim() || null,
+      assignee: (assignee === '__other__' ? assigneeOther.trim() : assignee) || null,
       notes: notes.trim() || null,
       horse_id: horseId || null,
       recurring: recurring || null,
@@ -154,21 +169,88 @@ export default function AddEvent() {
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Date').toUpperCase()}</Text>
           <DateInput value={date} onChange={setDate} placeholder="Select date" />
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Time').toUpperCase()}</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
-            value={time}
-            onChangeText={setTime}
-            placeholder="e.g. 9:00 AM"
-            placeholderTextColor={C.textMuted}
-          />
+          <View style={styles.amPmRow}>
+            {(['AM', 'PM'] as const).map(p => (
+              <Pressable
+                key={p}
+                style={[styles.amPmBtn, { borderColor: C.cardBorder }, timeAmPm === p && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                onPress={() => setTimeAmPm(p)}
+              >
+                <Text style={[styles.amPmText, { color: C.textMuted, fontFamily: F.sansMedium }, timeAmPm === p && { color: C.primary, fontFamily: F.sansBold }]}>{p}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.hourGrid}>
+            {HOURS.map((h, i) => {
+              const isSelected = timeHour === h && ((timeAmPm === 'AM' && i < 7) || (timeAmPm === 'PM' && i >= 7));
+              return (
+                <Pressable
+                  key={i}
+                  style={[styles.timeChip, { borderColor: C.cardBorder }, isSelected && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setTimeHour(h)}
+                >
+                  <Text style={[styles.timeChipText, { color: C.textMuted, fontFamily: F.sansMedium }, isSelected && { color: C.primary, fontFamily: F.sansBold }]}>{h}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={styles.minuteRow}>
+            {MINUTES.map(m => (
+              <Pressable
+                key={m}
+                style={[styles.amPmBtn, { borderColor: C.cardBorder }, timeMinute === m && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                onPress={() => setTimeMinute(m)}
+              >
+                <Text style={[styles.amPmText, { color: C.textMuted, fontFamily: F.sansMedium }, timeMinute === m && { color: C.primary, fontFamily: F.sansBold }]}>:{m}</Text>
+              </Pressable>
+            ))}
+          </View>
+
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Assigned To').toUpperCase()}</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
-            value={assignee}
-            onChangeText={setAssignee}
-            placeholder="e.g. Trainer Kim"
-            placeholderTextColor={C.textMuted}
-          />
+          {trainers.length > 0 ? (
+            <>
+              <View style={styles.trainerGrid}>
+                <Pressable
+                  style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === '' && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setAssignee('')}
+                >
+                  <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === '' && { color: C.primary, fontFamily: F.sansBold }]}>{t('None')}</Text>
+                </Pressable>
+                {trainers.map(name => (
+                  <Pressable
+                    key={name}
+                    style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === name && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                    onPress={() => setAssignee(name)}
+                  >
+                    <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === name && { color: C.primary, fontFamily: F.sansBold }]}>{name}</Text>
+                  </Pressable>
+                ))}
+                <Pressable
+                  style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === '__other__' && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setAssignee('__other__')}
+                >
+                  <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === '__other__' && { color: C.primary, fontFamily: F.sansBold }]}>{t('Other')}</Text>
+                </Pressable>
+              </View>
+              {assignee === '__other__' && (
+                <TextInput
+                  style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans, marginTop: 8 }]}
+                  value={assigneeOther}
+                  onChangeText={setAssigneeOther}
+                  placeholder="Enter name"
+                  placeholderTextColor={C.textMuted}
+                />
+              )}
+            </>
+          ) : (
+            <TextInput
+              style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
+              value={assignee}
+              onChangeText={setAssignee}
+              placeholder="e.g. Trainer Kim"
+              placeholderTextColor={C.textMuted}
+            />
+          )}
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('NOTES')}</Text>
           <TextInput
             style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
@@ -254,4 +336,14 @@ const styles = StyleSheet.create({
   recurringOption: { flex: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
   recurringLabel: { fontSize: 12, fontWeight: '500' },
   errorText: { fontSize: 13, padding: 16 },
+  amPmRow: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  amPmBtn: { flex: 1, borderWidth: 1.5, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
+  amPmText: { fontSize: 13, fontWeight: '500' },
+  hourGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  timeChip: { borderWidth: 1.5, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, minWidth: 40, alignItems: 'center' },
+  timeChipText: { fontSize: 13, fontWeight: '500' },
+  minuteRow: { flexDirection: 'row', gap: 8 },
+  trainerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  trainerChip: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 9 },
+  trainerChipText: { fontSize: 13, fontWeight: '500' },
 });

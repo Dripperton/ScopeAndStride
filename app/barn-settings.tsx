@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
@@ -18,12 +18,40 @@ export default function BarnSettings() {
   const { barnSettings, refreshBarnSettings } = useBarnData();
 
   const [schedulePrivacy, setSchedulePrivacy] = useState<'show_details' | 'show_busy'>('show_details');
+  const [trainers, setTrainers] = useState<string[]>([]);
+  const [newTrainer, setNewTrainer] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (barnSettings) { setSchedulePrivacy(barnSettings.schedule_privacy); setLoading(false); }
+    if (barnSettings) {
+      setSchedulePrivacy(barnSettings.schedule_privacy);
+      setTrainers(barnSettings.trainers || []);
+      setLoading(false);
+    }
   }, [barnSettings]);
+
+  async function handleAddTrainer() {
+    const name = newTrainer.trim();
+    if (!name) return;
+    const updated = [...trainers, name];
+    setTrainers(updated);
+    setNewTrainer('');
+    await supabase.from('barn_settings').update({ trainers: updated });
+    await refreshBarnSettings();
+  }
+
+  async function handleRemoveTrainer(name: string) {
+    Alert.alert('Remove Trainer', `Remove ${name} from the trainer list?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => {
+        const updated = trainers.filter(t => t !== name);
+        setTrainers(updated);
+        await supabase.from('barn_settings').update({ trainers: updated });
+        await refreshBarnSettings();
+      }},
+    ]);
+  }
 
   async function handlePrivacyToggle(value: boolean) {
     const newPrivacy = value ? 'show_busy' : 'show_details';
@@ -103,6 +131,36 @@ export default function BarnSettings() {
           </View>
         </View>
 
+        <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold, marginTop: 24 }]}>{t('Trainers')}</Text>
+        <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.settingDesc, { color: C.textMuted }]}>{t('These names appear in the "Assigned To" picker when adding events.')}</Text>
+          {trainers.map(name => (
+            <View key={name} style={[styles.trainerRow, { borderColor: C.cardBorder }]}>
+              <Text style={[styles.settingLabel, { color: C.text, fontFamily: F.sans, flex: 1 }]}>{name}</Text>
+              <Pressable onPress={() => handleRemoveTrainer(name)}>
+                <Text style={{ color: C.error, fontSize: 13, fontFamily: F.sansBold }}>Remove</Text>
+              </Pressable>
+            </View>
+          ))}
+          <View style={styles.addTrainerRow}>
+            <TextInput
+              style={[styles.trainerInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
+              value={newTrainer}
+              onChangeText={setNewTrainer}
+              placeholder="Trainer name"
+              placeholderTextColor={C.textMuted}
+              onSubmitEditing={handleAddTrainer}
+              returnKeyType="done"
+            />
+            <Pressable
+              style={[styles.addTrainerBtn, { backgroundColor: C.primary }]}
+              onPress={handleAddTrainer}
+            >
+              <Text style={{ color: C.headerText, fontFamily: F.sansBold, fontSize: 13 }}>Add</Text>
+            </Pressable>
+          </View>
+        </View>
+
         <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold, marginTop: 24 }]}>Admin</Text>
         <Pressable
           style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}
@@ -137,4 +195,8 @@ const styles = StyleSheet.create({
   privacyExample: { borderRadius: 10, borderWidth: 1, padding: 12, gap: 4 },
   privacyExampleLabel: { fontSize: 10, letterSpacing: 0.5, marginBottom: 4 },
   privacyExampleRow: { fontSize: 12, lineHeight: 20 },
+  trainerRow: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, paddingTop: 10, marginTop: 6 },
+  addTrainerRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  trainerInput: { flex: 1, borderWidth: 1, borderRadius: 10, padding: 10, fontSize: 14 },
+  addTrainerBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
 });
