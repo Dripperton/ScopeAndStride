@@ -39,7 +39,7 @@ export default function BarnSettings() {
     const updated = [...trainers, name];
     setTrainers(updated);
     setNewTrainer('');
-    await supabase.from('barn_settings').update({ trainers: updated });
+    await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
   }
 
   async function handleRemoveTrainer(name: string) {
@@ -48,7 +48,7 @@ export default function BarnSettings() {
       { text: 'Remove', style: 'destructive', onPress: async () => {
         const updated = trainers.filter(t => t !== name);
         setTrainers(updated);
-        await supabase.from('barn_settings').update({ trainers: updated });
+        await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
       }},
     ]);
   }
@@ -60,14 +60,14 @@ export default function BarnSettings() {
     const updated = trainers.map((t, i) => (i === editingTrainer.index ? name : t));
     setTrainers(updated);
     setEditingTrainer(null);
-    await supabase.from('barn_settings').update({ trainers: updated });
+    await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
   }
 
   async function handlePrivacyToggle(value: boolean) {
     const newPrivacy = value ? 'show_busy' : 'show_details';
     setSchedulePrivacy(newPrivacy);
     setSaving(true);
-    await supabase.from('barn_settings').update({ schedule_privacy: newPrivacy });
+    await supabase.from('barn_settings').update({ schedule_privacy: newPrivacy }).eq('id', barnSettings!.id);
     await refreshBarnSettings();
     setSaving(false);
   }
