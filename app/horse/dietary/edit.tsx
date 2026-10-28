@@ -87,7 +87,7 @@ export default function EditDietaryEntry() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Details')}</Text>
 

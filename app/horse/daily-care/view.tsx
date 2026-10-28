@@ -50,7 +50,7 @@ export default function DailyCareView() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
         {loading && logs.length === 0 ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : logs.length === 0 ? (

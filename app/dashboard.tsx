@@ -510,7 +510,7 @@ export default function Dashboard() {
         <ConciergeBar C={C} F={F} t={t} onPress={() => router.push('/concierge')} />
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
 
         {/* ═══════════════════════════════════════════════════════════════════
             BARN OWNER / STAFF LAYOUT
@@ -1056,7 +1056,7 @@ function WidgetSheet({ visible, widgets, onClose, onSave, sheetAnim, C, F, t, la
         </View>
         <Text style={[styles.sheetSubtitle, { color: C.textMuted }]}>{t('Show or hide sections on your dashboard')}</Text>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <ScrollView showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
           {/* Dashboard sections */}
           {local.filter(w => w.section === 'dashboard').length > 0 && (
             <>

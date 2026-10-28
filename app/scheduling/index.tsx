@@ -405,7 +405,7 @@ export default function SchedulingHub() {
       {loading ? (
         <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
 
           {/* MANAGER: REQUESTS */}
           {tab === 'requests' && canManage && (
@@ -868,7 +868,7 @@ export default function SchedulingHub() {
 
                 <Text style={[styles.sheetSectionLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>SELECT A NEW TIME</Text>
 
-                <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false}>
+                <ScrollView style={{ maxHeight: 260 }} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
                   {openSlots.filter(s => s.id !== rescheduleSheet.slotId).map(slot => (
                     <Pressable
                       key={slot.id}

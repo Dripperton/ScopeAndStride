@@ -344,7 +344,7 @@ export default function ServiceLog() {
           <Text style={[styles.emptyText, { color: C.textMuted, fontFamily: F.sans }]}>{t('No service records yet.')}</Text>
         </View>
       ) : (
-        <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
           {viewMode === 'time'
             ? groupByTime(filtered).map(bucket => {
                 const isOpen = expandedSections.has(bucket.key);

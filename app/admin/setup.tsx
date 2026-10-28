@@ -393,7 +393,7 @@ export default function AdminSetup() {
 
       {/* ── Invites tab */}
       {tab === 'invites' && (
-        <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+        <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardDismissMode="on-drag">
           <View style={styles.invitesHeader}>
             <Text style={[styles.note, { fontFamily: F.sans, color: C.textMuted, flex: 1 }]}>
               All horse owner invites. Resend to anyone who hasn't accepted.
@@ -441,7 +441,7 @@ export default function AdminSetup() {
 
       {/* ── Settings tab */}
       {tab === 'settings' && (
-        <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
+        <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent} keyboardDismissMode="on-drag">
           <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
             <Text style={[styles.cardTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>ALERT THRESHOLDS</Text>
             <Text style={[styles.cardDesc, { color: C.textMuted, fontFamily: F.sans }]}>

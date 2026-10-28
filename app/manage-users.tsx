@@ -213,7 +213,7 @@ export default function ManageUsers() {
         </Pressable>
       </View>
 
-      <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
 
         {showInviteForm && (
           <View style={[styles.inviteForm, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

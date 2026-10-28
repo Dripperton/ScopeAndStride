@@ -102,7 +102,7 @@ export default function Horses() {
         />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
         {horsesLoading ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : horses.length === 0 ? (

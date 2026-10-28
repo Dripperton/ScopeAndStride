@@ -111,7 +111,7 @@ export default function Board() {
           </Pressable>
         </View>
       ) : (
-        <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
           {pinnedPosts.length > 0 && (
             <View>
               <Text style={[styles.sectionLabel, { color: C.textMuted }]}>{t('Pinned')}</Text>

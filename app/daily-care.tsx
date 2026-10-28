@@ -45,7 +45,7 @@ export default function DailyCareOverview() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
         {horsesLoading && horses.length === 0 ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : horses.length === 0 ? (

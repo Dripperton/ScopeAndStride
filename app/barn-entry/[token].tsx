@@ -199,7 +199,7 @@ export default function BarnEntryForm() {
         <Text style={styles.subtitle}>Select the horses you worked on today</Text>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
 
         {/* Shared Details */}
         <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

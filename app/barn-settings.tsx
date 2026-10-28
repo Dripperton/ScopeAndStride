@@ -98,7 +98,7 @@ export default function BarnSettings() {
         <View style={styles.headerSpacer} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
         <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Schedule')}</Text>
         <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <View style={styles.settingRow}>
