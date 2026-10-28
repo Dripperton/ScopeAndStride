@@ -101,6 +101,7 @@ export default function AddEvent() {
     if (!title.trim()) { setError(t('Title is required.')); return; }
     if (!date.trim()) { setError(t('Date is required.')); return; }
     if (recurring && !recurringEndDate) { setError(t('End date is required for recurring events.')); return; }
+    if (recurring && recurringEndDate && recurringEndDate < date) { setError(t('End date must be after the start date.')); return; }
     setSaving(true);
     setError('');
 

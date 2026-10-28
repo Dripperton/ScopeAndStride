@@ -180,6 +180,8 @@ export default function SchedulingHub() {
   }
 
   async function deleteSlots(ids: string[]) {
+    // Cancel pending requests for these slots first
+    await supabase.from('lesson_requests').update({ status: 'cancelled' }).in('slot_id', ids).eq('status', 'pending');
     const { error } = await supabase.from('lesson_slots').delete().in('id', ids);
     if (error) { alert(`Error: ${error.message}`); return; }
     setSlots(prev => prev.filter(s => !ids.includes(s.id)));
@@ -921,8 +923,8 @@ export default function SchedulingHub() {
             <Text style={[styles.modalTitle, { color: C.text, fontFamily: F.sansBold }]}>Delete Slot{deleteConfirm && deleteConfirm.length > 1 ? 's' : ''}?</Text>
             <Text style={[styles.modalBody, { color: C.textMuted, fontFamily: F.sans }]}>
               {deleteConfirm && deleteConfirm.length > 1
-                ? `This will permanently remove ${deleteConfirm.length} slots. Any pending requests for these slots will remain in the system.`
-                : 'This will permanently remove the slot. Any pending requests for this slot will remain in the system.'}
+                ? `This will permanently remove ${deleteConfirm.length} slots. Any pending requests for these slots will be automatically cancelled.`
+                : 'This will permanently remove the slot. Any pending requests for this slot will be automatically cancelled.'}
             </Text>
             <View style={styles.modalActions}>
               <Pressable style={[styles.modalCancel, { borderColor: C.cardBorder }]} onPress={() => setDeleteConfirm(null)}>

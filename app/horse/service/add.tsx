@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText } from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
@@ -74,6 +74,7 @@ export default function AddServiceVisit() {
       source: 'manual',
     });
     if (err) { setError(err.message); setSaving(false); return; }
+    Alert.alert('Saved', 'Service visit recorded.');
     router.back();
   }
 
@@ -207,14 +208,12 @@ export default function AddServiceVisit() {
             keyboardType="url"
           />
 
-          {amount ? (
-            <Pressable style={styles.checkRow} onPress={() => setBarnInvoiced(!barnInvoiced)}>
-              <View style={[styles.checkbox, { borderColor: C.cardBorder }, barnInvoiced && { backgroundColor: C.primary, borderColor: C.primary }]}>
-                {barnInvoiced ? <Text style={[styles.checkmark, { color: C.card }]}>✓</Text> : null}
-              </View>
-              <Text style={[styles.checkLabel, { color: C.text, fontFamily: F.sans }]}>{t('Bill through barn')}</Text>
-            </Pressable>
-          ) : null}
+          <Pressable style={styles.checkRow} onPress={() => setBarnInvoiced(!barnInvoiced)}>
+            <View style={[styles.checkbox, { borderColor: C.cardBorder }, barnInvoiced && { backgroundColor: C.primary, borderColor: C.primary }]}>
+              {barnInvoiced ? <Text style={[styles.checkmark, { color: C.card }]}>✓</Text> : null}
+            </View>
+            <Text style={[styles.checkLabel, { color: C.text, fontFamily: F.sans }]}>{t('Bill through barn')}</Text>
+          </Pressable>
         </View>
 
         {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}

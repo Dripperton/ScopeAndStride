@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { ChessKnight } from 'lucide-react-native';
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
@@ -19,6 +19,8 @@ export default function Horses() {
   const { isHorseOwner } = useProfile();
   const { horses, horsesLoading, refreshHorses } = useBarnData();
   const [editMode, setEditMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [reordering, setReordering] = useState(false);
 
   async function handleDelete(id: number, name: string) {
     Alert.alert(
@@ -35,9 +37,10 @@ export default function Horses() {
   }
 
   async function handleMove(index: number, direction: 'up' | 'down') {
+    setReordering(true);
     const sorted = [...horses].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
-    if (swapIndex < 0 || swapIndex >= sorted.length) return;
+    if (swapIndex < 0 || swapIndex >= sorted.length) { setReordering(false); return; }
     const a = sorted[index];
     const b = sorted[swapIndex];
     const aOrder = a.sort_order ?? index;
@@ -47,6 +50,7 @@ export default function Horses() {
       supabase.from('horses').update({ sort_order: aOrder }).eq('id', b.id),
     ]);
     await refreshHorses();
+    setReordering(false);
   }
 
   return (
@@ -88,7 +92,14 @@ export default function Horses() {
       </View>
 
       <View style={[styles.searchBar, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-        <Text style={[styles.searchText, { color: C.textMuted }]}>🔍  {t('Search horses, owners, stalls…')}</Text>
+        <TextInput
+          style={[styles.searchText, { color: C.text }]}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={`🔍  ${t('Search horses, owners, stalls…')}`}
+          placeholderTextColor={C.textMuted}
+          clearButtonMode="while-editing"
+        />
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false}>
@@ -101,9 +112,14 @@ export default function Horses() {
             <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('Add your first horse or import a CSV to get started.')}</Text>
           </View>
         ) : (
-          [...horses]
-            .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
-            .map((horse: any, index: number, arr: any[]) => (
+          (() => {
+            const sorted = [...horses].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+            const filtered = sorted.filter(h => {
+              const q = searchQuery.toLowerCase();
+              return !q || (h.name || '').toLowerCase().includes(q) || (h.owner || '').toLowerCase().includes(q) || (h.stall || '').toLowerCase().includes(q);
+            });
+            return filtered;
+          })().map((horse: any, index: number, arr: any[]) => (
             <Pressable
               key={horse.id}
               style={({ hovered }: any) => [styles.horseCard, { backgroundColor: C.card, borderColor: editMode ? C.secondary : C.cardBorder }, hovered && !editMode && { backgroundColor: C.cardSeparator, borderColor: C.secondary }]}
@@ -112,10 +128,10 @@ export default function Horses() {
               {editMode ? (
                 <>
                   <View style={styles.reorderBtns}>
-                    <Pressable onPress={() => handleMove(index, 'up')} style={[styles.reorderBtn, { opacity: index === 0 ? 0.2 : 1 }]}>
+                    <Pressable onPress={() => handleMove(index, 'up')} disabled={reordering} style={[styles.reorderBtn, { opacity: index === 0 || reordering ? 0.2 : 1 }]}>
                       <Text style={{ fontSize: 16, color: C.textMuted }}>↑</Text>
                     </Pressable>
-                    <Pressable onPress={() => handleMove(index, 'down')} style={[styles.reorderBtn, { opacity: index === arr.length - 1 ? 0.2 : 1 }]}>
+                    <Pressable onPress={() => handleMove(index, 'down')} disabled={reordering} style={[styles.reorderBtn, { opacity: index === arr.length - 1 || reordering ? 0.2 : 1 }]}>
                       <Text style={{ fontSize: 16, color: C.textMuted }}>↓</Text>
                     </Pressable>
                   </View>

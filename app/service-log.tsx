@@ -84,7 +84,7 @@ export default function ServiceLog() {
     if (!confirmed) return;
     setDeleting(true);
     await supabase.from('service_visits').delete().in('id', Array.from(selectedIds));
-    refreshServiceVisits();
+    await refreshServiceVisits();
     setSelectedIds(new Set());
     setSelectMode(false);
     setDeleting(false);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Pencil } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
@@ -20,6 +21,7 @@ export default function BarnSettings() {
   const [schedulePrivacy, setSchedulePrivacy] = useState<'show_details' | 'show_busy'>('show_details');
   const [trainers, setTrainers] = useState<string[]>([]);
   const [newTrainer, setNewTrainer] = useState('');
+  const [editingTrainer, setEditingTrainer] = useState<{ index: number; value: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -49,6 +51,16 @@ export default function BarnSettings() {
         await supabase.from('barn_settings').update({ trainers: updated });
       }},
     ]);
+  }
+
+  async function handleSaveEditTrainer() {
+    if (!editingTrainer) return;
+    const name = editingTrainer.value.trim();
+    if (!name) return;
+    const updated = trainers.map((t, i) => (i === editingTrainer.index ? name : t));
+    setTrainers(updated);
+    setEditingTrainer(null);
+    await supabase.from('barn_settings').update({ trainers: updated });
   }
 
   async function handlePrivacyToggle(value: boolean) {
@@ -132,12 +144,36 @@ export default function BarnSettings() {
         <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold, marginTop: 24 }]}>{t('Trainers')}</Text>
         <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.settingDesc, { color: C.textMuted }]}>{t('These names appear in the "Assigned To" picker when adding events.')}</Text>
-          {trainers.map(name => (
-            <View key={name} style={[styles.trainerRow, { borderColor: C.cardBorder }]}>
-              <Text style={[styles.settingLabel, { color: C.text, fontFamily: F.sans, flex: 1 }]}>{name}</Text>
-              <Pressable onPress={() => handleRemoveTrainer(name)}>
-                <Text style={{ color: C.error, fontSize: 13, fontFamily: F.sansBold }}>Remove</Text>
-              </Pressable>
+          {trainers.map((name, index) => (
+            <View key={index} style={[styles.trainerRow, { borderColor: C.cardBorder }]}>
+              {editingTrainer?.index === index ? (
+                <>
+                  <TextInput
+                    style={[styles.trainerInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans, flex: 1 }]}
+                    value={editingTrainer.value}
+                    onChangeText={v => setEditingTrainer({ index, value: v })}
+                    autoFocus
+                    returnKeyType="done"
+                    onSubmitEditing={handleSaveEditTrainer}
+                  />
+                  <Pressable onPress={handleSaveEditTrainer} style={[styles.addTrainerBtn, { backgroundColor: C.primary }]}>
+                    <Text style={{ color: C.headerText, fontFamily: F.sansBold, fontSize: 13 }}>Save</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setEditingTrainer(null)} style={[styles.addTrainerBtn, { backgroundColor: C.cardBorder }]}>
+                    <Text style={{ color: C.text, fontFamily: F.sansBold, fontSize: 13 }}>Cancel</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={[styles.settingLabel, { color: C.text, fontFamily: F.sans, flex: 1 }]}>{name}</Text>
+                  <Pressable onPress={() => setEditingTrainer({ index, value: name })} style={{ marginRight: 12 }}>
+                    <Pencil size={15} color={C.textMuted} />
+                  </Pressable>
+                  <Pressable onPress={() => handleRemoveTrainer(name)}>
+                    <Text style={{ color: C.error, fontSize: 13, fontFamily: F.sansBold }}>Remove</Text>
+                  </Pressable>
+                </>
+              )}
             </View>
           ))}
           <View style={styles.addTrainerRow}>

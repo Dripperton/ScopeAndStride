@@ -2,6 +2,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Trophy, Stethoscope, Hammer, CalendarCheck, FileText, Repeat } from 'lucide-react-native';
+
+const HOURS = [6, 7, 8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7, 8];
+const MINUTES = ['00', '15', '30', '45'];
+
+function buildTimeString(h: number | null, m: string | null, ap: string) {
+  if (h === null || m === null) return null;
+  return `${h}:${m} ${ap}`;
+}
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 import DateInput from '../../lib/DateInput';
@@ -50,7 +58,9 @@ export default function EditEvent() {
   const [horses, setHorses] = useState<{ id: string; name: string }[]>([]);
   const [title, setTitle] = useState('');
   const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
+  const [timeHour, setTimeHour] = useState<number | null>(null);
+  const [timeMinute, setTimeMinute] = useState<string | null>(null);
+  const [timeAmPm, setTimeAmPm] = useState<'AM' | 'PM'>('AM');
   const [type, setType] = useState('other');
   const [assignee, setAssignee] = useState('');
   const [assigneeOther, setAssigneeOther] = useState('');
@@ -72,7 +82,13 @@ export default function EditEvent() {
       if (data) {
         setTitle(data.title || '');
         setDate(data.date || '');
-        setTime(data.time || '');
+        const rawTime = data.time || '';
+        const match = rawTime.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+        if (match) {
+          setTimeHour(parseInt(match[1]));
+          setTimeMinute(match[2]);
+          setTimeAmPm(match[3].toUpperCase() as 'AM' | 'PM');
+        }
         setType(data.type || 'other');
         const savedAssignee = data.assignee || '';
         const knownTrainers = barnSettings?.trainers || [];
@@ -101,7 +117,7 @@ export default function EditEvent() {
     const updates = {
       title: title.trim(),
       date,
-      time: time.trim() || null,
+      time: buildTimeString(timeHour, timeMinute, timeAmPm),
       type,
       assignee: (assignee === '__other__' ? assigneeOther.trim() : assignee) || null,
       notes: notes.trim() || null,
@@ -226,13 +242,42 @@ export default function EditEvent() {
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Date').toUpperCase()}</Text>
           <DateInput value={date} onChange={setDate} placeholder="Select date" />
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Time').toUpperCase()}</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
-            value={time}
-            onChangeText={setTime}
-            placeholder="e.g. 9:00 AM"
-            placeholderTextColor={C.textMuted}
-          />
+          <View style={styles.amPmRow}>
+            {(['AM', 'PM'] as const).map(p => (
+              <Pressable
+                key={p}
+                style={[styles.amPmBtn, { borderColor: C.cardBorder }, timeAmPm === p && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                onPress={() => setTimeAmPm(p)}
+              >
+                <Text style={[styles.amPmText, { color: C.textMuted, fontFamily: F.sansMedium }, timeAmPm === p && { color: C.primary, fontFamily: F.sansBold }]}>{p}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <View style={styles.hourGrid}>
+            {HOURS.map((h, i) => {
+              const isSelected = timeHour === h && ((timeAmPm === 'AM' && i < 7) || (timeAmPm === 'PM' && i >= 7));
+              return (
+                <Pressable
+                  key={i}
+                  style={[styles.timeChip, { borderColor: C.cardBorder }, isSelected && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setTimeHour(h)}
+                >
+                  <Text style={[styles.timeChipText, { color: C.textMuted, fontFamily: F.sansMedium }, isSelected && { color: C.primary, fontFamily: F.sansBold }]}>{h}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={styles.minuteRow}>
+            {MINUTES.map(m => (
+              <Pressable
+                key={m}
+                style={[styles.amPmBtn, { borderColor: C.cardBorder }, timeMinute === m && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                onPress={() => setTimeMinute(m)}
+              >
+                <Text style={[styles.amPmText, { color: C.textMuted, fontFamily: F.sansMedium }, timeMinute === m && { color: C.primary, fontFamily: F.sansBold }]}>:{m}</Text>
+              </Pressable>
+            ))}
+          </View>
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Assigned To').toUpperCase()}</Text>
           {(barnSettings?.trainers || []).length > 0 ? (
             <>
@@ -354,6 +399,13 @@ const styles = StyleSheet.create({
   trainerChip: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
   trainerChipText: { fontSize: 13, fontWeight: '500' },
   errorText: { fontSize: 13, padding: 16 },
+  amPmRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
+  amPmBtn: { paddingHorizontal: 18, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5 },
+  amPmText: { fontSize: 13, fontWeight: '600' },
+  hourGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  timeChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5 },
+  timeChipText: { fontSize: 14, fontWeight: '500' },
+  minuteRow: { flexDirection: 'row', gap: 8 },
   deleteBtn: { margin: 16, borderRadius: 12, padding: 16, alignItems: 'center' },
   deleteBtnHovered: { backgroundColor: '#6B1E1E' },
   deleteBtnText: { fontSize: 14, fontWeight: '600' },
