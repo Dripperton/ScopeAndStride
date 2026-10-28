@@ -77,7 +77,7 @@ serve(async () => {
       .from('barn_settings')
       .select('barn_name')
       .single()
-    const barnName = barnSettings?.barn_name ?? 'Hollow Creek'
+    const barnName = barnSettings?.barn_name ?? 'Hidden Hill Farm'
 
     // Fetch all pending/overdue invoices with horse and profile info
     const { data: invoices, error } = await supabase
