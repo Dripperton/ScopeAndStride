@@ -39,7 +39,8 @@ export default function BarnSettings() {
     const updated = [...trainers, name];
     setTrainers(updated);
     setNewTrainer('');
-    await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
+    const { error: err } = await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
+    if (err) { Alert.alert('Save failed', err.message); return; }
     await refreshBarnSettings();
   }
 
