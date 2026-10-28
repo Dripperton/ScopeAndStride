@@ -40,6 +40,7 @@ export default function BarnSettings() {
     setTrainers(updated);
     setNewTrainer('');
     await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
+    await refreshBarnSettings();
   }
 
   async function handleRemoveTrainer(name: string) {
@@ -49,6 +50,7 @@ export default function BarnSettings() {
         const updated = trainers.filter(t => t !== name);
         setTrainers(updated);
         await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
+        await refreshBarnSettings();
       }},
     ]);
   }
@@ -61,6 +63,7 @@ export default function BarnSettings() {
     setTrainers(updated);
     setEditingTrainer(null);
     await supabase.from('barn_settings').update({ trainers: updated }).eq('id', barnSettings!.id);
+    await refreshBarnSettings();
   }
 
   async function handlePrivacyToggle(value: boolean) {
