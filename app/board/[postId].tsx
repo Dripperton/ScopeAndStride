@@ -173,7 +173,7 @@ export default function PostDetail() {
         </View>
       </View>
 
-      <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView ref={scrollRef} style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
         {/* Post */}
         <View style={[styles.postCard, { backgroundColor: C.card, borderColor: C.cardBorder }, isAnnouncement && { borderColor: C.secondary, backgroundColor: '#FFFDF7' }]}>
           <View style={styles.postHeader}>

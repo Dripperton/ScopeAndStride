@@ -139,7 +139,7 @@ export default function EditHorse() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
         <View style={[styles.heroCard, { backgroundColor: color }]}>
           {photoUrl ? (
             <Image source={{ uri: photoUrl }} style={styles.heroPhoto} />

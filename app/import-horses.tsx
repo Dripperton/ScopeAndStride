@@ -101,7 +101,7 @@ export default function ImportHorses() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
         {done ? (
           <View style={styles.successCard}>
             <Text style={[styles.successIcon, { color: C.primary }]}>✓</Text>

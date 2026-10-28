@@ -51,7 +51,7 @@ export default function AddHorse() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
         <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Horse Name')}</Text>
         <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={name} onChangeText={setName} placeholder="e.g. Sterling" placeholderTextColor={C.cardBorder} />
 

@@ -146,7 +146,7 @@ export default function AddSlots() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
 
         {/* How many weeks */}
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

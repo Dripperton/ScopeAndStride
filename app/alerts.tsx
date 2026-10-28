@@ -101,7 +101,7 @@ export default function AlertsScreen() {
           <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('No alerts right now. Check back later.')}</Text>
         </View>
       ) : (
-        <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+        <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
           {criticalAlerts.length > 0 && (
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Critical')}</Text>

@@ -270,7 +270,7 @@ export default function Schedule() {
         </View>
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
         {loading && events.length === 0 ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : viewMode === 'upcoming' ? (
