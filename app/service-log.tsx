@@ -116,15 +116,17 @@ export default function ServiceLog() {
     const dayOfWeek = weekStart.getDay(); // 0=Sun
     const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     weekStart.setDate(weekStart.getDate() + diffToMon);
+    const lastWeekStart = startOf(new Date(weekStart)); lastWeekStart.setDate(lastWeekStart.getDate() - 7);
     const monthStart = startOf(new Date(now)); monthStart.setDate(1);
     const currentYear = now.getFullYear();
     const yearStart = new Date(currentYear, 0, 1);
 
     // Fixed buckets
-    const todayBucket:     { key: string; label: string; items: any[] } = { key: 'today', label: 'Today', items: [] };
-    const weekBucket:      { key: string; label: string; items: any[] } = { key: 'week', label: 'This Week', items: [] };
-    const monthBucket:     { key: string; label: string; items: any[] } = { key: 'month', label: 'This Month', items: [] };
-    const olderBucket:     { key: string; label: string; items: any[] } = { key: 'older', label: 'Older', items: [] };
+    const todayBucket:     { key: string; label: string; items: any[] } = { key: 'today',     label: 'Today',     items: [] };
+    const weekBucket:      { key: string; label: string; items: any[] } = { key: 'week',      label: 'This Week', items: [] };
+    const lastWeekBucket:  { key: string; label: string; items: any[] } = { key: 'last-week', label: 'Last Week', items: [] };
+    const monthBucket:     { key: string; label: string; items: any[] } = { key: 'month',     label: 'This Month', items: [] };
+    const olderBucket:     { key: string; label: string; items: any[] } = { key: 'older',     label: 'Older',     items: [] };
     // Monthly buckets for earlier months this year, keyed as 'month-YYYY-M'
     const monthlyMap = new Map<string, { key: string; label: string; items: any[] }>();
 
@@ -134,6 +136,8 @@ export default function ServiceLog() {
         todayBucket.items.push(v);
       } else if (d >= weekStart) {
         weekBucket.items.push(v);
+      } else if (d >= lastWeekStart) {
+        lastWeekBucket.items.push(v);
       } else if (d >= monthStart) {
         monthBucket.items.push(v);
       } else if (d >= yearStart) {
@@ -159,7 +163,7 @@ export default function ServiceLog() {
       return (by * 12 + bm) - (ay * 12 + am);
     });
 
-    const all = [todayBucket, weekBucket, monthBucket, ...monthlySorted, olderBucket];
+    const all = [todayBucket, weekBucket, lastWeekBucket, monthBucket, ...monthlySorted, olderBucket];
     return all.filter(b => b.items.length > 0);
   }
 
