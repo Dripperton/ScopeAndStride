@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
 import DateInput from '../../../lib/DateInput';
@@ -139,7 +139,7 @@ export default function EditHorse() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
         <View style={[styles.heroCard, { backgroundColor: color }]}>
           {photoUrl ? (
             <Image source={{ uri: photoUrl }} style={styles.heroPhoto} />

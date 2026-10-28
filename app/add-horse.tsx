@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { Keyboard, ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
@@ -51,7 +51,7 @@ export default function AddHorse() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
         <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Horse Name')}</Text>
         <TextInput style={[styles.input, { backgroundColor: C.card, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]} value={name} onChangeText={setName} placeholder="e.g. Sterling" placeholderTextColor={C.cardBorder} />
 

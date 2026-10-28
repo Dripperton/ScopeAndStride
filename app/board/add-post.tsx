@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Megaphone, MessageSquare, Camera, Image as ImageIcon, FileText, X } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
@@ -106,7 +106,7 @@ export default function AddPost() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
         {(isOwner || isStaff) && (
           <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>Post Type</Text>

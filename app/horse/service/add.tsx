@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Keyboard, ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText } from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
@@ -97,7 +97,7 @@ export default function AddServiceVisit() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
         {!horseIdParam && (
           <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('HORSE')}</Text>
