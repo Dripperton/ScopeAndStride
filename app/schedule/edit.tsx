@@ -8,6 +8,7 @@ import DateInput from '../../lib/DateInput';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import HomeButton from '../../lib/HomeButton';
+import { useBarnData } from '../../lib/BarnDataContext';
 
 const TYPES = [
   { value: 'lesson',  label: 'Lesson',  Icon: Trophy },
@@ -44,6 +45,7 @@ export default function EditEvent() {
   const { t } = useLanguage();
   const theme = useTheme(); const C = theme.colors; const F = theme.fonts;
   const { eventId } = useLocalSearchParams();
+  const { barnSettings } = useBarnData();
 
   const [horses, setHorses] = useState<{ id: string; name: string }[]>([]);
   const [title, setTitle] = useState('');
@@ -51,6 +53,7 @@ export default function EditEvent() {
   const [time, setTime] = useState('');
   const [type, setType] = useState('other');
   const [assignee, setAssignee] = useState('');
+  const [assigneeOther, setAssigneeOther] = useState('');
   const [notes, setNotes] = useState('');
   const [horseId, setHorseId] = useState('');
   const [recurring, setRecurring] = useState<string | null>(null);
@@ -71,7 +74,14 @@ export default function EditEvent() {
         setDate(data.date || '');
         setTime(data.time || '');
         setType(data.type || 'other');
-        setAssignee(data.assignee || '');
+        const savedAssignee = data.assignee || '';
+        const knownTrainers = barnSettings?.trainers || [];
+        if (savedAssignee && !knownTrainers.includes(savedAssignee)) {
+          setAssignee('__other__');
+          setAssigneeOther(savedAssignee);
+        } else {
+          setAssignee(savedAssignee);
+        }
         setNotes(data.notes || '');
         setHorseId(data.horse_id || '');
         setRecurring(data.recurring || null);
@@ -93,7 +103,7 @@ export default function EditEvent() {
       date,
       time: time.trim() || null,
       type,
-      assignee: assignee.trim() || null,
+      assignee: (assignee === '__other__' ? assigneeOther.trim() : assignee) || null,
       notes: notes.trim() || null,
       horse_id: horseId || null,
     };
@@ -224,13 +234,50 @@ export default function EditEvent() {
             placeholderTextColor={C.textMuted}
           />
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Assigned To').toUpperCase()}</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
-            value={assignee}
-            onChangeText={setAssignee}
-            placeholder="e.g. Trainer Kim"
-            placeholderTextColor={C.textMuted}
-          />
+          {(barnSettings?.trainers || []).length > 0 ? (
+            <>
+              <View style={styles.trainerGrid}>
+                <Pressable
+                  style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === '' && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setAssignee('')}
+                >
+                  <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === '' && { color: C.primary, fontFamily: F.sansBold }]}>{t('None')}</Text>
+                </Pressable>
+                {(barnSettings?.trainers || []).map((name: string) => (
+                  <Pressable
+                    key={name}
+                    style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === name && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                    onPress={() => setAssignee(name)}
+                  >
+                    <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === name && { color: C.primary, fontFamily: F.sansBold }]}>{name}</Text>
+                  </Pressable>
+                ))}
+                <Pressable
+                  style={[styles.trainerChip, { borderColor: C.cardBorder }, assignee === '__other__' && { borderColor: C.primary, backgroundColor: C.activeBg }]}
+                  onPress={() => setAssignee('__other__')}
+                >
+                  <Text style={[styles.trainerChipText, { color: C.textMuted, fontFamily: F.sansMedium }, assignee === '__other__' && { color: C.primary, fontFamily: F.sansBold }]}>{t('Other')}</Text>
+                </Pressable>
+              </View>
+              {assignee === '__other__' && (
+                <TextInput
+                  style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans, marginTop: 8 }]}
+                  value={assigneeOther}
+                  onChangeText={setAssigneeOther}
+                  placeholder="Enter name"
+                  placeholderTextColor={C.textMuted}
+                />
+              )}
+            </>
+          ) : (
+            <TextInput
+              style={[styles.input, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
+              value={assignee}
+              onChangeText={setAssignee}
+              placeholder="e.g. Trainer Kim"
+              placeholderTextColor={C.textMuted}
+            />
+          )}
           <Text style={[styles.fieldLabel, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('NOTES')}</Text>
           <TextInput
             style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
@@ -303,6 +350,9 @@ const styles = StyleSheet.create({
   horseList: { gap: 6 },
   horseOption: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10 },
   horseLabel: { fontSize: 13, fontWeight: '500' },
+  trainerGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  trainerChip: { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 },
+  trainerChipText: { fontSize: 13, fontWeight: '500' },
   errorText: { fontSize: 13, padding: 16 },
   deleteBtn: { margin: 16, borderRadius: 12, padding: 16, alignItems: 'center' },
   deleteBtnHovered: { backgroundColor: '#6B1E1E' },
