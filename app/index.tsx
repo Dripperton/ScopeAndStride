@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -58,7 +59,7 @@ export default function Index() {
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
       {/* ── Dark hero section with barn branding */}
-      <View style={styles.hero}>
+      <Pressable style={styles.hero} onPress={() => Keyboard.dismiss()}>
         <View style={styles.logoMark}>
           <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>HHF</Text>
         </View>
@@ -66,7 +67,7 @@ export default function Index() {
         <Text style={[styles.poweredBy, { fontFamily: F.sans }]}>
           {t('Powered by')} Scope & Stride
         </Text>
-      </View>
+      </Pressable>
 
       {/* ── Form section */}
       <ScrollView
