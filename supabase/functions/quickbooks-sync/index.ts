@@ -65,7 +65,7 @@ serve(async (req) => {
 
   const accessToken = await getValidAccessToken(integration)
   const realmId = integration.realm_id
-  const baseUrl = 'https://sandbox-quickbooks.api.intuit.com'
+  const baseUrl = 'https://quickbooks.api.intuit.com'
 
   // Query all invoices from QB
   const query = encodeURIComponent("SELECT * FROM Invoice MAXRESULTS 100")

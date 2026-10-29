@@ -30,13 +30,26 @@ This applies all migrations in `supabase/migrations/` to the new project.
 ```bash
 supabase functions deploy billing-notifications --project-ref <project-ref>
 supabase functions deploy concierge-chat --project-ref <project-ref>
+supabase functions deploy quickbooks-oauth-connect --project-ref <project-ref>
+supabase functions deploy quickbooks-oauth-callback --project-ref <project-ref>
+supabase functions deploy quickbooks-sync --project-ref <project-ref>
+supabase functions deploy quickbooks-webhook --project-ref <project-ref>
 ```
 
 Set required secrets on the new project:
 ```bash
 supabase secrets set RESEND_API_KEY=<key> --project-ref <project-ref>
 supabase secrets set OPENAI_API_KEY=<key> --project-ref <project-ref>
+supabase secrets set QUICKBOOKS_CLIENT_ID=<key> --project-ref <project-ref>
+supabase secrets set QUICKBOOKS_CLIENT_SECRET=<key> --project-ref <project-ref>
+supabase secrets set QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN=<key> --project-ref <project-ref>
 ```
+
+**QuickBooks webhook setup (manual — do once per barn):**
+1. Log into the Intuit Developer portal → your QB app → Webhooks
+2. Add endpoint URL: `https://<project-ref>.supabase.co/functions/v1/quickbooks-webhook`
+3. Select entity: **Invoice** (Created, Updated, Deleted)
+4. Copy the **Verifier Token** shown — use it for `QUICKBOOKS_WEBHOOK_VERIFIER_TOKEN` above
 
 ---
 
@@ -171,7 +184,7 @@ eas submit --platform ios --latest
 ## Checklist
 
 - [ ] Supabase project created and linked
-- [ ] `db push` completed (all migrations applied)
+- [ ] `db push` completed (all migrations applied — includes `barn_integrations` table)
 - [ ] Edge functions deployed + secrets set
 - [ ] `barn_settings` row seeded with barn name
 - [ ] Barn owner account created + role set to `owner`

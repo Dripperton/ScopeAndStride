@@ -61,7 +61,7 @@ export default function Index() {
       {/* ── Dark hero section with barn branding */}
       <Pressable style={styles.hero} onPress={() => Keyboard.dismiss()}>
         <View style={styles.logoMark}>
-          <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>HHF</Text>
+          <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>{Brand.appName}</Text>
         </View>
         <Text style={[styles.barnName, { fontFamily: F.serif }]} adjustsFontSizeToFit numberOfLines={1}>{Brand.barnName}</Text>
         <Text style={[styles.poweredBy, { fontFamily: F.sans }]}>
