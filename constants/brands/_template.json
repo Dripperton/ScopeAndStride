@@ -8,5 +8,7 @@
     "primary": "#1A1A1A",
     "secondary": "#2B5FD9",
     "surface": "#E8E8EC"
-  }
+  },
+  "supabaseUrl": "https://YOUR-PROJECT-REF.supabase.co",
+  "supabaseAnonKey": "YOUR-ANON-KEY"
 }

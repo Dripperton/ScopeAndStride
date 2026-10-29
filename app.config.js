@@ -30,6 +30,8 @@ module.exports = ({ config }) => {
       themePrimary: brand.theme.primary,
       themeSecondary: brand.theme.secondary,
       themeSurface: brand.theme.surface,
+      supabaseUrl: brand.supabaseUrl ?? '',
+      supabaseAnonKey: brand.supabaseAnonKey ?? '',
     },
   };
 };

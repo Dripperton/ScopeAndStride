@@ -41,7 +41,7 @@ serve(async (req) => {
     const displayBarnName = barnName || 'your barn'
 
     const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-      redirectTo: APP_URL,
+      redirectTo: `${APP_URL}`,
       data: { invited_role: role },
     })
 
@@ -67,14 +67,17 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Scope & Stride <hello@scopeandstride.com>',
+            from: `${displayBarnName} <hello@scopeandstride.com>`,
             to: email,
-            subject: `You've been invited to ${displayBarnName} on Scope & Stride`,
+            subject: `You've been invited to ${displayBarnName}`,
             html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-              <h2 style="color:#2C4A35;">You're invited to ${displayBarnName}</h2>
-              <p>You've been added as <strong>${roleLabel}</strong>. Click below to sign in:</p>
-              <a href="${magicLink}" style="display:inline-block;background:#2C4A35;color:#C9A85C;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">Sign In to Scope & Stride</a>
-              <p style="color:#999;font-size:12px;">This link expires in 24 hours.</p>
+              <div style="background:#1A1A1A;padding:24px;border-radius:12px;margin-bottom:24px;">
+                <h1 style="color:#FFFFFF;margin:0;font-size:24px;">${displayBarnName}</h1>
+              </div>
+              <h2 style="color:#1A1A1A;">You're invited</h2>
+              <p style="color:#3A3A3A;">You've been added as <strong>${roleLabel}</strong> at ${displayBarnName}. Click below to sign in and get started:</p>
+              <a href="${magicLink}" style="display:inline-block;background:#1A1A1A;color:#FFFFFF;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:bold;margin:16px 0;">Sign In</a>
+              <p style="color:#999;font-size:12px;">This link expires in 24 hours. If you didn't expect this invitation, you can ignore this email.</p>
             </div>`,
           }),
         })
