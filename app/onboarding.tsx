@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
+import Brand from '../constants/brand';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -112,11 +113,9 @@ export default function Onboarding() {
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <View style={styles.logoMark}>
-          <Text style={[styles.logoS, { color: C.headerText, fontFamily: F.sansBold }]}>S</Text>
-          <View style={[styles.logoRule, { backgroundColor: C.secondary }]} />
-          <Text style={[styles.logoS, { color: C.headerText, fontFamily: F.sansBold }]}>S</Text>
+          <Text style={[styles.logoS, { color: C.headerText, fontFamily: F.sansBold }]}>{Brand.appName}</Text>
         </View>
-        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Welcome to Scope & Stride')}</Text>
+        <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Welcome to')} {Brand.barnName}</Text>
         <Text style={styles.headerSub}>{t("Let's get your horse set up")}</Text>
       </View>
 

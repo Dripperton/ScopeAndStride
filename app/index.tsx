@@ -65,7 +65,7 @@ export default function Index() {
         </View>
         <Text style={[styles.barnName, { fontFamily: F.serif }]} adjustsFontSizeToFit numberOfLines={1}>{Brand.barnName}</Text>
         <Text style={[styles.poweredBy, { fontFamily: F.sans }]}>
-          {t('Powered by')} Scope & Stride
+          {t('Powered by')} {Brand.barnName}
         </Text>
       </Pressable>
 

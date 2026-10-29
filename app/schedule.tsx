@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
+import Brand from '../constants/brand';
 import HomeButton from '../lib/HomeButton';
 import { useBarnData } from '../lib/BarnDataContext';
 
@@ -377,7 +378,7 @@ export default function Schedule() {
               <Text style={[styles.modalTitle, { color: C.text, fontFamily: F.sansBold }]}>{t('Sync to Your Calendar')}</Text>
             </View>
             <Text style={[styles.modalBody, { color: C.textMuted }]}>
-              {t('Add your Scope & Stride schedule to any calendar app. Events update automatically — you only need to do this once.')}
+              {t('Add your')} {Brand.barnName} {t('schedule to any calendar app. Events update automatically — you only need to do this once.')}
             </Text>
 
             {Platform.OS !== 'web' ? (
@@ -396,7 +397,7 @@ export default function Schedule() {
             <Text style={[styles.stepText, { color: C.text }]}>2. {t('Open')} <Text style={[styles.bold, { color: C.text }]}>calendar.google.com</Text></Text>
             <Text style={[styles.stepText, { color: C.text }]}>3. {t('Click the')} <Text style={[styles.bold, { color: C.text }]}>+</Text> {t('next to "Other calendars"')} → <Text style={[styles.bold, { color: C.text }]}>{t('From URL')}</Text></Text>
             <Text style={[styles.stepText, { color: C.text }]}>4. {t('Paste the link and click')} <Text style={[styles.bold, { color: C.text }]}>{t('Add calendar')}</Text></Text>
-            <Text style={[styles.stepText, { color: C.text }]}>5. {t('Rename it')} <Text style={[styles.bold, { color: C.text }]}>Scope & Stride</Text> {t('if needed')}</Text>
+            <Text style={[styles.stepText, { color: C.text }]}>5. {t('Rename it')} <Text style={[styles.bold, { color: C.text }]}>{Brand.barnName}</Text> {t('if needed')}</Text>
 
             <View style={[styles.urlRow, { backgroundColor: C.background, borderColor: C.cardBorder }]}>
               <Text style={[styles.urlText, { color: C.textMuted }]} numberOfLines={1} selectable>{feedUrl}</Text>

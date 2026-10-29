@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
 import { useLanguage } from '../../lib/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import Brand from '../../constants/brand';
 
 function InvoiceContent() {
   const router = useRouter();
@@ -51,7 +52,7 @@ function InvoiceContent() {
 
       const { error: initError } = await initPaymentSheet({
         paymentIntentClientSecret: data.clientSecret,
-        merchantDisplayName: 'Scope & Stride',
+        merchantDisplayName: Brand.barnName,
         style: 'automatic',
       });
 

@@ -61,7 +61,7 @@ serve(async (req) => {
         <div style="max-width: 400px; margin: 0 auto;">
           <div style="font-size: 48px; margin-bottom: 16px;">✓</div>
           <h2 style="color: #2C4A35; margin-bottom: 8px;">QuickBooks Connected</h2>
-          <p style="color: #9A9285;">You can close this window and return to Scope & Stride.</p>
+          <p style="color: #9A9285;">QuickBooks is now connected. You can close this window and return to the app.</p>
         </div>
       </body>
     </html>

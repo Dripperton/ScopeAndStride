@@ -104,7 +104,7 @@ export default function ResetPassword() {
         ) : (
           <>
             <Text style={[styles.title, { color: C.text, fontFamily: F.sansBold }]}>{t('Set a new password')}</Text>
-            <Text style={[styles.subtitle, { color: C.textMuted, fontFamily: F.sans }]}>{t('Choose a strong password for your Scope & Stride account.')}</Text>
+            <Text style={[styles.subtitle, { color: C.textMuted, fontFamily: F.sans }]}>{t('Choose a strong password for your account.')}</Text>
 
             {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
 

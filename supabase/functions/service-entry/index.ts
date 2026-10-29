@@ -54,6 +54,7 @@ async function sendVisitEmail(opts: {
   amount: number | null;
   barnInvoiced: boolean;
   paymentUrl: string | null;
+  barnName: string;
 }) {
   const resendKey = Deno.env.get('RESEND_API_KEY');
   if (!resendKey) return;
@@ -85,9 +86,9 @@ async function sendVisitEmail(opts: {
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#FAF7F2;padding:0;">
-      <div style="background:#2C4A35;padding:24px 32px;">
-        <p style="margin:0 0 4px;color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;">Scope &amp; Stride</p>
-        <h1 style="margin:0;color:#C9A85C;font-size:20px;font-style:italic;">${opts.horseName}</h1>
+      <div style="background:#1A1A1A;padding:24px 32px;">
+        <p style="margin:0 0 4px;color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:1px;text-transform:uppercase;">${opts.barnName}</p>
+        <h1 style="margin:0;color:#FFFFFF;font-size:20px;font-style:italic;">${opts.horseName}</h1>
       </div>
       <div style="padding:28px 32px;">
         <p style="margin:0 0 20px;color:#3A3830;font-size:15px;">A <strong>${serviceLabel.toLowerCase()}</strong> visit has been logged for <strong>${opts.horseName}</strong>.</p>
@@ -106,7 +107,7 @@ async function sendVisitEmail(opts: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Scope & Stride <notifications@scopeandstride.com>',
+      from: `${opts.barnName} <notifications@scopeandstride.com>`,
       to: [opts.to],
       subject: `${serviceLabel} visit logged for ${opts.horseName}`,
       html,
@@ -120,6 +121,9 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: CORS });
   }
+
+  const { data: barnSettingsRow } = await supabase.from('barn_settings').select('barn_name').single();
+  const barnName = barnSettingsRow?.barn_name ?? 'Your Barn';
 
   const url = new URL(req.url);
   const token = url.searchParams.get('token');
@@ -186,6 +190,7 @@ Deno.serve(async (req) => {
           amount: h.amount ? parseFloat(h.amount) : null,
           barnInvoiced: h.barn_invoiced ?? false,
           paymentUrl: h.external_invoice_url || null,
+          barnName,
         });
       }
 
@@ -246,6 +251,7 @@ Deno.serve(async (req) => {
         amount: amount ? parseFloat(amount) : null,
         barnInvoiced: barn_invoiced ?? false,
         paymentUrl: external_invoice_url || null,
+        barnName,
       });
     }
 
