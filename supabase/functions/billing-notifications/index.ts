@@ -15,7 +15,7 @@ function daysUntil(dateStr: string): number {
   return Math.ceil(diff / (1000 * 60 * 60 * 24))
 }
 
-async function sendEmail(to: string, subject: string, html: string) {
+async function sendEmail(to: string, subject: string, html: string, barnName: string) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -23,7 +23,7 @@ async function sendEmail(to: string, subject: string, html: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Scope & Stride <hello@scopeandstride.com>',
+      from: `${barnName} <hello@scopeandstride.com>`,
       to,
       subject,
       html,
@@ -35,9 +35,8 @@ async function sendEmail(to: string, subject: string, html: string) {
 function dueSoonEmail(horseName: string, ownerName: string, amount: number, dueDate: string, daysLeft: number, barnName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-      <div style="background: #2C4A35; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <h1 style="color: #C9A85C; margin: 0; font-size: 24px;">Scope & Stride</h1>
-        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">${barnName}</p>
+      <div style="background: #1A1A1A; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+        <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">${barnName}</h1>
       </div>
       <h2 style="color: #1A1A14;">Invoice Due in ${daysLeft} Day${daysLeft !== 1 ? 's' : ''}</h2>
       <p style="color: #3A3830;">Hi ${ownerName},</p>
@@ -54,9 +53,8 @@ function dueSoonEmail(horseName: string, ownerName: string, amount: number, dueD
 function overdueEmail(horseName: string, ownerName: string, amount: number, dueDate: string, barnName: string): string {
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
-      <div style="background: #2C4A35; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
-        <h1 style="color: #C9A85C; margin: 0; font-size: 24px;">Scope & Stride</h1>
-        <p style="color: rgba(255,255,255,0.6); margin: 4px 0 0;">${barnName}</p>
+      <div style="background: #1A1A1A; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+        <h1 style="color: #FFFFFF; margin: 0; font-size: 24px;">${barnName}</h1>
       </div>
       <h2 style="color: #8B2E2E;">Invoice Overdue</h2>
       <p style="color: #3A3830;">Hi ${ownerName},</p>
@@ -117,13 +115,15 @@ serve(async () => {
         emailSent = await sendEmail(
           profile.email,
           `Invoice due in 5 days — ${horseName}`,
-          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 5, barnName)
+          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 5, barnName),
+          barnName
         )
       } else if (daysLeft === 1) {
         emailSent = await sendEmail(
           profile.email,
           `Invoice due tomorrow — ${horseName}`,
-          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 1, barnName)
+          dueSoonEmail(horseName, ownerName, amount, invoice.due_date, 1, barnName),
+          barnName
         )
       } else if (daysLeft <= 0 && invoice.status !== 'overdue') {
         // Mark as overdue and send notice
@@ -131,13 +131,15 @@ serve(async () => {
         emailSent = await sendEmail(
           profile.email,
           `Invoice overdue — ${horseName}`,
-          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName)
+          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName),
+          barnName
         )
       } else if (invoice.status === 'overdue') {
         emailSent = await sendEmail(
           profile.email,
           `Invoice overdue — ${horseName}`,
-          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName)
+          overdueEmail(horseName, ownerName, amount, invoice.due_date, barnName),
+          barnName
         )
       }
 

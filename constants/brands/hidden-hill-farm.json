@@ -5,8 +5,8 @@
   "tagline": "",
   "bundleId": "com.scopeandstride.hiddenhillfarm",
   "theme": {
-    "primary": "#1A1A1A",
-    "secondary": "#2B5FD9",
-    "surface": "#E8E8EC"
+    "primary": "#182C63",
+    "secondary": "#1A1A1A",
+    "surface": "#F4F5F7"
   }
 }

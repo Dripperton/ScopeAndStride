@@ -4,8 +4,12 @@ import { useProfile } from './useProfile';
 
 interface BarnSettings {
   id: string;
+  barn_name: string;
   schedule_privacy: 'show_details' | 'show_busy';
   trainers: string[];
+  primary_color: string | null;
+  secondary_color: string | null;
+  surface_color: string | null;
 }
 
 interface BarnDataContextValue {

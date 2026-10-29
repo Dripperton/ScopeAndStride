@@ -33,10 +33,10 @@ import { registerForPushNotificationsAsync } from '../lib/notifications';
 const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
-const BRAND_THEME = {
-  primary:   extra.themePrimary   ?? '#1A1A1A',
-  secondary: extra.themeSecondary ?? '#2B5FD9',
-  surface:   extra.themeSurface   ?? '#E8E8EC',
+const BUILD_THEME = {
+  primary:   extra.themePrimary   ?? '#182C63',
+  secondary: extra.themeSecondary ?? '#1A1A1A',
+  surface:   extra.themeSurface   ?? '#F4F5F7',
 };
 
 export default function Layout() {
@@ -45,6 +45,7 @@ export default function Layout() {
   const [session, setSession] = useState<any>(undefined);
   const [isRecovery, setIsRecovery] = useState(false);
   const hasRedirected = useRef(false);
+  const [runtimeTheme, setRuntimeTheme] = useState<{ primary: string; secondary: string; surface: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -66,6 +67,25 @@ export default function Layout() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Fetch barn brand colors from DB after auth — overrides build-time defaults
+  // so barn owners can update their brand without a new build
+  useEffect(() => {
+    if (!session) return;
+    supabase
+      .from('barn_settings')
+      .select('primary_color, secondary_color, surface_color')
+      .single()
+      .then(({ data }) => {
+        if (data?.primary_color && data?.secondary_color && data?.surface_color) {
+          setRuntimeTheme({
+            primary: data.primary_color,
+            secondary: data.secondary_color,
+            surface: data.surface_color,
+          });
+        }
+      });
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (session === undefined) return;
@@ -126,7 +146,7 @@ export default function Layout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ThemeProvider primary={BRAND_THEME.primary} secondary={BRAND_THEME.secondary} surface={BRAND_THEME.surface}>
+        <ThemeProvider primary={(runtimeTheme ?? BUILD_THEME).primary} secondary={(runtimeTheme ?? BUILD_THEME).secondary} surface={(runtimeTheme ?? BUILD_THEME).surface}>
           <LanguageProvider>
             <ProfileProvider>
                 <BarnDataProvider>
