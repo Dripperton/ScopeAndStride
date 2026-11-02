@@ -29,6 +29,10 @@
   },
   "submit": {
     "production": {},
-    "production:hidden-hill-farm": {}
+    "production:hidden-hill-farm": {
+      "ios": {
+        "ascAppId": "6808262044"
+      }
+    }
   }
 }
