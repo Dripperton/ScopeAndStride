@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
@@ -18,6 +18,31 @@ export default function Account() {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      t('Delete Account'),
+      t('This will permanently delete your account and all associated data. This cannot be undone.'),
+      [
+        { text: t('Cancel'), style: 'cancel' },
+        {
+          text: t('Delete Account'),
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            const { error } = await supabase.rpc('delete_own_account');
+            if (error) {
+              setDeleting(false);
+              Alert.alert(t('Error'), error.message);
+              return;
+            }
+            await supabase.auth.signOut();
+          },
+        },
+      ]
+    );
+  }
 
   async function handleUpdate() {
     if (!current.trim()) { setError(t('Please enter your current password.')); return; }
@@ -128,6 +153,22 @@ export default function Account() {
             </Pressable>
           </>
         )}
+        <View style={styles.dangerZone}>
+          <Text style={[styles.sectionTitle, { color: C.error, fontFamily: F.sansBold, marginTop: 32 }]}>{t('Danger Zone')}</Text>
+          <Text style={[styles.dangerText, { color: C.textMuted, fontFamily: F.sans }]}>
+            {t('Permanently delete your account and all associated data. This cannot be undone.')}
+          </Text>
+          <Pressable
+            style={[styles.btn, styles.deleteBtn]}
+            onPress={handleDeleteAccount}
+            disabled={deleting}
+          >
+            {deleting
+              ? <ActivityIndicator color="#FFFFFF" />
+              : <Text style={[styles.btnText, { color: '#FFFFFF', fontFamily: F.sansBold }]}>{t('Delete My Account')}</Text>
+            }
+          </Pressable>
+        </View>
       </View>
     </View>
   );
@@ -147,6 +188,9 @@ const styles = StyleSheet.create({
   input: { fontSize: 15, paddingVertical: 4 },
   btn: { padding: 16, borderRadius: 10, alignItems: 'center', marginTop: 8 },
   btnText: { fontSize: 15, fontWeight: '700' },
+  dangerZone: { marginTop: 8 },
+  dangerText: { fontSize: 13, lineHeight: 20, marginBottom: 12 },
+  deleteBtn: { backgroundColor: '#C0392B' },
   successCard: { borderWidth: 1, borderRadius: 16, padding: 24, alignItems: 'center', gap: 12 },
   successTitle: { fontSize: 20, fontWeight: '700' },
   successText: { fontSize: 14, textAlign: 'center' },
