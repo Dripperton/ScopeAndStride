@@ -125,7 +125,19 @@ export default function Layout() {
           profile?.role === 'horse_owner' &&
           profile?.onboarding_complete === false
         ) {
-          router.replace('/onboarding');
+          // Skip onboarding if the barn has already set up horses for this owner
+          const { data: horses } = await supabase
+            .from('horses')
+            .select('id')
+            .eq('owner_id', session.user.id)
+            .limit(1);
+
+          if (horses && horses.length > 0) {
+            await supabase.from('profiles').update({ onboarding_complete: true }).eq('id', session.user.id);
+            router.replace('/dashboard');
+          } else {
+            router.replace('/onboarding');
+          }
         } else {
           router.replace('/dashboard');
         }
