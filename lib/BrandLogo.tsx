@@ -26,7 +26,23 @@ export default function BrandLogo({ context }: Props) {
     );
   }
 
-  // Fallback: S/S lettermark (matches existing design — vertical stack)
+  // White-label fallback: show barn's own appName initials
+  if (Brand.isWhiteLabel) {
+    if (context === 'login') {
+      return (
+        <View style={styles.loginMark}>
+          <Text style={[styles.loginS, { letterSpacing: 2 }]}>{Brand.appName}</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.headerMark}>
+        <Text style={styles.headerS}>{Brand.appName}</Text>
+      </View>
+    );
+  }
+
+  // Default S/S lettermark
   if (context === 'login') {
     return (
       <View style={styles.loginMark}>

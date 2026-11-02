@@ -33,6 +33,7 @@ import {
   RotateCcw,
   Building2,
   CalendarDays,
+  UserCircle,
 } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useProfile } from '../lib/useProfile';
@@ -132,6 +133,8 @@ export default function Dashboard() {
   const [editCoggins, setEditCoggins] = useState('30');
   const [editFarrier, setEditFarrier] = useState('14');
   const [savingSettings, setSavingSettings] = useState(false);
+
+  const [dataError, setDataError] = useState<string | null>(null);
 
   // ── Horse owner state
   const [selectedHorseId, setSelectedHorseId] = useState<number | null>(null);
@@ -240,6 +243,8 @@ export default function Dashboard() {
   }, [primaryHorse]);
 
   async function fetchBarnData() {
+    setDataError(null);
+    try {
     const [{ count }, { count: eventCount }, { data: settings }, { data: events }, { data: invoiceData }, { data: alertHorses }, { data: farrierVisits }] = await Promise.all([
       supabase.from('horses').select('*', { count: 'exact', head: true }),
       supabase.from('events').select('*', { count: 'exact', head: true }).eq('date', new Date().toISOString().split('T')[0]),
@@ -265,6 +270,9 @@ export default function Dashboard() {
       setEditCoggins(String(settings.coggins_days));
       setEditFarrier(String(settings.farrier_days));
       computeAndSetAlerts(settings.coggins_days, settings.farrier_days, alertHorses, farrierVisits);
+    }
+    } catch {
+      setDataError('Could not load barn data. Check your connection.');
     }
   }
 
@@ -304,17 +312,22 @@ export default function Dashboard() {
   }
 
   async function fetchOwnerData(horseId: number) {
-    const [{ data: horse }, { data: farrierData }, { data: invoiceData }] = await Promise.all([
-      supabase.from('horses').select('*').eq('id', horseId).single(),
-      supabase.from('service_visits').select('*').eq('horse_id', horseId).eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }).limit(1),
-      supabase.from('invoices').select('status, invoice_line_items(amount)').eq('horse_id', horseId).neq('status', 'paid'),
-    ]);
-    if (horse) setMyHorse(horse);
-    if (farrierData?.[0]) setMyFarrier(farrierData[0]);
-    if (invoiceData) {
-      const total = invoiceData.reduce((sum: number, inv: any) =>
-        sum + (inv.invoice_line_items || []).reduce((s: number, item: any) => s + Number(item.amount), 0), 0);
-      setMyBalance(total);
+    setDataError(null);
+    try {
+      const [{ data: horse }, { data: farrierData }, { data: invoiceData }] = await Promise.all([
+        supabase.from('horses').select('*').eq('id', horseId).single(),
+        supabase.from('service_visits').select('*').eq('horse_id', horseId).eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }).limit(1),
+        supabase.from('invoices').select('status, invoice_line_items(amount)').eq('horse_id', horseId).neq('status', 'paid'),
+      ]);
+      if (horse) setMyHorse(horse);
+      if (farrierData?.[0]) setMyFarrier(farrierData[0]);
+      if (invoiceData) {
+        const total = invoiceData.reduce((sum: number, inv: any) =>
+          sum + (inv.invoice_line_items || []).reduce((s: number, item: any) => s + Number(item.amount), 0), 0);
+        setMyBalance(total);
+      }
+    } catch {
+      setDataError('Could not load horse data. Check your connection.');
     }
   }
 
@@ -361,7 +374,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: C.primary }]}>
-        <ActivityIndicator size="large" color={C.secondary} />
+        <ActivityIndicator size="large" color={C.headerText} />
       </View>
     );
   }
@@ -407,12 +420,18 @@ export default function Dashboard() {
       <View style={styles.headerRight}>
         {(isOwner || isStaff) && (
           <Pressable
-            style={({ hovered }: any) => [styles.iconBtn, hovered && styles.iconBtnHovered, showSettings && { backgroundColor: C.secondaryAlpha20 }]}
+            style={({ hovered }: any) => [styles.iconBtn, hovered && styles.iconBtnHovered, showSettings && { backgroundColor: 'rgba(255,255,255,0.2)' }]}
             onPress={() => setShowSettings(prev => !prev)}
           >
-            <Settings size={20} color={C.secondary} />
+            <Settings size={20} color={C.headerText} />
           </Pressable>
         )}
+        <Pressable
+          style={({ hovered }: any) => [styles.iconBtn, hovered && styles.iconBtnHovered]}
+          onPress={() => router.navigate('/account')}
+        >
+          <UserCircle size={20} color={C.headerText} />
+        </Pressable>
         <Pressable
           style={({ hovered }: any) => [styles.iconBtn, hovered && styles.iconBtnHovered]}
           onPress={handleSignOut}
@@ -481,13 +500,13 @@ export default function Dashboard() {
               </View>
             ) : (
               <Pressable
-                style={({ hovered }: any) => [styles.qbConnectBtn, { backgroundColor: hovered ? C.secondaryAlpha30 : C.secondaryAlpha15 }]}
+                style={({ hovered }: any) => [styles.qbConnectBtn, { backgroundColor: hovered ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.18)' }]}
                 onPress={handleConnectQB}
                 disabled={qbConnecting}
               >
                 {qbConnecting
-                  ? <ActivityIndicator color={C.secondary} size="small" />
-                  : <Text style={[styles.qbConnectBtnText, { color: C.secondary, fontFamily: F.sansMedium }]}>{t('Connect')}</Text>}
+                  ? <ActivityIndicator color={C.headerText} size="small" />
+                  : <Text style={[styles.qbConnectBtnText, { color: C.headerText, fontFamily: F.sansMedium }]}>{t('Connect')}</Text>}
               </Pressable>
             )}
           </View>
@@ -511,6 +530,18 @@ export default function Dashboard() {
       )}
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+
+        {dataError && (
+          <View style={{ margin: 16, padding: 14, backgroundColor: C.errorBg, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ color: C.error, fontSize: 13, flex: 1, fontFamily: F.sans }}>{dataError}</Text>
+            <Pressable
+              onPress={() => isHorseOwner && selectedHorseId ? fetchOwnerData(selectedHorseId) : fetchBarnData()}
+              style={{ marginLeft: 12, paddingHorizontal: 12, paddingVertical: 6, backgroundColor: C.error, borderRadius: 6 }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 12, fontFamily: F.sansBold }}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* ═══════════════════════════════════════════════════════════════════
             BARN OWNER / STAFF LAYOUT

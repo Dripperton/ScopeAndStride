@@ -97,10 +97,10 @@ export default function ResetPassword() {
               <>
                 <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text>
                 <Pressable
-                  style={({ hovered }: any) => [styles.btn, { backgroundColor: C.secondary }, hovered && { backgroundColor: C.secondaryDark }]}
+                  style={({ hovered }: any) => [styles.btn, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
                   onPress={() => router.replace('/forgot-password')}
                 >
-                  <Text style={[styles.btnText, { color: C.primary, fontFamily: F.sansBold }]}>{t('Request New Link')}</Text>
+                  <Text style={[styles.btnText, { color: '#FFFFFF', fontFamily: F.sansBold }]}>{t('Request New Link')}</Text>
                 </Pressable>
               </>
             ) : (
@@ -139,13 +139,13 @@ export default function ResetPassword() {
             </View>
 
             <Pressable
-              style={({ hovered }: any) => [styles.btn, { backgroundColor: C.secondary }, hovered && { backgroundColor: C.secondaryDark }]}
+              style={({ hovered }: any) => [styles.btn, { backgroundColor: C.primary }, hovered && { backgroundColor: C.primaryDark }]}
               onPress={handleUpdate}
               disabled={loading}
             >
               {loading
-                ? <ActivityIndicator color={C.primary} />
-                : <Text style={[styles.btnText, { color: C.primary, fontFamily: F.sansBold }]}>{t('Update Password')}</Text>
+                ? <ActivityIndicator color="#FFFFFF" />
+                : <Text style={[styles.btnText, { color: '#FFFFFF', fontFamily: F.sansBold }]}>{t('Update Password')}</Text>
               }
             </Pressable>
           </>
