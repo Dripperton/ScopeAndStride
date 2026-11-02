@@ -62,7 +62,9 @@ export default function ResetPassword() {
     } else {
       setDone(true);
       setLoading(false);
-      setTimeout(() => router.replace('/dashboard'), 2000);
+      if (Platform.OS !== 'web') {
+        setTimeout(() => router.replace('/dashboard'), 2000);
+      }
     }
   }
 
@@ -81,9 +83,13 @@ export default function ResetPassword() {
 
         {done ? (
           <View style={styles.successCard}>
-            <Text style={[styles.successTitle, { color: C.primary, fontFamily: F.sansBold }]}>{t('Password updated!')}</Text>
-            <Text style={[styles.successText, { color: C.textMuted, fontFamily: F.sans }]}>{t('Taking you to your dashboard…')}</Text>
-            <ActivityIndicator color={C.primary} style={{ marginTop: 16 }} />
+            <Text style={[styles.successTitle, { color: C.primary, fontFamily: F.sansBold }]}>{t('Password set!')}</Text>
+            <Text style={[styles.successText, { color: C.textMuted, fontFamily: F.sans }]}>
+              {Platform.OS === 'web'
+                ? t('Open the app on your phone and sign in with your email and new password.')
+                : t('Taking you to your dashboard…')}
+            </Text>
+            {Platform.OS !== 'web' && <ActivityIndicator color={C.primary} style={{ marginTop: 16 }} />}
           </View>
         ) : !ready ? (
           <View style={styles.successCard}>
