@@ -27,7 +27,7 @@ export default function ResetPassword() {
       const refreshToken = params.get('refresh_token');
       const type = params.get('type');
 
-      if (type === 'recovery' && accessToken) {
+      if (accessToken && (type === 'recovery' || type === 'invite' || type === 'magiclink')) {
         supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken || '' })
           .then(({ error }) => {
             if (error) setError(t('Invalid or expired reset link. Please request a new one.'));

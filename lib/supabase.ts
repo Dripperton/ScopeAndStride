@@ -28,9 +28,32 @@ AppState.addEventListener('change', (state) => {
 });
 
 // ── Deep link handler — establishes session from invite / magic link URLs ─────
-// Supabase appends #access_token=...&refresh_token=... to the redirect URL
+// Handles three formats:
+//   1. Query string tokens:  scopeandstride://auth-callback?access_token=...&refresh_token=...
+//      (forwarded by the web intermediary at /auth-callback — iOS preserves query strings)
+//   2. PKCE code:            scopeandstride://auth-callback?code=...
+//   3. Hash tokens (legacy): scopeandstride://#access_token=...  (iOS often strips these)
 function handleDeepLinkUrl(url: string | null) {
   if (!url) return;
+
+  const queryString = url.split('?')[1]?.split('#')[0];
+  if (queryString) {
+    const queryParams = new URLSearchParams(queryString);
+    const accessToken = queryParams.get('access_token');
+    const refreshToken = queryParams.get('refresh_token');
+    const code = queryParams.get('code');
+
+    if (accessToken && refreshToken) {
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      return;
+    }
+    if (code) {
+      supabase.auth.exchangeCodeForSession(code);
+      return;
+    }
+  }
+
+  // Legacy: hash tokens (often stripped by iOS for custom URL schemes)
   const fragment = url.split('#')[1];
   if (!fragment) return;
   const params = new URLSearchParams(fragment);

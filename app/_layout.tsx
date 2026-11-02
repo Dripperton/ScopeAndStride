@@ -30,7 +30,7 @@ import { ProfileProvider } from '../lib/useProfile';
 import { BarnDataProvider } from '../lib/BarnDataContext';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
-const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/'];
+const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/', '/privacy-policy'];
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 const BUILD_THEME = {

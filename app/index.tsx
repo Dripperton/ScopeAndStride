@@ -40,7 +40,6 @@ export default function Index() {
     }
     setLoading(true);
     setError('');
-
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
@@ -51,21 +50,19 @@ export default function Index() {
     setLoading(false);
   }
 
-  async function handleLanguageChange(lang: 'en' | 'es') {
-    setLanguage(lang);
-  }
-
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
       {/* ── Dark hero section with barn branding */}
       <Pressable style={styles.hero} onPress={() => Keyboard.dismiss()}>
-        <View style={styles.logoMark}>
-          <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>{Brand.appName}</Text>
-        </View>
+        {!Brand.isWhiteLabel && (
+          <View style={styles.logoMark}>
+            <Text style={[styles.logoInitials, { fontFamily: F.sansBold }]}>{Brand.appName}</Text>
+          </View>
+        )}
         <Text style={[styles.barnName, { fontFamily: F.serif }]} adjustsFontSizeToFit numberOfLines={1}>{Brand.barnName}</Text>
         <Text style={[styles.poweredBy, { fontFamily: F.sans }]}>
-          {t('Powered by')} {Brand.barnName}
+          {t('Powered by')} Scope & Stride
         </Text>
       </Pressable>
 
@@ -152,7 +149,7 @@ export default function Index() {
 
         {/* ── Language toggle */}
         <View style={styles.langRow}>
-          <Pressable onPress={() => handleLanguageChange('en')}>
+          <Pressable onPress={() => setLanguage('en')}>
             <Text style={[
               styles.langOption,
               { fontFamily: language === 'en' ? F.sansBold : F.sans },
@@ -162,7 +159,7 @@ export default function Index() {
             </Text>
           </Pressable>
           <Text style={styles.langDivider}>·</Text>
-          <Pressable onPress={() => handleLanguageChange('es')}>
+          <Pressable onPress={() => setLanguage('es')}>
             <Text style={[
               styles.langOption,
               { fontFamily: language === 'es' ? F.sansBold : F.sans },
