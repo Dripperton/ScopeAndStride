@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSCameraUsageDescription": "Scope & Stride needs camera access to add photos to posts.",
         "NSPhotoLibraryUsageDescription": "Scope & Stride needs photo library access to add images to posts.",
