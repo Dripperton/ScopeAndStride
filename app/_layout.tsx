@@ -30,7 +30,7 @@ import { ProfileProvider } from '../lib/useProfile';
 import { BarnDataProvider } from '../lib/BarnDataContext';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
-const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/', '/privacy-policy', '/reset-password'];
+const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/', '/privacy-policy', '/reset-password', '/eula'];
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 const BUILD_THEME = {
@@ -109,38 +109,14 @@ export default function Layout() {
       (async () => {
         const email = session.user.email?.toLowerCase();
 
-        // Fetch invite check and profile in parallel — saves one round trip on every login
-        const [{ data: hasPendingInvite }, { data: profile }] = await Promise.all([
-          supabase.from('invites').select('id').eq('email', email).eq('accepted', false).single(),
-          supabase.from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single(),
-        ]);
+        const { data: hasPendingInvite } = await supabase
+          .from('invites').select('id').eq('email', email).eq('accepted', false).single();
 
         if (hasPendingInvite) {
           await supabase.rpc('accept_invite');
-          router.replace('/dashboard');
-          return;
         }
 
-        if (
-          profile?.role === 'horse_owner' &&
-          profile?.onboarding_complete === false
-        ) {
-          // Skip onboarding if the barn has already set up horses for this owner
-          const { data: horses } = await supabase
-            .from('horses')
-            .select('id')
-            .eq('owner_id', session.user.id)
-            .limit(1);
-
-          if (horses && horses.length > 0) {
-            await supabase.from('profiles').update({ onboarding_complete: true }).eq('id', session.user.id);
-            router.replace('/dashboard');
-          } else {
-            router.replace('/onboarding');
-          }
-        } else {
-          router.replace('/dashboard');
-        }
+        router.replace('/dashboard');
       })();
     }
   }, [session, isRecovery, pathname]);
