@@ -71,7 +71,7 @@ export default function EULA() {
       </Text>
 
       <Text style={styles.heading}>12. Contact</Text>
-      <Text style={styles.body}>questions@scopeandstride.com</Text>
+      <Text style={styles.body}>hello@scopeandstride.com</Text>
 
       <View style={{ height: 40 }} />
     </ScrollView>

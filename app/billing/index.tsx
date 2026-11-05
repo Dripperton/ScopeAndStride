@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Calendar, DollarSign, Receipt, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
@@ -35,6 +35,15 @@ export default function Billing() {
       .eq('provider', 'quickbooks')
       .single();
     setQbConnected(!!data);
+  }
+
+  async function handleQbConnect() {
+    if (!profile?.id) return;
+    const { data, error } = await supabase.functions.invoke('quickbooks-oauth-connect', {
+      body: { userId: profile.id },
+    });
+    if (error || !data?.url) { alert(t('Failed to start QuickBooks connection.')); return; }
+    Linking.openURL(data.url);
   }
 
   async function handleQbSync() {
@@ -98,25 +107,32 @@ export default function Billing() {
         </View>
         {isOwner && (
           <View style={styles.headerBtns}>
-            {qbConnected && (
+            {qbConnected ? (
               <Pressable
-                style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+                style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
                 onPress={handleQbSync}
                 disabled={syncing}
               >
                 {syncing
-                  ? <ActivityIndicator color={C.secondary} size="small" />
+                  ? <ActivityIndicator color={C.headerText} size="small" />
                   : <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>↓ QB</Text>}
+              </Pressable>
+            ) : (
+              <Pressable
+                style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
+                onPress={handleQbConnect}
+              >
+                <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ QB</Text>
               </Pressable>
             )}
             <Pressable
-              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
               onPress={() => router.push("/billing/templates")}
             >
               <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Recurring')}</Text>
             </Pressable>
             <Pressable
-              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
               onPress={() => router.push("/billing/add")}
             >
               <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ {t('Invoice')}</Text>

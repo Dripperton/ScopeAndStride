@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
@@ -153,6 +153,16 @@ export default function Account() {
             </Pressable>
           </>
         )}
+        <View style={styles.supportSection}>
+          <Text style={[styles.sectionTitle, { color: C.text, fontFamily: F.sansBold, marginTop: 32 }]}>{t('Support')}</Text>
+          <Text style={[styles.dangerText, { color: C.textMuted, fontFamily: F.sans }]}>
+            {t('Have a question or need help? Reach out to our team.')}
+          </Text>
+          <Pressable onPress={() => Linking.openURL('mailto:hello@scopeandstride.com')}>
+            <Text style={[styles.supportEmail, { color: C.primary, fontFamily: F.sans }]}>hello@scopeandstride.com</Text>
+          </Pressable>
+        </View>
+
         <View style={styles.dangerZone}>
           <Text style={[styles.sectionTitle, { color: C.error, fontFamily: F.sansBold, marginTop: 32 }]}>{t('Danger Zone')}</Text>
           <Text style={[styles.dangerText, { color: C.textMuted, fontFamily: F.sans }]}>
@@ -188,6 +198,8 @@ const styles = StyleSheet.create({
   input: { fontSize: 15, paddingVertical: 4 },
   btn: { padding: 16, borderRadius: 10, alignItems: 'center', marginTop: 8 },
   btnText: { fontSize: 15, fontWeight: '700' },
+  supportSection: { marginTop: 8 },
+  supportEmail: { fontSize: 15, textDecorationLine: 'underline', marginTop: 4 },
   dangerZone: { marginTop: 8 },
   dangerText: { fontSize: 13, lineHeight: 20, marginBottom: 12 },
   deleteBtn: { backgroundColor: '#C0392B' },
