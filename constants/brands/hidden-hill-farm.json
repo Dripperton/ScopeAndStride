@@ -5,9 +5,9 @@
   "tagline": "",
   "bundleId": "com.scopeandstride.hiddenhillfarm",
   "theme": {
-    "primary": "#182C63",
-    "secondary": "#1A1A1A",
-    "surface": "#F4F5F7"
+    "primary": "#1E3F9B",
+    "secondary": "#000000",
+    "surface": "#F0F0F0"
   },
   "supabaseUrl": "https://kzpdukjkttkaaligxsmb.supabase.co",
   "supabaseAnonKey": "sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6"
