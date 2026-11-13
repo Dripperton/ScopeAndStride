@@ -116,7 +116,14 @@ export default function Layout() {
           await supabase.rpc('accept_invite');
         }
 
-        router.replace('/dashboard');
+        const { data: profile } = await supabase
+          .from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single();
+
+        if ((profile?.role === 'horse_owner' || profile?.role === 'rider') && !profile?.onboarding_complete) {
+          router.replace('/onboarding');
+        } else {
+          router.replace('/dashboard');
+        }
       })();
     }
   }, [session, isRecovery, pathname]);
