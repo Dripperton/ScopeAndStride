@@ -208,7 +208,7 @@ export default function ManageUsers() {
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Manage Users')}</Text>
-        <Pressable style={[styles.inviteBtn, { backgroundColor: C.secondaryAlpha15 }]} onPress={() => { setShowInviteForm(v => { if (!v) scrollRef.current?.scrollTo({ y: 0, animated: true }); return !v; }); }}>
+        <Pressable style={[styles.inviteBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }]} onPress={() => { setShowInviteForm(v => { if (!v) scrollRef.current?.scrollTo({ y: 0, animated: true }); return !v; }); }}>
           <Text style={[styles.inviteBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Invite')}</Text>
         </Pressable>
       </View>

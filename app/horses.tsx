@@ -68,13 +68,13 @@ export default function Horses() {
             {!editMode && (
               <>
                 <Pressable
-                  style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+                  style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
                   onPress={() => router.push('/import-horses')}
                 >
                   <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>⬆ Import</Text>
                 </Pressable>
                 <Pressable
-                  style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+                  style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
                   onPress={() => router.push('/add-horse')}
                 >
                   <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ Add</Text>
@@ -82,7 +82,7 @@ export default function Horses() {
               </>
             )}
             <Pressable
-              style={[styles.addBtn, { backgroundColor: editMode ? C.secondary : C.secondaryAlpha15 }]}
+              style={[styles.addBtn, { backgroundColor: editMode ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.18)' }]}
               onPress={() => setEditMode(e => !e)}
             >
               <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{editMode ? t('Done') : t('Edit')}</Text>

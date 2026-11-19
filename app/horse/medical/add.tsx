@@ -1,6 +1,8 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { supabase } from '../../../lib/supabase';
 import DateInput from '../../../lib/DateInput';
 import { useLanguage } from '../../../lib/LanguageContext';
@@ -27,7 +29,48 @@ export default function AddMedicalEntry() {
   const [expiryDate, setExpiryDate] = useState('');
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
+  const [parsing, setParsing] = useState(false);
   const [error, setError] = useState('');
+
+  async function handleImportPDF() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: 'application/pdf',
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+
+    const file = result.assets[0];
+    setParsing(true);
+    setError('');
+    try {
+      const base64 = await FileSystem.readAsStringAsync(file.uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      const supabaseUrl = (supabase as any).supabaseUrl as string;
+      const res = await fetch(`${supabaseUrl}/functions/v1/parse-vet-pdf`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({ pdf_base64: base64 }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) { setError(json.error || 'Could not parse PDF.'); return; }
+
+      if (json.type) setType(json.type);
+      if (json.title) setTitle(json.title);
+      if (json.date) setDate(json.date);
+      if (json.notes) setNotes(json.notes);
+    } catch (e: any) {
+      setError('Failed to read PDF. Try again.');
+    } finally {
+      setParsing(false);
+    }
+  }
 
   const showExpiry = type === 'coggins' || type === 'vaccination';
   const selectedType = TYPES.find(t => t.value === type);
@@ -65,6 +108,16 @@ export default function AddMedicalEntry() {
       </View>
 
       <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
+        <Pressable
+          style={[styles.importBtn, { borderColor: C.primary, backgroundColor: C.activeBg }]}
+          onPress={handleImportPDF}
+          disabled={parsing}
+        >
+          {parsing
+            ? <ActivityIndicator size="small" color={C.primary} />
+            : <Text style={[styles.importBtnText, { color: C.primary, fontFamily: F.sansBold }]}>📄 {t('Import from PDF')}</Text>}
+        </Pressable>
+
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Entry Type')}</Text>
           <View style={styles.typeGrid}>
@@ -128,6 +181,8 @@ export default function AddMedicalEntry() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 16, paddingTop: 52, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  importBtn: { margin: 16, marginBottom: 8, borderWidth: 1.5, borderRadius: 12, padding: 14, alignItems: 'center', borderStyle: 'dashed' },
+  importBtnText: { fontSize: 14 },
   backText: { color: 'rgba(255,255,255,0.6)', fontSize: 14, padding: 4 },
   headerTitle: { fontSize: 16, fontWeight: '600' },
   body: { flex: 1 },

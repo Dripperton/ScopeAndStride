@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import DateInput from '../../lib/DateInput';
 import { useTheme } from '../../context/ThemeContext';
+import Brand from '../../constants/brand';
 
 const SUPABASE_FN = 'https://kzpdukjkttkaaligxsmb.supabase.co/functions/v1/service-entry';
 
@@ -113,8 +114,8 @@ export default function ServiceEntryForm() {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
-        <Text style={styles.barn}>Scope &amp; Stride</Text>
-        <Text style={[styles.horseName, { color: C.secondary, fontFamily: F.sansBold }]}>{horseName}</Text>
+        <Text style={styles.barn}>{Brand.barnName}</Text>
+        <Text style={[styles.horseName, { color: C.headerText, fontFamily: F.sansBold }]}>{horseName}</Text>
         <Text style={styles.subtitle}>Log a service visit for this horse</Text>
       </View>
 

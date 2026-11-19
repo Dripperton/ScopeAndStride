@@ -97,7 +97,7 @@ export default function RecurringTemplates() {
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Recurring Templates')}</Text>
         <Pressable
-          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
           onPress={() => router.push('/billing/add-template')}
         >
           <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ {t('New')}</Text>

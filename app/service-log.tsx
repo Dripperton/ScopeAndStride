@@ -248,23 +248,23 @@ export default function ServiceLog() {
         <View style={styles.headerRight}>
           {canEdit && !selectMode && (
             <Pressable
-              style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
               onPress={() => router.push('/horse/service/add')}
             >
-              <Plus size={18} color={C.secondary} />
+              <Plus size={18} color={C.headerText} />
             </Pressable>
           )}
           {canEdit && (
             <Pressable
-              style={({ hovered }: any) => [styles.selectBtn, { borderColor: C.secondaryAlpha30 }, selectMode && { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
+              style={({ hovered }: any) => [styles.selectBtn, { borderColor: 'rgba(255,255,255,0.3)' }, selectMode && { borderColor: 'rgba(255,255,255,0.3)', backgroundColor: 'rgba(255,255,255,0.1)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.1)' }]}
               onPress={() => { setSelectMode(p => !p); setSelectedIds(new Set()); }}
             >
-              <Text style={[styles.selectBtnText, { color: C.secondary, fontFamily: F.sansBold }, selectMode && { color: 'rgba(255,255,255,0.7)' }]}>{selectMode ? t('Cancel') : t('Select')}</Text>
+              <Text style={[styles.selectBtnText, { color: C.headerText, fontFamily: F.sansBold }, selectMode && { color: 'rgba(255,255,255,0.7)' }]}>{selectMode ? t('Cancel') : t('Select')}</Text>
             </Pressable>
           )}
           {!selectMode && barnQrToken ? (
-            <Pressable style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]} onPress={() => setQrVisible(true)}>
-              <QrCode size={18} color={C.secondary} />
+            <Pressable style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]} onPress={() => setQrVisible(true)}>
+              <QrCode size={18} color={C.headerText} />
             </Pressable>
           ) : !selectMode ? (
             <View style={{ width: 40 }} />

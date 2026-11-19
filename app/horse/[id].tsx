@@ -161,7 +161,7 @@ export default function HorseProfile() {
         <View style={styles.headerActions}>
           {canEdit && horse?.qr_token ? (
             <Pressable
-              style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              style={({ hovered }: any) => [styles.qrBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
               onPress={() => setQrVisible(true)}
             >
               <Text style={[styles.qrBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>QR</Text>
@@ -169,7 +169,7 @@ export default function HorseProfile() {
           ) : null}
           {canEdit ? (
             <Pressable
-              style={({ hovered }: any) => [styles.editBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+              style={({ hovered }: any) => [styles.editBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
               onPress={() => router.push(`/horse/edit/${id}`)}
             >
               <Text style={[styles.editBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Edit')}</Text>

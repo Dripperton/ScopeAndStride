@@ -44,6 +44,35 @@ async function getValidAccessToken(integration: any): Promise<string> {
   return tokens.access_token
 }
 
+async function fetchAllInvoices(accessToken: string, realmId: string): Promise<any[]> {
+  const baseUrl = 'https://quickbooks.api.intuit.com'
+  const pageSize = 100
+  const all: any[] = []
+  let startPosition = 1
+
+  while (true) {
+    const query = encodeURIComponent(
+      `SELECT * FROM Invoice MAXRESULTS ${pageSize} STARTPOSITION ${startPosition}`
+    )
+    const res = await fetch(
+      `${baseUrl}/v3/company/${realmId}/query?query=${query}&minorversion=65`,
+      {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+        },
+      }
+    )
+    const data = await res.json()
+    const page = data.QueryResponse?.Invoice || []
+    all.push(...page)
+    if (page.length < pageSize) break
+    startPosition += pageSize
+  }
+
+  return all
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
 
@@ -65,28 +94,20 @@ serve(async (req) => {
 
   const accessToken = await getValidAccessToken(integration)
   const realmId = integration.realm_id
-  const baseUrl = 'https://quickbooks.api.intuit.com'
 
-  // Query all invoices from QB
-  const query = encodeURIComponent("SELECT * FROM Invoice MAXRESULTS 100")
-  const res = await fetch(`${baseUrl}/v3/company/${realmId}/query?query=${query}&minorversion=65`, {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Accept': 'application/json',
-    },
-  })
+  // Fetch all invoices with pagination
+  const invoices = await fetchAllInvoices(accessToken, realmId)
 
-  const data = await res.json()
-  console.log('QB API status:', res.status)
-  console.log('QB API response:', JSON.stringify(data).slice(0, 500))
-  const invoices = data.QueryResponse?.Invoice || []
-
+  const fetchedQbIds: string[] = []
   let synced = 0
 
   for (const inv of invoices) {
-    const total = inv.TotalAmt || 0
+    const qbId = String(inv.Id)
+    fetchedQbIds.push(qbId)
+
     const dueDate = inv.DueDate || null
     const ownerName = inv.CustomerRef?.name || null
+    const total = inv.TotalAmt || 0
     const balance = inv.Balance ?? total
     const status = balance === 0 ? 'paid' : dueDate && new Date(dueDate) < new Date() ? 'overdue' : 'pending'
 
@@ -100,19 +121,28 @@ serve(async (req) => {
     const { data: existing } = await supabase
       .from('invoices')
       .select('id')
-      .eq('quickbooks_invoice_id', String(inv.Id))
+      .eq('quickbooks_invoice_id', qbId)
       .eq('quickbooks_realm_id', realmId)
       .single()
 
     if (existing) {
+      // Update invoice fields
       await supabase.from('invoices').update({
         owner_name: ownerName,
         due_date: dueDate,
         status,
       }).eq('id', existing.id)
+
+      // Refresh line items: delete old, insert fresh
+      await supabase.from('invoice_line_items').delete().eq('invoice_id', existing.id)
+      if (lineItems.length > 0) {
+        await supabase.from('invoice_line_items').insert(
+          lineItems.map((item: any) => ({ ...item, invoice_id: existing.id }))
+        )
+      }
     } else {
       const { data: newInvoice } = await supabase.from('invoices').insert({
-        quickbooks_invoice_id: String(inv.Id),
+        quickbooks_invoice_id: qbId,
         quickbooks_realm_id: realmId,
         quickbooks_customer_ref: inv.CustomerRef?.value || null,
         owner_name: ownerName,
@@ -127,6 +157,15 @@ serve(async (req) => {
       }
     }
     synced++
+  }
+
+  // Delete local QB invoices that no longer exist in QB
+  if (fetchedQbIds.length > 0) {
+    await supabase
+      .from('invoices')
+      .delete()
+      .eq('quickbooks_realm_id', realmId)
+      .not('quickbooks_invoice_id', 'in', `(${fetchedQbIds.join(',')})`)
   }
 
   return new Response(JSON.stringify({ synced }), {

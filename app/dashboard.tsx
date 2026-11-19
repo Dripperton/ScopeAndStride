@@ -413,7 +413,7 @@ export default function Dashboard() {
       <View style={styles.headerLeft}>
         <BrandLogo context="header" />
         <View>
-          <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{Brand.appName}</Text>
+          {!Brand.isWhiteLabel && <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{Brand.appName}</Text>}
           <Text style={[styles.headerBarn, { color: 'rgba(255,255,255,0.4)' }]}>{Brand.barnName}</Text>
         </View>
       </View>

@@ -73,9 +73,14 @@ export default function AddServiceVisit() {
       barn_invoiced: barnInvoiced,
       source: 'manual',
     });
-    if (err) { setError(err.message); setSaving(false); return; }
-    Alert.alert('Saved', 'Service visit recorded.');
-    router.back();
+    if (err) {
+      setError(t('Could not save. Check your connection and try again.'));
+      setSaving(false);
+      return;
+    }
+    Alert.alert(t('Saved'), t('Service visit recorded.'), [
+      { text: t('OK'), onPress: () => router.back() },
+    ]);
   }
 
   const showNextAppt = SHOWS_NEXT_APPT.includes(serviceType);

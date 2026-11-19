@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "375010121731",
+    "project_id": "scope-and-stride",
+    "storage_bucket": "scope-and-stride.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:375010121731:android:70e2d82d73cd8ade729636",
+        "android_client_info": {
+          "package_name": "com.scopeandstride.hiddenhillfarm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBVSII1064WyO-X-Pt7jZMnZsdMPcCgFW4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

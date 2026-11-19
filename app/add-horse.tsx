@@ -44,7 +44,7 @@ export default function AddHorse() {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
-        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: C.secondaryAlpha15 }]}>
+        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
           <Text style={[styles.backText, { color: C.headerText, fontFamily: F.sans }]}>← {t('Back')}</Text>
         </Pressable>
         <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Add Horse')}</Text>

@@ -22,7 +22,7 @@ export default function ForgotPassword() {
     setError('');
     const redirectTo = Platform.OS === 'web'
       ? `${window.location.origin}/reset-password`
-      : 'scopeandstride://reset-password';
+      : 'https://app.scopeandstride.com/auth-callback';
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     if (error) {
       setError(error.message);
@@ -36,7 +36,7 @@ export default function ForgotPassword() {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
-        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: C.secondaryAlpha15 }]}>
+        <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
           <Text style={[styles.backText, { color: C.headerText, fontFamily: F.sans }]}>← {t('Back')}</Text>
         </Pressable>
         <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Reset Password')}</Text>
@@ -56,7 +56,7 @@ export default function ForgotPassword() {
               style={({ hovered }: any) => [styles.btn, { backgroundColor: C.secondary }, hovered && { backgroundColor: C.secondaryDark }]}
               onPress={() => router.replace('/')}
             >
-              <Text style={[styles.btnText, { color: C.primary, fontFamily: F.sansBold }]}>{t('Back to Sign In')}</Text>
+              <Text style={[styles.btnText, { color: '#FFFFFF', fontFamily: F.sansBold }]}>{t('Back to Sign In')}</Text>
             </Pressable>
           </View>
         ) : (
@@ -86,7 +86,7 @@ export default function ForgotPassword() {
             >
               {loading
                 ? <ActivityIndicator color={C.primary} />
-                : <Text style={[styles.btnText, { color: C.primary, fontFamily: F.sansBold }]}>{t('Send Reset Link')}</Text>
+                : <Text style={[styles.btnText, { color: '#FFFFFF', fontFamily: F.sansBold }]}>{t('Send Reset Link')}</Text>
               }
             </Pressable>
           </>

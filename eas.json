@@ -25,6 +25,12 @@
       "env": {
         "BRAND_SLUG": "hidden-hill-farm"
       }
+    },
+    "production:hidden-hill-farm:android": {
+      "extends": "production:hidden-hill-farm",
+      "env": {
+        "BRAND_SLUG": "hidden-hill-farm"
+      }
     }
   },
   "submit": {
@@ -32,6 +38,12 @@
     "production:hidden-hill-farm": {
       "ios": {
         "ascAppId": "6808262044"
+      }
+    },
+    "production:hidden-hill-farm:android": {
+      "android": {
+        "serviceAccountKeyPath": "./google-play-service-account.json",
+        "track": "internal"
       }
     }
   }

@@ -89,7 +89,7 @@ export default function Board() {
           </View>
         </View>
         <Pressable
-          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: C.secondaryAlpha15 }, hovered && { backgroundColor: C.secondaryAlpha30 }]}
+          style={({ hovered }: any) => [styles.addBtn, { backgroundColor: 'rgba(255,255,255,0.18)' }, hovered && { backgroundColor: 'rgba(255,255,255,0.32)' }]}
           onPress={() => router.push('/board/add-post')}
         >
           <Text style={[styles.addBtnText, { color: C.headerText, fontFamily: F.sansBold }]}>+ {t('Post')}</Text>

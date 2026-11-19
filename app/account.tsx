@@ -12,7 +12,6 @@ export default function Account() {
   const C = theme.colors;
   const F = theme.fonts;
 
-  const [current, setCurrent] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +44,6 @@ export default function Account() {
   }
 
   async function handleUpdate() {
-    if (!current.trim()) { setError(t('Please enter your current password.')); return; }
     if (!password.trim()) { setError(t('Please enter a new password.')); return; }
     if (password !== confirm) { setError(t('Passwords do not match.')); return; }
     if (password.length < 6) { setError(t('Password must be at least 6 characters.')); return; }
@@ -53,20 +51,9 @@ export default function Account() {
     setLoading(true);
     setError('');
 
-    // Verify current password by re-signing in
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user?.email) { setError(t('Unable to verify account.')); setLoading(false); return; }
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: user.email,
-      password: current,
-    });
-    if (signInError) {
-      setError(t('Current password is incorrect.'));
-      setLoading(false);
-      return;
-    }
-
+    // Don't re-sign-in to verify current password — that fires SIGNED_IN and
+    // triggers the layout's routing guard, which bounces the user to dashboard.
+    // The user is already authenticated to reach this screen; just update directly.
     const { error: updateError } = await supabase.auth.updateUser({ password });
     if (updateError) {
       setError(updateError.message);
@@ -104,18 +91,6 @@ export default function Account() {
         ) : (
           <>
             {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
-
-            <View style={[styles.inputWrap, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-              <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Current Password')}</Text>
-              <TextInput
-                style={[styles.input, { color: C.text, fontFamily: F.sans }]}
-                value={current}
-                onChangeText={setCurrent}
-                placeholder={t('Enter current password')}
-                placeholderTextColor={C.cardBorder}
-                secureTextEntry
-              />
-            </View>
 
             <View style={[styles.inputWrap, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
               <Text style={[styles.label, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('New Password')}</Text>

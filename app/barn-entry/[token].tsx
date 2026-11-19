@@ -4,6 +4,7 @@ import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, T
 import { CheckSquare, Square } from 'lucide-react-native';
 import DateInput from '../../lib/DateInput';
 import { useTheme } from '../../context/ThemeContext';
+import Brand from '../../constants/brand';
 
 const SUPABASE_FN = 'https://kzpdukjkttkaaligxsmb.supabase.co/functions/v1/service-entry';
 
@@ -194,8 +195,8 @@ export default function BarnEntryForm() {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
-        <Text style={styles.barn}>Scope &amp; Stride</Text>
-        <Text style={[styles.headerHorseName, { color: C.secondary, fontFamily: F.sansBold }]}>Log Service Visits</Text>
+        <Text style={styles.barn}>{Brand.barnName}</Text>
+        <Text style={[styles.headerHorseName, { color: C.headerText, fontFamily: F.sansBold }]}>Log Service Visits</Text>
         <Text style={styles.subtitle}>Select the horses you worked on today</Text>
       </View>
 

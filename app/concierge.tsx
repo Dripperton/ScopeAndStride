@@ -103,13 +103,13 @@ export default function Concierge() {
             style={({ hovered }: any) => [styles.homeBtn, hovered && styles.homeBtnHovered]}
             onPress={() => router.dismissTo('/dashboard')}
           >
-            <Home size={18} color={C.secondary} />
+            <Home size={18} color={C.headerText} />
           </Pressable>
           <View>
             <View style={styles.headerTitleRow}>
               <Text style={[styles.headerName, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Concierge')}</Text>
-              <View style={[styles.aiBadge, { backgroundColor: C.secondaryAlpha20 }]}>
-                <Text style={[styles.aiBadgeText, { color: C.secondary, fontFamily: F.sansBold }]}>AI</Text>
+              <View style={[styles.aiBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Text style={[styles.aiBadgeText, { color: C.headerText, fontFamily: F.sansBold }]}>AI</Text>
               </View>
             </View>
             <Text style={styles.headerSub}>{t('Ask anything about your barn')}</Text>

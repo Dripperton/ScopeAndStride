@@ -198,7 +198,7 @@ export default function EditEvent() {
         <View style={styles.headerCenter}>
           <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Edit Event')}</Text>
           {recurring && (
-            <View style={[styles.recurringBadge, { backgroundColor: C.secondaryAlpha15 }]}>
+            <View style={[styles.recurringBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
               <Repeat size={10} color={C.headerText} />
               <Text style={[styles.recurringBadgeText, { color: C.headerText, fontFamily: F.sansBold }]}>{recurring}</Text>
             </View>

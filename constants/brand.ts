@@ -136,11 +136,13 @@ const ui = {
 const _extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 
 const Brand = {
-  slug:      _extra.barnSlug  ?? config.slug,
-  barnName:  _extra.barnName  ?? config.barnName,
-  appName:   _extra.appName   ?? config.appName,
-  tagline:   _extra.tagline   ?? config.tagline,
-  chipStyle: config.chipStyle,
+  slug:         _extra.barnSlug  ?? config.slug,
+  barnName:     _extra.barnName  ?? config.barnName,
+  appName:      _extra.appName   ?? config.appName,
+  tagline:      _extra.tagline   ?? config.tagline,
+  chipStyle:    config.chipStyle,
+  // isWhiteLabel is true for any barn-specific build (barnSlug set in app.config.js extra)
+  isWhiteLabel: !!_extra.barnSlug,
   colors,
   ui,
 };

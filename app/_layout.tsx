@@ -30,7 +30,7 @@ import { ProfileProvider } from '../lib/useProfile';
 import { BarnDataProvider } from '../lib/BarnDataContext';
 import { registerForPushNotificationsAsync } from '../lib/notifications';
 
-const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/', '/privacy-policy', '/reset-password', '/eula'];
+const PUBLIC_PREFIXES = ['/barn-entry/', '/service-entry/', '/privacy-policy', '/reset-password', '/eula', '/forgot-password'];
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 const BUILD_THEME = {
@@ -107,21 +107,30 @@ export default function Layout() {
       hasRedirected.current = true;
       registerForPushNotificationsAsync(session.user.id);
       (async () => {
-        const email = session.user.email?.toLowerCase();
+        try {
+          const email = session.user.email?.toLowerCase();
 
-        const { data: hasPendingInvite } = await supabase
-          .from('invites').select('id').eq('email', email).eq('accepted', false).single();
+          const { data: hasPendingInvite } = await supabase
+            .from('invites').select('id').eq('email', email).eq('accepted', false).single();
 
-        if (hasPendingInvite) {
-          await supabase.rpc('accept_invite');
-        }
+          if (hasPendingInvite) {
+            await supabase.rpc('accept_invite');
+          }
 
-        const { data: profile } = await supabase
-          .from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single();
+          const { data: profile } = await supabase
+            .from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single();
 
-        if ((profile?.role === 'horse_owner' || profile?.role === 'rider') && !profile?.onboarding_complete) {
-          router.replace('/onboarding');
-        } else {
+          const isHorseOwner = profile?.role === 'horse_owner' || profile?.role === 'rider';
+          if (isHorseOwner && !profile?.onboarding_complete) {
+            router.replace('/onboarding');
+          } else {
+            if (!isHorseOwner && !profile?.onboarding_complete) {
+              supabase.from('profiles').update({ onboarding_complete: true }).eq('id', session.user.id);
+            }
+            router.replace('/dashboard');
+          }
+        } catch {
+          // Profile fetch failed — fall back to dashboard rather than leaving user stuck
           router.replace('/dashboard');
         }
       })();

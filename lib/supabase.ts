@@ -15,6 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // handled manually below for React Native
+    flowType: 'pkce',
   },
 });
 

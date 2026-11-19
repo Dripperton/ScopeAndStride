@@ -15,7 +15,7 @@ export default function HomeButton() {
       ]}
       onPress={() => router.dismissAll()}
     >
-      <Home size={18} color={C.secondary} />
+      <Home size={18} color={C.headerText} />
     </Pressable>
   );
 }

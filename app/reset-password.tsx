@@ -37,14 +37,26 @@ export default function ResetPassword() {
         setError(t('Invalid or expired reset link. Please request a new one.'));
       }
     } else {
-      // Native: _layout.tsx already handled the PASSWORD_RECOVERY event
-      // and set the session before navigating here, so we're ready
+      // Native: deep link opens the app directly, then supabase.ts exchanges
+      // the PKCE code asynchronously. Don't do a one-shot getSession() — it
+      // races against the exchange. Listen for auth state changes instead.
       supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setReady(true);
-        } else {
+        if (session) { setReady(true); return; }
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+          if ((event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') && session) {
+            setReady(true);
+            subscription.unsubscribe();
+          }
+        });
+
+        // If the exchange never fires (expired/invalid link), show the error
+        const timer = setTimeout(() => {
+          subscription.unsubscribe();
           setError(t('Invalid or expired reset link. Please request a new one.'));
-        }
+        }, 10000);
+
+        return () => { subscription.unsubscribe(); clearTimeout(timer); };
       });
     }
   }, []);

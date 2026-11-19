@@ -45,7 +45,11 @@ export default function Index() {
       password,
     });
     if (signInError) {
-      setError(signInError.message);
+      if (signInError.message.toLowerCase().includes('invalid login') || signInError.message.toLowerCase().includes('invalid credentials')) {
+        setError(t('Incorrect email or password. Tap "Forgot password?" to reset it.'));
+      } else {
+        setError(signInError.message);
+      }
     }
     setLoading(false);
   }
