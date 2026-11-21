@@ -209,6 +209,7 @@ export default function ImportHorses() {
       email: row.owner_email.toLowerCase(),
       role: 'horse_owner',
       created_by: profile?.id,
+      barn_id: profile?.barn_id,
       horse_id: row.horse_id,
       relationship: 'owner',
       billing_contact: true,
@@ -219,9 +220,9 @@ export default function ImportHorses() {
       return;
     }
 
-    const { data: barnData } = await supabase.from('barn_settings').select('barn_name').single();
+    const { data: barnData } = await supabase.from('barn_settings').select('id, barn_name').single();
     await supabase.functions.invoke('send-invite', {
-      body: { email: row.owner_email.toLowerCase(), role: 'horse_owner', barnName: barnData?.barn_name },
+      body: { email: row.owner_email.toLowerCase(), role: 'horse_owner', barnName: barnData?.barn_name, barnId: barnData?.id },
     });
 
     setInviteQueue(prev => prev.map((r, i) => i === idx ? { ...r, status: 'sent' } : r));

@@ -31,6 +31,12 @@
       "env": {
         "BRAND_SLUG": "hidden-hill-farm"
       }
+    },
+    "production:rebelle-hill": {
+      "extends": "production",
+      "env": {
+        "BRAND_SLUG": "rebelle-hill"
+      }
     }
   },
   "submit": {
@@ -45,6 +51,9 @@
         "serviceAccountKeyPath": "./google-play-service-account.json",
         "track": "internal"
       }
+    },
+    "production:rebelle-hill": {
+      "ios": {}
     }
   }
 }

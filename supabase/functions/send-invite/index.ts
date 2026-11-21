@@ -34,7 +34,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, role, barnName } = await req.json()
+    const { email, role, barnName, barnId } = await req.json()
 
     if (!email || !role) {
       return new Response(JSON.stringify({ error: 'email and role are required' }), {
@@ -52,7 +52,7 @@ serve(async (req) => {
       email,
       password: tempPassword,
       email_confirm: true,
-      user_metadata: { invited_role: role },
+      user_metadata: { invited_role: role, barn_id: barnId },
     })
 
     // If user already exists, reset their password to a new temp password

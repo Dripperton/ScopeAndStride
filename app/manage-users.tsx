@@ -87,6 +87,7 @@ export default function ManageUsers() {
       email: inviteEmail.trim().toLowerCase(),
       role: inviteRole,
       created_by: profile?.id,
+      barn_id: profile?.barn_id,
       horse_id: needsHorse && inviteHorseId ? inviteHorseId : null,
       relationship: needsHorse ? effectiveRelationship : null,
       billing_contact: needsHorse && inviteRole !== 'rider' ? inviteBillingContact : false,
@@ -94,9 +95,9 @@ export default function ManageUsers() {
     if (error) {
       alert(t('Failed') + ': ' + error.message);
     } else {
-      const { data: barnData } = await supabase.from('barn_settings').select('barn_name').single();
+      const { data: barnData } = await supabase.from('barn_settings').select('id, barn_name').single();
       await supabase.functions.invoke('send-invite', {
-        body: { email: inviteEmail.trim().toLowerCase(), role: inviteRole, barnName: barnData?.barn_name },
+        body: { email: inviteEmail.trim().toLowerCase(), role: inviteRole, barnName: barnData?.barn_name, barnId: barnData?.id },
       });
       setSuccessMsg(t('Invite sent to') + ' ' + inviteEmail.trim());
       setInviteEmail('');

@@ -1,0 +1,14 @@
+{
+  "slug": "rebelle-hill",
+  "barnName": "Rebelle Hill",
+  "appName": "Rebelle Hill",
+  "tagline": "",
+  "bundleId": "com.scopeandstride.rebellehill",
+  "theme": {
+    "primary": "#0A0A0A",
+    "secondary": "#C4952A",
+    "surface": "#F8F5EF"
+  },
+  "supabaseUrl": "https://kzpdukjkttkaaligxsmb.supabase.co",
+  "supabaseAnonKey": "sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6"
+}

@@ -14,12 +14,28 @@ module.exports = ({ config }) => {
     brand = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
   }
 
+  // Use brand-specific icon if it exists, fall back to default
+  const brandIconPath = path.join(__dirname, 'assets', 'brands', slug, 'icon.png');
+  const brandSplashPath = path.join(__dirname, 'assets', 'brands', slug, 'splash-icon.png');
+  const iconPath = fs.existsSync(brandIconPath)
+    ? `./assets/brands/${slug}/icon.png`
+    : './assets/images/icon.png';
+  const splashIconPath = fs.existsSync(brandSplashPath)
+    ? `./assets/brands/${slug}/splash-icon.png`
+    : './assets/images/splash-icon.png';
+
   return {
     ...config,
     name: brand.barnName,
+    icon: iconPath,
     ios: {
       ...config.ios,
       bundleIdentifier: brand.bundleId,
+    },
+    splash: {
+      ...config.splash,
+      image: splashIconPath,
+      backgroundColor: brand.theme.primary,
     },
     extra: {
       ...config.extra,
