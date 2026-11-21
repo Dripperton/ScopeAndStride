@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import DateInput from '../../lib/DateInput';
 import { useLanguage } from '../../lib/LanguageContext';
@@ -106,7 +106,7 @@ export default function EditInvoice() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()}>
           <Text style={styles.backText}>{t('Cancel')}</Text>
@@ -227,7 +227,7 @@ export default function EditInvoice() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

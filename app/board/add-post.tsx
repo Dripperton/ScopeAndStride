@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Megaphone, MessageSquare, Camera, Image as ImageIcon, FileText, X } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useProfile } from '../../lib/useProfile';
@@ -90,7 +90,7 @@ export default function AddPost() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('New Post')}</Text>
@@ -223,7 +223,7 @@ export default function AddPost() {
         {error ? <Text style={[styles.errorText, { color: C.error }]}>{error}</Text> : null}
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

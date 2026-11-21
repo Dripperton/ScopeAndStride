@@ -1,14 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  Alert,
-} from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus, Trash2, Check, X, RefreshCw } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
@@ -92,7 +83,7 @@ export default function AdminSetup() {
 
   async function loadInitialData() {
     const [settingsRes, barnRes] = await Promise.all([
-      supabase.from('alert_settings').select('*').eq('barn_id', 'default').single(),
+      supabase.from('alert_settings').select('*').single(),
       supabase.from('barn_settings').select('barn_name').single(),
     ]);
     if (settingsRes.data) {
@@ -235,7 +226,7 @@ export default function AdminSetup() {
   const doneCount = rows.filter(r => r.status === 'done').length;
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -500,7 +491,7 @@ export default function AdminSetup() {
           <View style={{ height: 40 }} />
         </ScrollView>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

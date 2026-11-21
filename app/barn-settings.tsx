@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Pencil } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
@@ -95,7 +95,7 @@ export default function BarnSettings() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Barn Settings')}</Text>
@@ -213,7 +213,7 @@ export default function BarnSettings() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

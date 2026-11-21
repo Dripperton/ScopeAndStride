@@ -1,19 +1,12 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
 import DateInput from '../../../lib/DateInput';
 import { useLanguage } from '../../../lib/LanguageContext';
 import { useTheme } from '../../../context/ThemeContext';
 import { Plus, Trash2, X } from 'lucide-react-native';
-
-const STANDARD_TEMPLATES = [
-  'Stays in',
-  'Stall cleaned',
-  'Do not ride',
-  'Lame — monitor',
-];
 
 function today() {
   return new Date().toISOString().split('T')[0];
@@ -38,10 +31,11 @@ export default function AddDailyCare() {
   const [ridden, setRidden] = useState(false);
   const [notes, setNotes] = useState('');
 
-  const [customTemplates, setCustomTemplates] = useState<{ id: string; text: string }[]>([]);
-  const [addingTemplate, setAddingTemplate] = useState(false);
-  const [newTemplateText, setNewTemplateText] = useState('');
-  const [savingTemplate, setSavingTemplate] = useState(false);
+  const [careItems, setCareItems] = useState<{ id: string; text: string }[]>([]);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [addingItem, setAddingItem] = useState(false);
+  const [newItemText, setNewItemText] = useState('');
+  const [savingItem, setSavingItem] = useState(false);
   const [manageVisible, setManageVisible] = useState(false);
 
   useEffect(() => {
@@ -60,6 +54,7 @@ export default function AddDailyCare() {
           setTurnoutDuration(data.turnout_duration || '');
           setRidden(data.ridden || false);
           setNotes(data.notes || '');
+          setCheckedItems(new Set(data.care_items || []));
         }
         setLoading(false);
       });
@@ -68,29 +63,34 @@ export default function AddDailyCare() {
 
   useEffect(() => {
     supabase.from('note_templates').select('id, text').order('text').then(({ data }) => {
-      if (data) setCustomTemplates(data);
+      if (data) setCareItems(data);
     });
   }, []);
 
-  function applyTemplate(text: string) {
-    setNotes(prev => prev.trim() ? `${prev.trim()}\n${text}` : text);
+  function toggleItem(text: string) {
+    setCheckedItems(prev => {
+      const next = new Set(prev);
+      if (next.has(text)) next.delete(text);
+      else next.add(text);
+      return next;
+    });
   }
 
-  async function saveTemplate() {
-    const text = newTemplateText.trim();
+  async function saveItem() {
+    const text = newItemText.trim();
     if (!text) return;
-    setSavingTemplate(true);
-    await supabase.from('note_templates').insert({ text, created_by: profile?.id });
+    setSavingItem(true);
+    await supabase.from('note_templates').insert({ text, barn_id: profile?.barn_id, created_by: profile?.id });
     const { data } = await supabase.from('note_templates').select('id, text').order('text');
-    if (data) setCustomTemplates(data);
-    setNewTemplateText('');
-    setAddingTemplate(false);
-    setSavingTemplate(false);
+    if (data) setCareItems(data);
+    setNewItemText('');
+    setAddingItem(false);
+    setSavingItem(false);
   }
 
-  async function deleteTemplate(id: string) {
+  async function deleteItem(id: string) {
     await supabase.from('note_templates').delete().eq('id', id);
-    setCustomTemplates(prev => prev.filter(t => t.id !== id));
+    setCareItems(prev => prev.filter(i => i.id !== id));
   }
 
   async function handleSave() {
@@ -102,6 +102,7 @@ export default function AddDailyCare() {
       turned_out: turnedOut,
       turnout_duration: turnedOut ? (turnoutDuration || null) : null,
       ridden,
+      care_items: Array.from(checkedItems),
       notes: notes.trim() || null,
       created_by: profile?.id,
     }, { onConflict: 'horse_id,date' });
@@ -116,7 +117,7 @@ export default function AddDailyCare() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()}>
           <Text style={styles.backText}>{t('Cancel')}</Text>
@@ -135,14 +136,14 @@ export default function AddDailyCare() {
       <Modal visible={manageVisible} transparent animationType="slide" onRequestClose={() => setManageVisible(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setManageVisible(false)}>
           <Pressable style={[styles.modalSheet, { backgroundColor: C.card }]} onPress={() => {}}>
-            <Text style={[styles.modalTitle, { color: C.text, fontFamily: F.sansBold }]}>Custom Templates</Text>
-            {customTemplates.length === 0 && (
-              <Text style={[styles.emptyText, { color: C.textMuted, fontFamily: F.sans }]}>No custom templates yet.</Text>
+            <Text style={[styles.modalTitle, { color: C.text, fontFamily: F.sansBold }]}>Manage Care Items</Text>
+            {careItems.length === 0 && (
+              <Text style={[styles.emptyText, { color: C.textMuted, fontFamily: F.sans }]}>No custom items yet.</Text>
             )}
-            {customTemplates.map(tmpl => (
-              <View key={tmpl.id} style={[styles.manageRow, { borderColor: C.cardBorder }]}>
-                <Text style={[styles.manageRowText, { color: C.text, fontFamily: F.sans }]}>{tmpl.text}</Text>
-                <Pressable onPress={() => deleteTemplate(tmpl.id)} style={styles.deleteBtn}>
+            {careItems.map(item => (
+              <View key={item.id} style={[styles.manageRow, { borderColor: C.cardBorder }]}>
+                <Text style={[styles.manageRowText, { color: C.text, fontFamily: F.sans }]}>{item.text}</Text>
+                <Pressable onPress={() => deleteItem(item.id)} style={styles.deleteBtn}>
                   <Trash2 size={14} color={C.error} />
                 </Pressable>
               </View>
@@ -193,70 +194,61 @@ export default function AddDailyCare() {
             </View>
             <Text style={[styles.checkLabel, { color: C.text, fontFamily: F.sans }]}>{t('Ridden')}</Text>
           </Pressable>
-        </View>
 
-        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
-          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Notes')}</Text>
+          {careItems.map(item => (
+            <Pressable
+              key={item.id}
+              style={[styles.checkRow, { borderBottomColor: C.cardSeparator }]}
+              onPress={() => toggleItem(item.text)}
+            >
+              <View style={[styles.checkbox, { borderColor: C.cardBorder }, checkedItems.has(item.text) && { backgroundColor: C.primary, borderColor: C.primary }]}>
+                {checkedItems.has(item.text) && <Text style={[styles.checkmark, { color: C.card }]}>✓</Text>}
+              </View>
+              <Text style={[styles.checkLabel, { color: C.text, fontFamily: F.sans }]}>{item.text}</Text>
+            </Pressable>
+          ))}
 
-          {/* Template chips */}
-          <View style={styles.chipsRow}>
-            {STANDARD_TEMPLATES.map(text => (
-              <Pressable
-                key={text}
-                style={({ hovered }: any) => [styles.chip, { backgroundColor: C.activeBg, borderColor: C.primary }, hovered && { opacity: 0.75 }]}
-                onPress={() => applyTemplate(text)}
-              >
-                <Text style={[styles.chipText, { color: C.primary, fontFamily: F.sansMedium }]}>{text}</Text>
-              </Pressable>
-            ))}
-            {customTemplates.map(tmpl => (
-              <Pressable
-                key={tmpl.id}
-                style={({ hovered }: any) => [styles.chip, { backgroundColor: C.activeBg, borderColor: C.primary }, hovered && { opacity: 0.75 }]}
-                onPress={() => applyTemplate(tmpl.text)}
-              >
-                <Text style={[styles.chipText, { color: C.primary, fontFamily: F.sansMedium }]}>{tmpl.text}</Text>
-              </Pressable>
-            ))}
-            {canEdit && !addingTemplate && (
-              <Pressable
-                style={({ hovered }: any) => [styles.chip, styles.chipAdd, { borderColor: C.cardBorder }, hovered && { backgroundColor: C.activeBg }]}
-                onPress={() => setAddingTemplate(true)}
-              >
-                <Plus size={12} color={C.textMuted} />
-              </Pressable>
-            )}
-            {canEdit && customTemplates.length > 0 && !addingTemplate && (
-              <Pressable onPress={() => setManageVisible(true)} style={styles.manageLink}>
-                <Text style={[styles.manageLinkText, { color: C.textMuted, fontFamily: F.sans }]}>Manage</Text>
-              </Pressable>
-            )}
-          </View>
-
-          {/* Inline add custom template */}
-          {addingTemplate && (
+          {addingItem && (
             <View style={[styles.inlineAddRow, { borderColor: C.cardBorder }]}>
               <TextInput
                 style={[styles.inlineAddInput, { color: C.text, fontFamily: F.sans }]}
-                value={newTemplateText}
-                onChangeText={setNewTemplateText}
-                placeholder="New template text..."
+                value={newItemText}
+                onChangeText={setNewItemText}
+                placeholder="New item..."
                 placeholderTextColor={C.textMuted}
                 autoFocus
+                onSubmitEditing={saveItem}
               />
               <Pressable
-                style={[styles.inlineAddSave, { backgroundColor: C.primary }, (!newTemplateText.trim() || savingTemplate) && { opacity: 0.4 }]}
-                onPress={saveTemplate}
-                disabled={!newTemplateText.trim() || savingTemplate}
+                style={[styles.inlineAddSave, { backgroundColor: C.primary }, (!newItemText.trim() || savingItem) && { opacity: 0.4 }]}
+                onPress={saveItem}
+                disabled={!newItemText.trim() || savingItem}
               >
-                <Text style={[styles.inlineAddSaveText, { color: C.card, fontFamily: F.sansBold }]}>Save</Text>
+                <Text style={[styles.inlineAddSaveText, { color: C.card, fontFamily: F.sansBold }]}>Add</Text>
               </Pressable>
-              <Pressable onPress={() => { setAddingTemplate(false); setNewTemplateText(''); }} style={styles.inlineAddCancel}>
+              <Pressable onPress={() => { setAddingItem(false); setNewItemText(''); }} style={styles.inlineAddCancel}>
                 <X size={16} color={C.textMuted} />
               </Pressable>
             </View>
           )}
 
+          {canEdit && !addingItem && (
+            <View style={styles.careItemsFooter}>
+              <Pressable style={styles.addItemBtn} onPress={() => setAddingItem(true)}>
+                <Plus size={13} color={C.textMuted} />
+                <Text style={[styles.addItemText, { color: C.textMuted, fontFamily: F.sans }]}>Add item</Text>
+              </Pressable>
+              {careItems.length > 0 && (
+                <Pressable onPress={() => setManageVisible(true)}>
+                  <Text style={[styles.manageLinkText, { color: C.textMuted, fontFamily: F.sans }]}>Manage</Text>
+                </Pressable>
+              )}
+            </View>
+          )}
+        </View>
+
+        <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Notes')}</Text>
           <TextInput
             style={[styles.input, styles.notesInput, { backgroundColor: C.background, borderColor: C.cardBorder, color: C.text, fontFamily: F.sans }]}
             value={notes}
@@ -270,7 +262,7 @@ export default function AddDailyCare() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -291,11 +283,9 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderRadius: 10, padding: 12, fontSize: 14 },
   durationInput: { marginTop: 8, marginLeft: 34 },
   notesInput: { minHeight: 96, textAlignVertical: 'top' },
-  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12, alignItems: 'center' },
-  chip: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
-  chipAdd: { paddingHorizontal: 8, paddingVertical: 6 },
-  chipText: { fontSize: 13 },
-  manageLink: { paddingHorizontal: 4 },
+  careItemsFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10 },
+  addItemBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  addItemText: { fontSize: 13 },
   manageLinkText: { fontSize: 12, textDecorationLine: 'underline' },
   inlineAddRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 10 },
   inlineAddInput: { flex: 1, fontSize: 14, paddingVertical: 4 },

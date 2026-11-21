@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import DateInput from '../../lib/DateInput';
 import { useLanguage } from '../../lib/LanguageContext';
@@ -79,7 +79,7 @@ export default function AddInvoice() {
   const selectedHorse = horses.find(h => String(h.id) === horseId);
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <HomeButton />
         <Text style={[styles.headerTitle, { color: C.headerText, fontFamily: F.sansBold }]}>{t('Add Invoice')}</Text>
@@ -204,7 +204,7 @@ export default function AddInvoice() {
         {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

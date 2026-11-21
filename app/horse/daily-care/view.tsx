@@ -80,6 +80,12 @@ export default function DailyCareView() {
                   {log.ridden ? <CheckSquare size={16} color={C.primary} /> : <Square size={16} color={C.cardBorder} />}
                   <Text style={[styles.checkText, { color: C.text, fontFamily: F.sans }, !log.ridden && { color: C.cardBorder }]}>{t('Ridden')}</Text>
                 </View>
+                {(log.care_items || []).map((item: string) => (
+                  <View key={item} style={styles.checkItem}>
+                    <CheckSquare size={16} color={C.primary} />
+                    <Text style={[styles.checkText, { color: C.text, fontFamily: F.sans }]}>{item}</Text>
+                  </View>
+                ))}
               </View>
               {log.notes ? <Text style={[styles.logNotes, { color: C.textMuted, borderTopColor: C.cardSeparator, fontFamily: F.sans }]}>{log.notes}</Text> : null}
             </View>

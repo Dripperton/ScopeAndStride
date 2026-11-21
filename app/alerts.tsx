@@ -34,7 +34,7 @@ export default function AlertsScreen() {
   async function fetchAlerts() {
     const today = new Date();
     const [{ data: settings }, { data: horses }, { data: farrierVisits }] = await Promise.all([
-      supabase.from('alert_settings').select('*').eq('barn_id', 'default').single(),
+      supabase.from('alert_settings').select('*').single(),
       supabase.from('horses').select('id, name, alert, coggins_expiry_date'),
       supabase.from('service_visits').select('horse_id, next_appointment_date').eq('service_type', 'farrier').not('next_appointment_date', 'is', null).order('date', { ascending: false }),
     ]);

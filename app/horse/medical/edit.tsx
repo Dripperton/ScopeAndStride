@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Platform } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 import DateInput from '../../../lib/DateInput';
 import { useLanguage } from '../../../lib/LanguageContext';
@@ -78,7 +78,7 @@ export default function EditMedicalEntry() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()}>
           <Text style={[styles.backText, { fontFamily: F.sans }]}>{t('Cancel')}</Text>
@@ -163,7 +163,7 @@ export default function EditMedicalEntry() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

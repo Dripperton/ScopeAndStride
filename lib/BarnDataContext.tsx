@@ -102,14 +102,14 @@ export function BarnDataProvider({ children }: { children: React.ReactNode }) {
   const refreshServiceVisits = useCallback(async () => {
     const [{ data }, { data: settings }] = await Promise.all([
       supabase.from('service_visits').select('*, horses(name, color)').order('date', { ascending: false }),
-      supabase.from('alert_settings').select('barn_qr_token').eq('barn_id', 'default').single(),
+      supabase.from('alert_settings').select('id, barn_qr_token').single(),
     ]);
     if (data) setServiceVisits(data);
     if (settings?.barn_qr_token) {
       setBarnQrToken(settings.barn_qr_token);
-    } else {
+    } else if (settings?.id) {
       const newToken = crypto.randomUUID();
-      await supabase.from('alert_settings').update({ barn_qr_token: newToken }).eq('barn_id', 'default');
+      await supabase.from('alert_settings').update({ barn_qr_token: newToken }).eq('id', settings.id);
       setBarnQrToken(newToken);
     }
     setServiceVisitsLoading(false);

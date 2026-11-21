@@ -248,7 +248,7 @@ export default function Dashboard() {
     const [{ count }, { count: eventCount }, { data: settings }, { data: events }, { data: invoiceData }, { data: alertHorses }, { data: farrierVisits }] = await Promise.all([
       supabase.from('horses').select('*', { count: 'exact', head: true }),
       supabase.from('events').select('*', { count: 'exact', head: true }).eq('date', new Date().toISOString().split('T')[0]),
-      supabase.from('alert_settings').select('*').eq('barn_id', 'default').single(),
+      supabase.from('alert_settings').select('*').single(),
       supabase.from('events').select('id, title, date, time').gte('date', new Date().toISOString().split('T')[0]).order('date').order('time').limit(5),
       supabase.from('invoices').select('status, invoice_line_items(amount)').neq('status', 'paid'),
       supabase.from('horses').select('id, name, alert, coggins_expiry_date'),

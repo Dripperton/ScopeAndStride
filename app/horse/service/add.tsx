@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Keyboard, ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Wrench, Stethoscope, Syringe, Pill, Activity, FileText } from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
 import { useProfile } from '../../../lib/useProfile';
@@ -87,7 +87,7 @@ export default function AddServiceVisit() {
   const showExpiry = SHOWS_EXPIRY.includes(serviceType);
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()}>
           <Text style={styles.backText}>{t('Cancel')}</Text>
@@ -224,7 +224,7 @@ export default function AddServiceVisit() {
         {error ? <Text style={[styles.errorText, { color: C.error, fontFamily: F.sans }]}>{error}</Text> : null}
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Keyboard, ActivityIndicator, ScrollView, StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
@@ -42,7 +42,7 @@ export default function AddHorse() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: C.background }]}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor: C.background }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
         <Pressable onPress={() => router.back()} style={({ hovered }: any) => [styles.backBtn, hovered && { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
           <Text style={[styles.backText, { color: C.headerText, fontFamily: F.sans }]}>← {t('Back')}</Text>
@@ -110,7 +110,7 @@ export default function AddHorse() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
