@@ -11,12 +11,31 @@ const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 const supabaseUrl = extra.supabaseUrl || 'https://kzpdukjkttkaaligxsmb.supabase.co';
 const supabaseKey = extra.supabaseAnonKey || 'sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6';
 
+// Hybrid storage: memory-first for instant reads, AsyncStorage for cross-restart persistence.
+// getSession() re-reads storage on every call in auth-js, so AsyncStorage v2 (NitroModules)
+// returning null during initialization caused every PostgREST query to run as anon.
+const _mem: Record<string, string> = {};
+const HybridStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    if (key in _mem) return _mem[key];
+    try { const v = await AsyncStorage.getItem(key); if (v !== null) _mem[key] = v; return v; } catch { return null; }
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    _mem[key] = value;
+    try { await AsyncStorage.setItem(key, value); } catch {}
+  },
+  removeItem: async (key: string): Promise<void> => {
+    delete _mem[key];
+    try { await AsyncStorage.removeItem(key); } catch {}
+  },
+};
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    storage: AsyncStorage,
+    storage: HybridStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false, // handled manually below for React Native
+    detectSessionInUrl: false,
     flowType: 'pkce',
   },
 });
