@@ -53,7 +53,9 @@
       }
     },
     "production:rebelle-hill": {
-      "ios": {}
+      "ios": {
+        "ascAppId": "6837663590"
+      }
     }
   }
 }
