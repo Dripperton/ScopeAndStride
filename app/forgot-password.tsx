@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import { supabase } from '../lib/supabase';
 import { useLanguage } from '../lib/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -20,9 +21,11 @@ export default function ForgotPassword() {
     if (!email.trim()) { setError(t('Please enter your email address.')); return; }
     setLoading(true);
     setError('');
+    const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
+    const scheme = extra.scheme ?? 'scopeandstride';
     const redirectTo = Platform.OS === 'web'
       ? `${window.location.origin}/reset-password`
-      : 'https://app.scopeandstride.com/auth-callback';
+      : `${scheme}://auth-callback`;
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
     if (error) {
       setError(error.message);

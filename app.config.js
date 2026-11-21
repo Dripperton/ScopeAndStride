@@ -27,6 +27,7 @@ module.exports = ({ config }) => {
   return {
     ...config,
     name: brand.barnName,
+    scheme: brand.scheme ?? config.scheme,
     icon: iconPath,
     ios: {
       ...config.ios,
@@ -46,6 +47,7 @@ module.exports = ({ config }) => {
       themePrimary: brand.theme.primary,
       themeSecondary: brand.theme.secondary,
       themeSurface: brand.theme.surface,
+      scheme: brand.scheme ?? 'scopeandstride',
       supabaseUrl: brand.supabaseUrl ?? '',
       supabaseAnonKey: brand.supabaseAnonKey ?? '',
     },

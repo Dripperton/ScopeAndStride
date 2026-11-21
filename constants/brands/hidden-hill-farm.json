@@ -9,6 +9,7 @@
     "secondary": "#000000",
     "surface": "#F0F0F0"
   },
+  "scheme": "scopeandstride",
   "supabaseUrl": "https://kzpdukjkttkaaligxsmb.supabase.co",
   "supabaseAnonKey": "sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6"
 }
