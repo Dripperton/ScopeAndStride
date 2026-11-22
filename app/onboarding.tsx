@@ -112,6 +112,9 @@ export default function Onboarding() {
   return (
     <View style={[styles.container, { backgroundColor: C.background }]}>
       <View style={[styles.header, { backgroundColor: C.primary }]}>
+        <Pressable style={styles.signOutBtn} onPress={() => supabase.auth.signOut()}>
+          <Text style={styles.signOutText}>{t('Sign out')}</Text>
+        </Pressable>
         <View style={styles.logoMark}>
           <Text style={[styles.logoS, { color: C.headerText, fontFamily: F.sansBold }]}>{Brand.appName}</Text>
         </View>
@@ -256,6 +259,8 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { padding: 24, paddingTop: 56, alignItems: 'center', gap: 8 },
+  signOutBtn: { position: 'absolute', top: 56, right: 20 },
+  signOutText: { fontSize: 13, color: 'rgba(255,255,255,0.5)' },
   logoMark: { alignItems: 'center', gap: 2, marginBottom: 4 },
   logoS: { fontSize: 14, fontWeight: '800', lineHeight: 15 },
   logoRule: { width: 20, height: 1.5 },

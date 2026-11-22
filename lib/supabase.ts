@@ -12,29 +12,40 @@ const supabaseUrl = extra.supabaseUrl || 'https://kzpdukjkttkaaligxsmb.supabase.
 const supabaseKey = extra.supabaseAnonKey || 'sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6';
 
 // iOS Keychain (expo-secure-store) has no initialization delay unlike AsyncStorage v2
-// (NitroModules), which returned null or threw on cold start causing all queries to run
-// as anon. SecureStore's 2KB limit is handled by chunking large values.
+// (NitroModules). SecureStore's 2KB limit is handled by chunking large values.
+// In-memory cache (memStore) backs every read/write so that if the Keychain write
+// fails silently the session is still available within the same app session.
 const CHUNK_SIZE = 1900;
+const memStore = new Map<string, string>();
+
 const SecureStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       const direct = await SecureStore.getItemAsync(key);
-      if (direct !== null) return direct;
+      if (direct !== null) {
+        memStore.set(key, direct);
+        return direct;
+      }
       const countStr = await SecureStore.getItemAsync(`${key}__count`);
-      if (!countStr) return null;
-      const count = parseInt(countStr, 10);
-      const chunks = await Promise.all(
-        Array.from({ length: count }, (_, i) => SecureStore.getItemAsync(`${key}__${i}`))
-      );
-      if (chunks.some(c => c === null)) return null;
-      return chunks.join('');
-    } catch { return null; }
+      if (countStr) {
+        const count = parseInt(countStr, 10);
+        const chunks = await Promise.all(
+          Array.from({ length: count }, (_, i) => SecureStore.getItemAsync(`${key}__${i}`))
+        );
+        if (chunks.every(c => c !== null)) {
+          const val = (chunks as string[]).join('');
+          memStore.set(key, val);
+          return val;
+        }
+      }
+    } catch {}
+    return memStore.get(key) ?? null;
   },
   setItem: async (key: string, value: string): Promise<void> => {
+    memStore.set(key, value);
     try {
       if (value.length <= CHUNK_SIZE) {
         await SecureStore.setItemAsync(key, value);
-        // Clean up any leftover chunks from a previous larger value
         const countStr = await SecureStore.getItemAsync(`${key}__count`);
         if (countStr) {
           const count = parseInt(countStr, 10);
@@ -55,6 +66,7 @@ const SecureStorage = {
     } catch {}
   },
   removeItem: async (key: string): Promise<void> => {
+    memStore.delete(key);
     try {
       const countStr = await SecureStore.getItemAsync(`${key}__count`);
       if (countStr) {
