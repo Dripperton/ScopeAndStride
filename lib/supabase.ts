@@ -18,16 +18,17 @@ const _mem: Record<string, string> = {};
 const HybridStorage = {
   getItem: async (key: string): Promise<string | null> => {
     if (key in _mem) return _mem[key];
-    try {
-      const v = await AsyncStorage.getItem(key);
-      if (v !== null) { _mem[key] = v; return v; }
-      // NitroModules (AsyncStorage v2) returns null during early cold-start init.
-      // Wait and retry once — by 300ms it's always ready.
-      await new Promise(r => setTimeout(r, 300));
-      const v2 = await AsyncStorage.getItem(key);
-      if (v2 !== null) _mem[key] = v2;
-      return v2;
-    } catch { return null; }
+    // NitroModules (AsyncStorage v2) may throw OR return null during early cold-start
+    // initialization. Keep them in separate try-catches so a throw on the first attempt
+    // doesn't skip the retry (a single try-catch would short-circuit to null on throw).
+    for (let i = 0; i < 5; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 400));
+      try {
+        const v = await AsyncStorage.getItem(key);
+        if (v !== null) { _mem[key] = v; return v; }
+      } catch {}
+    }
+    return null;
   },
   setItem: async (key: string, value: string): Promise<void> => {
     _mem[key] = value;
