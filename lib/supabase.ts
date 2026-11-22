@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { AppState } from 'react-native';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
@@ -11,38 +11,67 @@ const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 const supabaseUrl = extra.supabaseUrl || 'https://kzpdukjkttkaaligxsmb.supabase.co';
 const supabaseKey = extra.supabaseAnonKey || 'sb_publishable_6HLbfXt3q5rjEi8eoq8lJg_B_LlNqV6';
 
-// Hybrid storage: memory-first for instant reads, AsyncStorage for cross-restart persistence.
-// getSession() re-reads storage on every call in auth-js, so AsyncStorage v2 (NitroModules)
-// returning null during initialization caused every PostgREST query to run as anon.
-const _mem: Record<string, string> = {};
-const HybridStorage = {
+// iOS Keychain (expo-secure-store) has no initialization delay unlike AsyncStorage v2
+// (NitroModules), which returned null or threw on cold start causing all queries to run
+// as anon. SecureStore's 2KB limit is handled by chunking large values.
+const CHUNK_SIZE = 1900;
+const SecureStorage = {
   getItem: async (key: string): Promise<string | null> => {
-    if (key in _mem) return _mem[key];
-    // NitroModules (AsyncStorage v2) may throw OR return null during early cold-start
-    // initialization. Keep them in separate try-catches so a throw on the first attempt
-    // doesn't skip the retry (a single try-catch would short-circuit to null on throw).
-    for (let i = 0; i < 5; i++) {
-      if (i > 0) await new Promise(r => setTimeout(r, 400));
-      try {
-        const v = await AsyncStorage.getItem(key);
-        if (v !== null) { _mem[key] = v; return v; }
-      } catch {}
-    }
-    return null;
+    try {
+      const direct = await SecureStore.getItemAsync(key);
+      if (direct !== null) return direct;
+      const countStr = await SecureStore.getItemAsync(`${key}__count`);
+      if (!countStr) return null;
+      const count = parseInt(countStr, 10);
+      const chunks = await Promise.all(
+        Array.from({ length: count }, (_, i) => SecureStore.getItemAsync(`${key}__${i}`))
+      );
+      if (chunks.some(c => c === null)) return null;
+      return chunks.join('');
+    } catch { return null; }
   },
   setItem: async (key: string, value: string): Promise<void> => {
-    _mem[key] = value;
-    try { await AsyncStorage.setItem(key, value); } catch {}
+    try {
+      if (value.length <= CHUNK_SIZE) {
+        await SecureStore.setItemAsync(key, value);
+        // Clean up any leftover chunks from a previous larger value
+        const countStr = await SecureStore.getItemAsync(`${key}__count`);
+        if (countStr) {
+          const count = parseInt(countStr, 10);
+          await Promise.all([
+            SecureStore.deleteItemAsync(`${key}__count`),
+            ...Array.from({ length: count }, (_, i) => SecureStore.deleteItemAsync(`${key}__${i}`)),
+          ]);
+        }
+      } else {
+        const chunks: string[] = [];
+        for (let i = 0; i < value.length; i += CHUNK_SIZE) chunks.push(value.slice(i, i + CHUNK_SIZE));
+        await Promise.all([
+          SecureStore.setItemAsync(`${key}__count`, String(chunks.length)),
+          ...chunks.map((c, i) => SecureStore.setItemAsync(`${key}__${i}`, c)),
+        ]);
+        await SecureStore.deleteItemAsync(key);
+      }
+    } catch {}
   },
   removeItem: async (key: string): Promise<void> => {
-    delete _mem[key];
-    try { await AsyncStorage.removeItem(key); } catch {}
+    try {
+      const countStr = await SecureStore.getItemAsync(`${key}__count`);
+      if (countStr) {
+        const count = parseInt(countStr, 10);
+        await Promise.all([
+          SecureStore.deleteItemAsync(`${key}__count`),
+          ...Array.from({ length: count }, (_, i) => SecureStore.deleteItemAsync(`${key}__${i}`)),
+        ]);
+      }
+      await SecureStore.deleteItemAsync(key);
+    } catch {}
   },
 };
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
-    storage: HybridStorage,
+    storage: SecureStorage,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
