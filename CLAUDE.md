@@ -49,6 +49,9 @@ All colors are in `constants/colors.ts` as named exports (`Colors.hunterGreen`, 
 
 Post attachments are stored in the `post-attachments` Supabase Storage bucket.
 
+### ScrollView / Keyboard Convention
+All `ScrollView` components must use `keyboardDismissMode="none" keyboardShouldPersistTaps="handled"`. Never use `keyboardDismissMode="interactive"` — on New Architecture iOS it dismisses the keyboard on any drag, making forms unusable. This applies to all barns (HHF, RH, and any future barn).
+
 ### Known Limitations
 - No offline support; all reads and writes require network
 - Minimal error handling — most failures use `alert()` with no retry logic
