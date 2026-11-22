@@ -43,14 +43,6 @@ async function getBarnBranding(userId: string, userMetadata: any): Promise<{ bar
 
 serve(async (req) => {
   try {
-    if (HOOK_SECRET) {
-      const authHeader = req.headers.get('authorization') ?? ''
-      const token = authHeader.replace(/^Bearer\s+/i, '')
-      if (token !== HOOK_SECRET) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
-      }
-    }
-
     const payload = await req.json()
     const { user, email_data } = payload
     const { token_hash, email_action_type, redirect_to } = email_data
