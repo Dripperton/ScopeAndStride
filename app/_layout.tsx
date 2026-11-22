@@ -121,20 +121,8 @@ export default function Layout() {
             await supabase.rpc('accept_invite');
           }
 
-          const { data: profile } = await supabase
-            .from('profiles').select('role, onboarding_complete').eq('id', session.user.id).single();
-
-          const isHorseOwner = profile?.role === 'horse_owner' || profile?.role === 'rider';
-          if (isHorseOwner && !profile?.onboarding_complete) {
-            router.replace('/onboarding');
-          } else {
-            if (!isHorseOwner && !profile?.onboarding_complete) {
-              supabase.from('profiles').update({ onboarding_complete: true }).eq('id', session.user.id);
-            }
-            router.replace('/dashboard');
-          }
+          router.replace('/dashboard');
         } catch {
-          // Profile fetch failed — fall back to dashboard rather than leaving user stuck
           router.replace('/dashboard');
         }
       })();
