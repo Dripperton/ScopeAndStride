@@ -93,7 +93,7 @@ export default function AddFarrierEntry() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled" onScrollBeginDrag={Keyboard.dismiss}>
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Visit Details')}</Text>
 

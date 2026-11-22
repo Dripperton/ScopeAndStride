@@ -155,7 +155,7 @@ export default function AddDailyCare() {
         </Pressable>
       </Modal>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>{t('Date')}</Text>
           <DateInput value={date} onChange={setDate} />

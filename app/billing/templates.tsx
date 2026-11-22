@@ -120,7 +120,7 @@ export default function RecurringTemplates() {
         </Pressable>
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         {loading && templates.length === 0 ? (
           <ActivityIndicator size="large" color={C.primary} style={{ marginTop: 40 }} />
         ) : templates.length === 0 ? (

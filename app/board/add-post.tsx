@@ -106,7 +106,7 @@ export default function AddPost() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled" onScrollBeginDrag={Keyboard.dismiss}>
         {(isOwner || isStaff) && (
           <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
             <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>Post Type</Text>

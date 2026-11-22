@@ -104,7 +104,7 @@ function InvoiceContent() {
         <View style={{ width: 50 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <View style={styles.invoiceTopRow}>
             <View>

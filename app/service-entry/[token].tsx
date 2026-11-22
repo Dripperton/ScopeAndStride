@@ -119,7 +119,7 @@ export default function ServiceEntryForm() {
         <Text style={styles.subtitle}>Log a service visit for this horse</Text>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
 
         <View style={[styles.card, { backgroundColor: C.card, borderColor: C.cardBorder }]}>
           <Text style={[styles.sectionTitle, { color: C.textMuted, fontFamily: F.sansBold }]}>Service Type</Text>

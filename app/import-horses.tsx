@@ -249,7 +249,7 @@ export default function ImportHorses() {
         <View style={{ width: 60 }} />
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
 
         {!done ? (
           <>

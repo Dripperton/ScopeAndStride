@@ -107,7 +107,7 @@ export default function AddMedicalEntry() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive" onScrollBeginDrag={Keyboard.dismiss}>
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled" onScrollBeginDrag={Keyboard.dismiss}>
         <Pressable
           style={[styles.importBtn, { borderColor: C.primary, backgroundColor: C.activeBg }]}
           onPress={handleImportPDF}

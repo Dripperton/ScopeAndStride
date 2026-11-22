@@ -141,7 +141,7 @@ export default function Billing() {
         )}
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         {isOwner && (
           <View style={styles.summaryGrid}>
             <View style={[styles.summaryCard, styles.summaryMain, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

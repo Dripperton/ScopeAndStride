@@ -218,7 +218,7 @@ export default function HorseProfile() {
         );
       })() : null}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
 
         {/* Billing Banner */}
         {unpaidInvoices.length > 0 && (

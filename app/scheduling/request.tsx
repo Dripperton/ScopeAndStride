@@ -121,7 +121,7 @@ export default function RequestSlot() {
         </Pressable>
       </View>
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         {/* Slot summary */}
         <View style={[styles.slotSummary, { backgroundColor: C.primary }]}>
           <Text style={[styles.slotSummaryDate, { color: C.headerText, fontFamily: F.sansBold }]}>{formatDate(date as string)}</Text>

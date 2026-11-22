@@ -76,7 +76,7 @@ export default function Index() {
         contentContainerStyle={styles.formContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        keyboardDismissMode="interactive"
+        keyboardDismissMode="none" keyboardShouldPersistTaps="handled"
         onScrollBeginDrag={Keyboard.dismiss}
       >
         <View style={styles.formCard}>

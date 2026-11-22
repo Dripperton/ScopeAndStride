@@ -139,7 +139,7 @@ export default function Onboarding() {
         </View>
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
 
         {step === 0 && (
           <View style={[styles.section, { backgroundColor: C.card, borderColor: C.cardBorder }]}>

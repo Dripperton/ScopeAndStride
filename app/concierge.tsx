@@ -124,7 +124,7 @@ export default function Concierge() {
         contentContainerStyle={styles.bodyContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        keyboardDismissMode="none" keyboardShouldPersistTaps="handled"
       >
         {/* Empty state — suggestions */}
         {!askedQuestion && !loading && (

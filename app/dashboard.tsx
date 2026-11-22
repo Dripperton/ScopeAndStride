@@ -529,7 +529,7 @@ export default function Dashboard() {
         <ConciergeBar C={C} F={F} t={t} onPress={() => router.push('/concierge')} />
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
 
         {dataError && (
           <View style={{ margin: 16, padding: 14, backgroundColor: C.errorBg, borderRadius: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -1087,7 +1087,7 @@ function WidgetSheet({ visible, widgets, onClose, onSave, sheetAnim, C, F, t, la
         </View>
         <Text style={[styles.sheetSubtitle, { color: C.textMuted }]}>{t('Show or hide sections on your dashboard')}</Text>
 
-        <ScrollView showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+        <ScrollView showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
           {/* Dashboard sections */}
           {local.filter(w => w.section === 'dashboard').length > 0 && (
             <>

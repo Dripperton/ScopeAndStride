@@ -459,7 +459,7 @@ export default function Schedule() {
         </View>
       )}
 
-      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="interactive">
+      <ScrollView style={styles.body} showsVerticalScrollIndicator={false} keyboardDismissMode="none" keyboardShouldPersistTaps="handled">
         {viewMode === 'month' ? (
           monthDayEvents.length === 0 ? (
             <View style={styles.emptyState}>
