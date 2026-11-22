@@ -14,6 +14,20 @@
     "production": {
       "autoIncrement": true
     },
+    "development:hidden-hill-farm": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "BRAND_SLUG": "hidden-hill-farm"
+      }
+    },
+    "development:rebelle-hill": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "BRAND_SLUG": "rebelle-hill"
+      }
+    },
     "production:scope-and-stride": {
       "extends": "production",
       "env": {

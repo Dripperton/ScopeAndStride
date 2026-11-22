@@ -16,7 +16,7 @@ export default function Horses() {
   const theme = useTheme();
   const C = theme.colors;
   const F = theme.fonts;
-  const { isHorseOwner } = useProfile();
+  const { isHorseOwner, profileLoadError } = useProfile();
   const { horses, horsesLoading, refreshHorses } = useBarnData();
   const [editMode, setEditMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -109,7 +109,11 @@ export default function Horses() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>🐴</Text>
             <Text style={[styles.emptyTitle, { color: C.text, fontFamily: F.sansBold }]}>{t('No horses yet.')}</Text>
-            <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('Add your first horse or import a CSV to get started.')}</Text>
+            {profileLoadError ? (
+              <Text style={[styles.emptyText, { color: C.error ?? '#CC3333', fontFamily: F.sans }]}>{profileLoadError}</Text>
+            ) : (
+              <Text style={[styles.emptyText, { color: C.textMuted }]}>{t('Add your first horse or import a CSV to get started.')}</Text>
+            )}
           </View>
         ) : (
           (() => {
