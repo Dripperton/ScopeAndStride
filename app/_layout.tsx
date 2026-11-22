@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Stack, useRouter, usePathname } from 'expo-router';
-import { supabase } from '../lib/supabase';
+import { supabase, handleDeepLinkUrl } from '../lib/supabase';
+import * as Linking from 'expo-linking';
 import { View, ActivityIndicator, Text, ScrollView } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -64,6 +65,9 @@ export default function Layout() {
       setIsRecovery(false);
       setSession(session);
     });
+
+    // Must run AFTER onAuthStateChange is set up so PASSWORD_RECOVERY fires into a live listener
+    Linking.getInitialURL().then(handleDeepLinkUrl);
 
     return () => subscription.unsubscribe();
   }, []);

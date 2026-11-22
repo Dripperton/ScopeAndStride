@@ -55,7 +55,7 @@ AppState.addEventListener('change', (state) => {
 //      (forwarded by the web intermediary at /auth-callback — iOS preserves query strings)
 //   2. PKCE code:            scopeandstride://auth-callback?code=...
 //   3. Hash tokens (legacy): scopeandstride://#access_token=...  (iOS often strips these)
-function handleDeepLinkUrl(url: string | null) {
+export function handleDeepLinkUrl(url: string | null) {
   if (!url) return;
 
   const queryString = url.split('?')[1]?.split('#')[0];
@@ -89,5 +89,5 @@ function handleDeepLinkUrl(url: string | null) {
 // App already running — receives deep link in foreground
 Linking.addEventListener('url', ({ url }) => handleDeepLinkUrl(url));
 
-// Cold start — app launched via deep link
-Linking.getInitialURL().then(handleDeepLinkUrl);
+// Cold start is handled in _layout.tsx after onAuthStateChange is set up,
+// so PASSWORD_RECOVERY fires into a live listener.
