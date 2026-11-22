@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { useLanguage, Language } from './LanguageContext';
 
@@ -45,9 +46,17 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
-  const fetchProfile = useCallback(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const user = session?.user ?? null;
+  // directSession: passed from onAuthStateChange so we skip getSession() (which
+  // reads storage and may return null if SecureStore is broken).
+  // Called without args only on manual refresh, where storage is more likely warm.
+  const fetchProfile = useCallback(async (directSession?: Session | null) => {
+    let user;
+    if (directSession !== undefined) {
+      user = directSession?.user ?? null;
+    } else {
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user ?? null;
+    }
     if (!user) {
       setProfileLoadError('No session — user is null');
       setLoading(false);
@@ -79,7 +88,7 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session) {
-          fetchProfile();
+          fetchProfile(session);
         } else {
           setLoading(false);
         }

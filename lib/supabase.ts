@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { AppState } from 'react-native';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
+import type { Session } from '@supabase/supabase-js';
 
 const extra = (Constants.expoConfig?.extra ?? {}) as Record<string, string>;
 
@@ -22,7 +23,7 @@ const SecureStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       const direct = await SecureStore.getItemAsync(key);
-      if (direct !== null) {
+      if (direct != null) {
         memStore.set(key, direct);
         return direct;
       }
@@ -32,7 +33,7 @@ const SecureStorage = {
         const chunks = await Promise.all(
           Array.from({ length: count }, (_, i) => SecureStore.getItemAsync(`${key}__${i}`))
         );
-        if (chunks.every(c => c !== null)) {
+        if (chunks.every(c => c != null)) {
           const val = (chunks as string[]).join('');
           memStore.set(key, val);
           return val;
@@ -81,6 +82,24 @@ const SecureStorage = {
   },
 };
 
+// Last-resort token cache: set synchronously from onAuthStateChange, used by
+// customFetch to inject a valid JWT even when getSession() fails to read storage.
+let _cachedToken: string | null = null;
+
+// Injects the cached user JWT for all non-auth requests so PostgREST RLS works
+// even if SecureStore can't return the session.
+const customFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+  if (_cachedToken) {
+    const url = typeof input === 'string' ? input : (input as Request).url;
+    if (!url.includes('/auth/v1/')) {
+      const headers = new Headers(init?.headers as HeadersInit | undefined);
+      headers.set('Authorization', `Bearer ${_cachedToken}`);
+      return fetch(input, { ...init, headers });
+    }
+  }
+  return fetch(input, init);
+};
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     storage: SecureStorage,
@@ -89,6 +108,12 @@ export const supabase = createClient(supabaseUrl, supabaseKey, {
     detectSessionInUrl: false,
     flowType: 'pkce',
   },
+  global: { fetch: customFetch },
+});
+
+// Keep _cachedToken fresh from every auth event (fires before fetchProfile runs)
+supabase.auth.onAuthStateChange((_event, session: Session | null) => {
+  _cachedToken = session?.access_token ?? null;
 });
 
 // ── Auto-refresh token when app returns to foreground ─────────────────────────
