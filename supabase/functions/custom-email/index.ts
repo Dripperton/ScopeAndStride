@@ -4,6 +4,7 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'noreply@scopeandstride.com'
+const HOOK_SECRET = Deno.env.get('SEND_EMAIL_HOOK_SECRET') ?? ''
 
 async function getBarnBranding(userId: string, userMetadata: any): Promise<{ barnName: string; primaryColor: string }> {
   try {
@@ -42,6 +43,14 @@ async function getBarnBranding(userId: string, userMetadata: any): Promise<{ bar
 
 serve(async (req) => {
   try {
+    if (HOOK_SECRET) {
+      const authHeader = req.headers.get('authorization') ?? ''
+      const token = authHeader.replace(/^Bearer\s+/i, '')
+      if (token !== HOOK_SECRET) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { 'Content-Type': 'application/json' } })
+      }
+    }
+
     const payload = await req.json()
     const { user, email_data } = payload
     const { token_hash, email_action_type, redirect_to } = email_data
